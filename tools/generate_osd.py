@@ -39,6 +39,8 @@ module campus_osd #(
     input clk, rst, in_vs, in_de, emergency_async,
     input [23:0] in_rgb,
     input [7:0] settings_async,
+    input transition_pending_async,
+    output transition_black_ready,
     output out_vs, out_de,
     output [23:0] out_rgb
 );
@@ -52,6 +54,10 @@ reg [3:0] h10,h1,m10,m1,s10,s1;
 reg [23:0] frame_time;
 reg [7:0] settings_sync0,settings_sync1,frame_settings;
 wire frame_start= in_vs && !vs_prev;
+wire [4:0] fade_level;
+picture_transition u_transition(.clk(clk),.rst(rst),.frame_start(frame_start),
+    .pending_async(transition_pending_async),.emergency_async(emergency_async),
+    .black_ready(transition_black_ready),.level(fade_level));
 always @(posedge clk or posedge rst) begin
     if(rst) begin
         mode_sync0<=0; mode_sync1<=0; frame_mode<=0;
@@ -190,10 +196,56 @@ end
 // Synchronous ROM read permits block RAM inference.
 always @(posedge clk) glyph_bits<=glyph_rom[{glyph_id,glyph_row}];
 wire ink=text_d && glyph_bits[15-column_d];
-wire [23:0] shaded={2'b00,rgb_d[23:18],2'b00,rgb_d[15:10],2'b00,rgb_d[7:2]};
+function [7:0] fade_channel;
+input [7:0] channel;
+input [4:0] level;
+reg [12:0] product;
+begin product=channel*level; fade_channel=product[11:4]; end
+endfunction
+wire [23:0] faded_rgb={fade_channel(rgb_d[23:16],fade_level),
+    fade_channel(rgb_d[15:8],fade_level),fade_channel(rgb_d[7:0],fade_level)};
+wire [23:0] shaded={2'b00,faded_rgb[23:18],2'b00,faded_rgb[15:10],2'b00,faded_rgb[7:2]};
 assign out_de=de_d;
 assign out_vs=vs_d;
-assign out_rgb= !de_d ? 24'd0 : ink ? (mode_d?24'hFFD060:24'hFFFFFF) : band_d ? shaded : rgb_d;
+assign out_rgb= !de_d ? 24'd0 : ink ? (mode_d?24'hFFD060:24'hFFFFFF) : band_d ? shaded : faded_rgb;
+endmodule
+
+// Level changes only in vertical blanking. Keep the new buffer hidden for two
+// frame boundaries after commit so the frame-reader can adopt its base address.
+module picture_transition(
+    input clk,rst,frame_start,pending_async,emergency_async,
+    output black_ready,
+    output reg [4:0] level
+);
+localparam IDLE=0,OUT=1,BLACK=2,SETTLE=3,IN=4;
+reg [2:0] state;
+reg pending_sync0,pending_sync1,emergency_sync0,emergency_sync1;
+reg [1:0] settle_frames;
+assign black_ready=(state==BLACK);
+always @(posedge clk or posedge rst) begin
+    if(rst) begin
+        state<=IDLE;level<=16;settle_frames<=0;
+        pending_sync0<=0;pending_sync1<=0;emergency_sync0<=0;emergency_sync1<=0;
+    end else begin
+        pending_sync0<=pending_async;pending_sync1<=pending_sync0;
+        emergency_sync0<=emergency_async;emergency_sync1<=emergency_sync0;
+        if(frame_start) begin
+            if(emergency_sync1) begin state<=IDLE;level<=16;settle_frames<=0;end
+            else case(state)
+            IDLE: if(pending_sync1) begin state<=OUT;level<=15;end
+            OUT: if(!pending_sync1) begin state<=IN;end
+                 else if(level==1) begin level<=0;state<=BLACK;end
+                 else level<=level-1'b1;
+            BLACK: if(!pending_sync1) begin state<=SETTLE;settle_frames<=0;end
+            SETTLE: if(settle_frames==1) begin state<=IN;end
+                    else settle_frames<=settle_frames+1'b1;
+            IN: if(level==15) begin level<=16;state<=IDLE;end
+                else level<=level+1'b1;
+            default: begin state<=IDLE;level<=16;end
+            endcase
+        end
+    end
+end
 endmodule
 '''
 n = len(normal)

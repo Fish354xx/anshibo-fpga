@@ -18,6 +18,8 @@ module sd_card_bmp #(
     output                      o_emergency_mode,   // 0=普通模式 1=应急模式（面板指示）
     output [15:0]               debug_status,
     output [7:0]                picture_settings,
+    output                      transition_pending,
+    input                       transition_black_ready,
 
     input                       write_finish_toggle,
     output reg [1:0]            write_buf_idx,
@@ -73,6 +75,14 @@ wire             disp_commit_en;       // 本次事务结束后是否允许切�
 
 // bmp_ready 先表示"源文件读取/送 FIFO 完成"；真正切显示要等 write_finish_toggle 同步后
 reg              source_done_seen;
+reg              memory_done_seen;
+reg [1:0]        transition_ready_sync;
+wire             commit_allowed;
+frame_commit_gate u_frame_commit_gate(
+    .load_busy(load_busy), .source_done(source_done_seen), .memory_done(memory_done_seen),
+    .display_valid(display_valid), .emergency_mode(o_emergency_mode),
+    .display_permit(disp_commit_en), .black_ready(transition_ready_sync[1]),
+    .transition_pending(transition_pending), .commit_allowed(commit_allowed));
 
 // 同步 mem_clk 域的 write_finish_toggle
 reg [2:0]        wrfin_tgl_sync;
@@ -169,10 +179,13 @@ always @(posedge clk or posedge rst) begin
         img_sector3           <= 32'd0;
         load_busy             <= 1'b0;
         source_done_seen      <= 1'b0;
+        memory_done_seen      <= 1'b0;
+        transition_ready_sync <= 2'b00;
         display_valid         <= 1'b0;
     end else begin
         wrfin_tgl_sync   <= {wrfin_tgl_sync[1:0], write_finish_toggle};
         write_ack_sync   <= {write_ack_sync[0], write_req_ack};
+        transition_ready_sync <= {transition_ready_sync[0], transition_black_ready};
         scan_start_pulse <= 1'b0;
         load_start_pulse <= 1'b0;
 
@@ -191,6 +204,7 @@ always @(posedge clk or posedge rst) begin
             img_sector3           <= 32'd0;
             load_busy             <= 1'b0;
             source_done_seen      <= 1'b0;
+            memory_done_seen      <= 1'b0;
             display_valid         <= 1'b0;
         end else begin
             // 扫描阶段缓存前 4 张图的起始 sector
@@ -214,9 +228,13 @@ always @(posedge clk or posedge rst) begin
             // 收到 write_finish_toggle 脉冲，本次 SDRAM 写事务安全结束。
             // 是否切换显示由 disp_commit_en 决定：加载性质与当前模式不一致时
             // 只结束事务、不切画面（应急期间不闪出普通图，退出应急时不闪出应急图）
-            if (load_busy && source_done_seen && write_finish_pulse) begin
+            if (load_busy && source_done_seen && write_finish_pulse)
+                memory_done_seen <= 1'b1;
+            // Retain the write-complete event while waiting for the old picture to fade out.
+            if (commit_allowed) begin
                 load_busy        <= 1'b0;
                 source_done_seen <= 1'b0;
+                memory_done_seen <= 1'b0;
                 if (disp_commit_en) begin
                     disp_buf_idx          <= pending_buf_idx;
                     img_idx               <= load_idx;
@@ -239,6 +257,7 @@ always @(posedge clk or posedge rst) begin
                 display_valid         <= 1'b0;
                 load_busy             <= 1'b0;
                 source_done_seen      <= 1'b0;
+                memory_done_seen      <= 1'b0;
             end
             // 唯一的加载发起口：由模式控制器仲裁（首图 / 应急图 / 恢复图 / 手动 / 自动），
             // 控制器只在流水空闲时给出单周期请求，本模块据此启动一次加载事务
@@ -250,6 +269,7 @@ always @(posedge clk or posedge rst) begin
                 load_start_pulse <= 1'b1;
                 load_busy        <= 1'b1;
                 source_done_seen <= 1'b0;
+                memory_done_seen <= 1'b0;
             end
         end
     end
@@ -310,6 +330,17 @@ sd_card_top sd_card_top_m0(
 endmodule
 
 // Release-based short presses avoid issuing a normal action before recognizing a long press.
+// Retire rejected transactions immediately; only accepted normal switches fade.
+module frame_commit_gate(
+    input load_busy,source_done,memory_done,display_valid,emergency_mode,display_permit,black_ready,
+    output transition_pending,commit_allowed
+);
+wire finished=load_busy && source_done && memory_done;
+wire needs_fade=display_valid && !emergency_mode && display_permit;
+assign transition_pending=finished && needs_fade;
+assign commit_allowed=finished && (!needs_fade || black_ready);
+endmodule
+
 module picture_key_control #(
     parameter integer CLK_FREQ_HZ=100000000,
     parameter integer DEBOUNCE_MS=20,

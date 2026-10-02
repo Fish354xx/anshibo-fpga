@@ -58,6 +58,7 @@ wire [6:0]  seg_data_0;
 wire [15:0] sd_debug_status;
 wire emergency_mode;
 wire [7:0] picture_settings;
+wire transition_pending,transition_black_ready;
 reg [19:0] debug_sync0, debug_sync1;
 wire [6:0] debug_seg_count, debug_seg_display, debug_seg_load;
 wire [6:0] debug_seg_flags, debug_seg_mode;
@@ -185,6 +186,8 @@ sd_card_bmp #(
     .debug_status      (sd_debug_status),
     .o_emergency_mode  (emergency_mode),
     .picture_settings  (picture_settings),
+    .transition_pending(transition_pending),
+    .transition_black_ready(transition_black_ready),
     .state_code        (state_code),
     .bmp_width         (16'd640),
     .bmp_height        (16'd480),
@@ -365,6 +368,7 @@ audio_arc_calculate #(
 campus_osd u_campus_osd(
     .clk(video_clk), .rst(rst_all), .in_vs(vs), .in_de(de),
     .in_rgb(vout_data), .emergency_async(emergency_mode),
+    .transition_pending_async(transition_pending), .transition_black_ready(transition_black_ready),
     .settings_async(picture_settings),
     .out_vs(osd_vs), .out_de(osd_de), .out_rgb(osd_rgb)
 );
