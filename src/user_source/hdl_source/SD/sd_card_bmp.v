@@ -75,6 +75,7 @@ reg              source_done_seen;
 
 // 同步 mem_clk 域的 write_finish_toggle
 reg [2:0]        wrfin_tgl_sync;
+reg [1:0]        write_ack_sync;
 wire             write_finish_pulse;
 
 assign write_en           = bmp_data_wr_en;
@@ -160,6 +161,7 @@ endfunction
 always @(posedge clk or posedge rst) begin
     if (rst) begin
         wrfin_tgl_sync        <= 3'b000;
+        write_ack_sync        <= 2'b00;
         scan_start_pulse      <= 1'b0;
         load_start_pulse      <= 1'b0;
         load_sector           <= 32'd0;
@@ -180,6 +182,7 @@ always @(posedge clk or posedge rst) begin
         display_valid         <= 1'b0;
     end else begin
         wrfin_tgl_sync   <= {wrfin_tgl_sync[1:0], write_finish_toggle};
+        write_ack_sync   <= {write_ack_sync[0], write_req_ack};
         scan_start_pulse <= 1'b0;
         load_start_pulse <= 1'b0;
 
@@ -284,7 +287,7 @@ bmp_read bmp_read_m0(
     .bmp_width              (bmp_width),
     .bmp_height             (bmp_height),
     .write_req              (write_req),
-    .write_req_ack          (write_req_ack),
+    .write_req_ack          (write_ack_sync[1]),
     .sd_sec_read            (sd_sec_read),
     .sd_sec_read_addr       (sd_sec_read_addr),
     .sd_sec_read_data       (sd_sec_read_data),

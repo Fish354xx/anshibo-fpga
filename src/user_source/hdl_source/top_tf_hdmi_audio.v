@@ -49,6 +49,8 @@ wire de;
 
 wire [23:0] vout_data_raw;
 wire [23:0] vout_data;
+wire [23:0] osd_rgb;
+wire osd_vs, osd_de;
 wire        display_valid;
 
 wire [3:0]  state_code;
@@ -347,12 +349,17 @@ audio_arc_calculate #(
 );
 
 // ===================== RGB/DE 转 AXIS 视频 =====================
+campus_osd u_campus_osd(
+    .clk(video_clk), .rst(rst_all), .in_vs(vs), .in_de(de),
+    .in_rgb(vout_data), .emergency_async(emergency_mode),
+    .out_vs(osd_vs), .out_de(osd_de), .out_rgb(osd_rgb)
+);
 video_rgb_to_axis_640x480 u_video_rgb_to_axis_640x480(
     .I_clk         (video_clk),
     .I_rst         (rst_all),
-    .I_vs          (vs),
-    .I_de          (de),
-    .I_rgb         (vout_data),
+    .I_vs          (osd_vs),
+    .I_de          (osd_de),
+    .I_rgb         (osd_rgb),
     .O_video_user  (axis_s_user),
     .O_video_valid (axis_s_valid),
     .O_video_last  (axis_s_last),

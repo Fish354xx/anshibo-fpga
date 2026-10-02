@@ -82,3 +82,10 @@ set_clock_groups -asynchronous \
 # 7. 其余 Input/Output delay 先保持空白
 #    你当前两个原始 sdc 也都没有写这部分。
 # ------------------------------------------------------------
+
+# Only first-stage CDC registers are exempt; destination stages remain timed.
+set_false_path -to [get_regs {sd_card_bmp_m0/write_ack_sync[0]}]
+set_false_path -to [get_regs {sd_card_bmp_m0/wrfin_tgl_sync[0]}]
+set_false_path -to [get_regs {u_hdmi_audio_tone_i2s_64fs/enable_sync0}]
+set_false_path -to [get_regs {debug_sync0[*]}]
+set_false_path -to [get_regs {u_campus_osd/mode_sync0}]

@@ -70,12 +70,12 @@ BEGIN
     CLKC0_CPHASE => 9,
     CLKC0_FPHASE => 0,
     CLKC1_ENABLE => "ENABLE",
-    CLKC1_DIV => 8,
-    CLKC1_CPHASE => 7,
+    CLKC1_DIV => 24,
+    CLKC1_CPHASE => 23,
     CLKC1_FPHASE => 0,
     CLKC2_ENABLE => "ENABLE",
-    CLKC2_DIV => 8,
-    CLKC2_CPHASE => 3,
+    CLKC2_DIV => 24,
+    CLKC2_CPHASE => 11,
     CLKC2_FPHASE => 0 
   )
   PORT MAP (
@@ -102,4 +102,3 @@ BEGIN
   clk0_buf <= clkc_wire(0);
 
 END rtl;
-
