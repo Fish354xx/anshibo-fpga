@@ -59,6 +59,7 @@ wire [15:0] sd_debug_status;
 wire emergency_mode;
 wire [7:0] picture_settings;
 wire transition_pending,transition_black_ready;
+wire sd_card_write_ready;
 reg [19:0] debug_sync0, debug_sync1;
 wire [6:0] debug_seg_count, debug_seg_display, debug_seg_load;
 wire [6:0] debug_seg_flags, debug_seg_mode;
@@ -199,6 +200,7 @@ sd_card_bmp #(
 
     .write_req         (sd_card_write_req),
     .write_req_ack     (sd_card_write_req_ack),
+    .write_ready       (sd_card_write_ready),
     .write_en          (sd_card_write_en),
     .write_data        (sd_card_write_data),
     .SD_nCS            (sd_ncs),
@@ -309,7 +311,8 @@ frame_read_write #(
     .write_addr_index  (write_buf_idx),
     .write_len         (FRAME_PIXELS),
     .write_en          (sd_card_write_en),
-    .write_data        (sd_card_write_data)
+    .write_data        (sd_card_write_data),
+    .write_ready       (sd_card_write_ready)
 );
 
 sdram U3(

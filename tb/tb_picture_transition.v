@@ -28,7 +28,9 @@ endtask
 initial begin
  cycles(5);rst=0;cycles(6);
  check(level==16 && !ready,"startup full opacity without transition");
- busy=1;source_done=1;#1;
+ busy=1;memory_done=1;source_done=0;#1;
+ check(!request && !commit,"early memory completion waits for source drain");
+ memory_done=0;source_done=1;#1;
  check(!request && !commit,"source completion alone cannot switch buffers");
  memory_done=1;#1;
  check(request && !commit,"completed normal image waits for black handshake");

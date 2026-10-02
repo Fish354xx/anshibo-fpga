@@ -27,6 +27,7 @@ module sd_card_bmp #(
 
     output                      write_req,
     input                       write_req_ack,
+    input                       write_ready,
     output                      write_en,
     output [31:0]               write_data,
     output                      SD_nCS,
@@ -228,7 +229,9 @@ always @(posedge clk or posedge rst) begin
             // 收到 write_finish_toggle 脉冲，本次 SDRAM 写事务安全结束。
             // 是否切换显示由 disp_commit_en 决定：加载性质与当前模式不一致时
             // 只结束事务、不切画面（应急期间不闪出普通图，退出应急时不闪出应急图）
-            if (load_busy && source_done_seen && write_finish_pulse)
+            // Downscaling can finish the output frame before unused source rows
+            // have drained. Latch either completion order, then wait for both.
+            if (load_busy && write_finish_pulse)
                 memory_done_seen <= 1'b1;
             // Retain the write-complete event while waiting for the old picture to fade out.
             if (commit_allowed) begin
@@ -298,6 +301,7 @@ bmp_read bmp_read_m0(
     .bmp_height             (bmp_height),
     .write_req              (write_req),
     .write_req_ack          (write_ack_sync[1]),
+    .write_ready            (write_ready),
     .sd_sec_read            (sd_sec_read),
     .sd_sec_read_addr       (sd_sec_read_addr),
     .sd_sec_read_data       (sd_sec_read_data),

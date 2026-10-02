@@ -24,6 +24,7 @@ module bmp_read(
 
     output reg                  write_req,
     input                       write_req_ack,
+    input                       write_ready,
 
     output reg                  sd_sec_read,
     output reg [31:0]           sd_sec_read_addr,
@@ -31,8 +32,8 @@ module bmp_read(
     input                       sd_sec_read_data_valid,
     input                       sd_sec_read_end,
 
-    output reg                  bmp_data_wr_en,
-    output reg [23:0]           bmp_data
+    output                      bmp_data_wr_en,
+    output [23:0]               bmp_data
 );
 
 localparam ST_IDLE      = 3'd0;
@@ -40,6 +41,7 @@ localparam ST_SCAN      = 3'd1;
 localparam ST_LOAD_HDR  = 3'd2;
 localparam ST_LOAD_WAIT = 3'd3;
 localparam ST_LOAD_DATA = 3'd4;
+localparam ST_FETCH = 3'd5, ST_OFFER = 3'd6, ST_FINISH = 3'd7;
 
 reg [2:0]  state;
 reg [9:0]  rd_cnt;
@@ -52,29 +54,56 @@ reg [31:0] width;
 reg [31:0] height;
 reg [15:0] bit_count;
 reg [31:0] compression;
+reg [31:0] dib_size;
+reg [15:0] planes;
 
 reg [31:0] scan_sector;
 reg [31:0] load_sector_latched;
 reg [31:0] bmp_len_cnt;
 reg [1:0]  bmp_byte_idx;
 
-wire header_match;
+reg header_match;
 wire bmp_data_valid;
-wire [31:0] file_sector_count;
+reg [31:0] file_sector_count;
 wire [31:0] next_scan_sector_if_match;
 wire [31:0] next_scan_sector_if_miss;
 
 assign ready = (state == ST_IDLE);
-assign header_match = (header_0 == "B") &&
-                      (header_1 == "M") &&
-                      (width[15:0]  == bmp_width) &&
-                      (height[15:0] == bmp_height) &&
-                      (bit_count    == 16'd24) &&
-                      (compression  == 32'd0);
-assign bmp_data_valid = (sd_sec_read_data_valid == 1'b1) &&
-                        (bmp_len_cnt >= pixel_offset) &&
-                        (bmp_len_cnt <  file_len);
-assign file_sector_count = (file_len == 32'd0) ? 32'd1 : ((file_len + 32'd511) >> 9);
+// Header values finish at byte 33; this calculation pipeline settles long
+// before the 512-byte header sector ends. Split the product into small DSPs.
+reg [12:0] row_stride;
+reg [17:0] bytes_lo,bytes_hi;
+reg [22:0] image_bytes;
+reg [31:0] pixel_end;
+always @(posedge clk) begin
+    row_stride<=({2'b0,width[10:0]}*13'd3+13'd3)&13'h1FFC;
+    bytes_lo<=row_stride*height[4:0];
+    bytes_hi<=row_stride*height[9:5];
+    image_bytes<={5'd0,bytes_lo}+{bytes_hi,5'd0};
+    pixel_end<=pixel_offset+{9'd0,image_bytes};
+end
+always @(posedge clk) begin
+header_match <= (header_0=="B") && (header_1=="M") &&
+    (width>0 && width<=1280) && (height>0 && height<=960) &&
+    bit_count==24 && compression==0 && dib_size>=40 && planes==1 &&
+    pixel_offset>=54 && pixel_offset<=4096 && pixel_end<=file_len && file_len<=8388608;
+end
+assign bmp_data_valid = (state==ST_OFFER) && (bmp_len_cnt>=pixel_offset) && (bmp_len_cnt<pixel_end);
+reg [7:0] sector_mem[0:511];
+reg [8:0] sector_wr,sector_pos;
+reg [7:0] sector_byte;
+reg scale_start;
+wire scale_ready,scale_done;
+bmp_nearest_scaler u_scaler(.clk(clk),.rst(rst),.start(scale_start),
+    .src_width(width[10:0]),.src_height(height[9:0]),
+    .in_valid(bmp_data_valid),.in_byte(sector_byte),.in_ready(scale_ready),
+    .out_ready(write_ready),.out_valid(bmp_data_wr_en),.out_rgb(bmp_data),.done(scale_done));
+always @(posedge clk) begin
+    if(state==ST_LOAD_DATA && sd_sec_read_data_valid) sector_mem[sector_wr]<=sd_sec_read_data;
+    if(state==ST_FETCH) sector_byte<=sector_mem[sector_pos];
+end
+always @(posedge clk)
+    file_sector_count <= (file_len == 32'd0) ? 32'd1 : ((file_len + 32'd511) >> 9);
 assign next_scan_sector_if_match = scan_sector + file_sector_count;
 assign next_scan_sector_if_miss  = scan_sector + 32'd1;
 
@@ -100,9 +129,15 @@ always @(posedge clk or posedge rst) begin
         width        <= 32'd0;
         height       <= 32'd0;
         bit_count    <= 16'd0;
-        compression  <= 32'd0;
+        compression  <= 32'd0; dib_size<=0;planes<=0;
     end else if (((state == ST_SCAN) || (state == ST_LOAD_HDR)) && sd_sec_read_data_valid) begin
         case (rd_cnt)
+            14: dib_size[7:0]<=sd_sec_read_data;
+            15: dib_size[15:8]<=sd_sec_read_data;
+            16: dib_size[23:16]<=sd_sec_read_data;
+            17: dib_size[31:24]<=sd_sec_read_data;
+            26: planes[7:0]<=sd_sec_read_data;
+            27: planes[15:8]<=sd_sec_read_data;
             10'd0 : header_0 <= sd_sec_read_data;
             10'd1 : header_1 <= sd_sec_read_data;
 
@@ -140,60 +175,8 @@ end
 
 always @(posedge clk or posedge rst) begin
     if (rst) begin
-        bmp_len_cnt <= 32'd0;
-    end else if (state == ST_LOAD_DATA) begin
-        if (sd_sec_read_data_valid)
-            bmp_len_cnt <= bmp_len_cnt + 32'd1;
-    end else begin
-        bmp_len_cnt <= 32'd0;
-    end
-end
-
-always @(posedge clk or posedge rst) begin
-    if (rst) begin
-        bmp_byte_idx <= 2'd0;
-    end else if (state == ST_LOAD_DATA) begin
-        if (bmp_data_valid)
-            bmp_byte_idx <= (bmp_byte_idx == 2'd2) ? 2'd0 : (bmp_byte_idx + 2'd1);
-    end else begin
-        bmp_byte_idx <= 2'd0;
-    end
-end
-
-always @(posedge clk or posedge rst) begin
-    if (rst) begin
-        bmp_data_wr_en <= 1'b0;
-        bmp_data       <= 24'd0;
-    end else if (state == ST_LOAD_DATA) begin
-        if (bmp_data_valid) begin
-            case (bmp_byte_idx)
-                2'd0: begin
-                    bmp_data_wr_en <= 1'b0;
-                    bmp_data[7:0]  <= sd_sec_read_data;
-                end
-                2'd1: begin
-                    bmp_data_wr_en <= 1'b0;
-                    bmp_data[15:8] <= sd_sec_read_data;
-                end
-                2'd2: begin
-                    bmp_data_wr_en  <= 1'b1;
-                    bmp_data[23:16] <= sd_sec_read_data;
-                end
-                default: begin
-                    bmp_data_wr_en <= 1'b0;
-                end
-            endcase
-        end else begin
-            bmp_data_wr_en <= 1'b0;
-        end
-    end else begin
-        bmp_data_wr_en <= 1'b0;
-    end
-end
-
-always @(posedge clk or posedge rst) begin
-    if (rst) begin
         state             <= ST_IDLE;
+        bmp_len_cnt<=0;sector_wr<=0;sector_pos<=0;scale_start<=0;
         state_code        <= 4'd0;
         sd_sec_read       <= 1'b0;
         sd_sec_read_addr  <= 32'd0;
@@ -206,6 +189,7 @@ always @(posedge clk or posedge rst) begin
         load_sector_latched <= 32'd0;
     end else if (!sd_init_done) begin
         state             <= ST_IDLE;
+        bmp_len_cnt<=0;sector_wr<=0;sector_pos<=0;scale_start<=0;
         state_code        <= 4'd0;
         sd_sec_read       <= 1'b0;
         sd_sec_read_addr  <= 32'd0;
@@ -218,6 +202,7 @@ always @(posedge clk or posedge rst) begin
         load_sector_latched <= 32'd0;
     end else begin
         scan_found_valid <= 1'b0;
+        scale_start<=0;
 
         case (state)
             ST_IDLE: begin
@@ -292,21 +277,32 @@ always @(posedge clk or posedge rst) begin
                 if (write_req_ack) begin
                     write_req <= 1'b0;
                     state     <= ST_LOAD_DATA;
+                    bmp_len_cnt<=0;sector_wr<=0;sector_pos<=0;scale_start<=1;
                 end
             end
 
             ST_LOAD_DATA: begin
-                state_code  <= 4'd4;
-                sd_sec_read <= 1'b1;
-
-                if (sd_sec_read_end) begin
-                    sd_sec_read <= 1'b0;
-                    if (bmp_len_cnt >= file_len) begin
-                        state <= ST_IDLE;
-                    end else begin
-                        sd_sec_read_addr <= sd_sec_read_addr + 32'd1;
-                    end
+                state_code<=4'd4; sd_sec_read<=1;
+                if(sd_sec_read_data_valid) sector_wr<=sector_wr+1'b1;
+                if(sd_sec_read_end) begin
+                    sd_sec_read<=0;sector_pos<=0;sector_wr<=0;state<=ST_FETCH;
                 end
+            end
+            ST_FETCH: begin
+                sd_sec_read<=0;state<=ST_OFFER;
+            end
+            ST_OFFER: begin
+                if(!bmp_data_valid || scale_ready) begin
+                    bmp_len_cnt<=bmp_len_cnt+1'b1;
+                    if(bmp_len_cnt+1>=pixel_end) state<=ST_FINISH;
+                    else if(sector_pos==511) begin
+                        sd_sec_read_addr<=sd_sec_read_addr+1'b1;state<=ST_LOAD_DATA;
+                    end else begin sector_pos<=sector_pos+1'b1;state<=ST_FETCH;end
+                end
+            end
+            ST_FINISH: begin
+                sd_sec_read<=0;
+                if(scale_done) state<=ST_IDLE;
             end
 
             default: begin
@@ -319,4 +315,99 @@ always @(posedge clk or posedge rst) begin
     end
 end
 
+endmodule
+
+// Streaming nearest-neighbour scaler. A single output-width line is stored;
+// the sector feeder pauses while rows are repeated or FIFO output is blocked.
+module bmp_nearest_scaler #(
+    parameter OUT_WIDTH=640, OUT_HEIGHT=480,
+    parameter OUTPUT_GAP=14
+)(
+    input clk,rst,start,
+    input [10:0] src_width,
+    input [9:0] src_height,
+    input in_valid,
+    input [7:0] in_byte,
+    output in_ready,
+    input out_ready,
+    output reg out_valid,
+    output reg [23:0] out_rgb,
+    output done
+);
+localparam READ=0,MAP=1,HSTEP=2,PIXEND=3,PAD=4,ROWEND=5,
+           EMIT_ADDR=6,EMIT_WRITE=7,VSTEP=8,NEXTROW=9,DONE=10,EMIT_WAIT=11;
+reg [3:0] state;
+reg [10:0] sx,want_x;
+reg [9:0] sy,want_y,ox,oy;
+reg [12:0] h_acc,v_acc;
+reg [1:0] byte_idx,pad_left;
+reg [23:0] pixel,line_pixel;
+reg [4:0] output_gap;
+reg [3:0] after_emit;
+reg [23:0] line_mem[0:OUT_WIDTH-1];
+// After the last output row, drain any remaining unselected source rows.
+assign in_ready=(state==READ || state==PAD || state==DONE);
+assign done=(state==DONE);
+always @(posedge clk) begin
+    if(state==MAP && sy==want_y && sx==want_x && ox<OUT_WIDTH)
+        line_mem[ox]<=pixel;
+    if(state==EMIT_ADDR) line_pixel<=line_mem[ox];
+end
+always @(posedge clk or posedge rst) begin
+    if(rst) begin
+        state<=DONE;out_valid<=0;out_rgb<=0;
+        sx<=0;sy<=0;want_x<=0;want_y<=0;ox<=0;oy<=0;
+        h_acc<=0;v_acc<=0;byte_idx<=0;pad_left<=0;pixel<=0;
+        output_gap<=0;after_emit<=DONE;
+    end else begin
+        out_valid<=0;
+        if(start) begin
+            state<=READ;sx<=0;sy<=0;want_x<=0;want_y<=0;ox<=0;oy<=0;
+            h_acc<=0;v_acc<=0;byte_idx<=0;pad_left<=0;pixel<=0;
+        end else case(state)
+        READ: if(in_valid) begin
+            case(byte_idx)
+            0: begin pixel[7:0]<=in_byte;byte_idx<=1;end
+            1: begin pixel[15:8]<=in_byte;byte_idx<=2;end
+            2: begin pixel[23:16]<=in_byte;byte_idx<=0;state<=MAP;end
+            endcase
+        end
+        MAP: if(sy==want_y && sx==want_x && ox<OUT_WIDTH) begin
+            ox<=ox+1'b1;h_acc<=h_acc+src_width;state<=HSTEP;
+        end else state<=PIXEND;
+        HSTEP: if(h_acc>=OUT_WIDTH) begin h_acc<=h_acc-OUT_WIDTH;want_x<=want_x+1'b1;end
+               else state<=MAP;
+        PIXEND: if(sx==src_width-1'b1) begin
+            pad_left<=src_width[1:0];
+            if(src_width[1:0]!=0) state<=PAD;else state<=ROWEND;
+        end else begin sx<=sx+1'b1;state<=READ;end
+        PAD: if(in_valid) begin
+            if(pad_left==1) state<=ROWEND;
+            pad_left<=pad_left-1'b1;
+        end
+        ROWEND: if(sy==want_y) begin ox<=0;state<=EMIT_ADDR;end
+                else state<=NEXTROW;
+        EMIT_ADDR: state<=EMIT_WRITE;
+        EMIT_WRITE: if(out_ready) begin
+            out_rgb<=line_pixel;out_valid<=1;
+            // Shared SDRAM gives writes burst priority. Pace line replay so
+            // repeated/scaled rows cannot monopolize read-FIFO refill time.
+            output_gap<=OUTPUT_GAP-1;
+            state<=EMIT_WAIT;
+            if(ox==OUT_WIDTH-1) begin oy<=oy+1'b1;v_acc<=v_acc+src_height;after_emit<=VSTEP;end
+            else begin ox<=ox+1'b1;after_emit<=EMIT_ADDR;end
+        end
+        EMIT_WAIT: if(output_gap==0) state<=after_emit;
+                   else output_gap<=output_gap-1'b1;
+        VSTEP: if(v_acc>=OUT_HEIGHT) begin v_acc<=v_acc-OUT_HEIGHT;want_y<=want_y+1'b1;end
+               else if(oy==OUT_HEIGHT) state<=DONE;
+               else if(want_y==sy) begin ox<=0;state<=EMIT_ADDR;end
+               else state<=NEXTROW;
+        NEXTROW: begin
+            sy<=sy+1'b1;sx<=0;want_x<=0;ox<=0;h_acc<=0;byte_idx<=0;state<=READ;
+        end
+        default: state<=DONE;
+        endcase
+    end
+end
 endmodule
