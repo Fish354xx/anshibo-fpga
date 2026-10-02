@@ -1,0 +1,11 @@
+# TD generated compilation outputs
+*_Runs/
+log/
+*.log
+*.logw
+*.dmp
+.recent_user_depot.ini
+__pycache__/
+*.pyc
+.env
+.env.*
