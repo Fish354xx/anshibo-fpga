@@ -54,6 +54,7 @@ wire        display_valid;
 wire [3:0]  state_code;
 wire [6:0]  seg_data_0;
 wire [15:0] sd_debug_status;
+wire emergency_mode;
 reg [19:0] debug_sync0, debug_sync1;
 wire [6:0] debug_seg_count, debug_seg_display, debug_seg_load;
 wire [6:0] debug_seg_flags, debug_seg_mode;
@@ -179,6 +180,7 @@ sd_card_bmp #(
     .key_auto          (key2),
     .key_mode          (key_mode),
     .debug_status      (sd_debug_status),
+    .o_emergency_mode  (emergency_mode),
     .state_code        (state_code),
     .bmp_width         (16'd640),
     .bmp_height        (16'd480),
@@ -309,13 +311,14 @@ sdram U3(
     .Sdr_rd_dout       (Sdr_rd_dout)
 );
 
-// ===================== 音频：内部 I2S 测试音 =====================
+// ===================== 音频：应急双音提示，普通模式发送静音采样 =====================
 hdmi_audio_tone_i2s_64fs #(
     .PHASE_INC (32'd39370534),
     .AMP       (24'sd2000000)
 ) u_hdmi_audio_tone_i2s_64fs (
     .I_mclk      (audio_mclk),
     .I_rst       (rst_all),
+    .I_enable    (emergency_mode),
     .O_i2s_BCLK  (audio_i2s_bclk),
     .O_i2s_LRCK  (audio_i2s_lrck),
     .O_i2s_DOUT  (audio_i2s_dout)
