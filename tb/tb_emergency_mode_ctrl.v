@@ -33,6 +33,7 @@ module tb_emergency_mode_ctrl;
     reg         key_mode;
     reg         key_next_press;
     reg         key_auto_press;
+    reg         pause_rotate=1'b0;
     reg         scan_done;
     reg         bmp_ready;
     reg  [2:0]  img_found_count;
@@ -85,6 +86,7 @@ module tb_emergency_mode_ctrl;
         .key_mode             (key_mode),
         .key_next_press       (key_next_press),
         .key_auto_press       (key_auto_press),
+        .pause_rotate         (pause_rotate),
         .scan_done            (scan_done),
         .bmp_ready            (bmp_ready),
         .first_image_committed(m_first_committed),
@@ -649,6 +651,24 @@ module tb_emergency_mode_ctrl;
         // ================================================================
         // 最终不变量汇总
         // ================================================================
+        $display("\n--- T12: adjustment pauses rotation and retains emergency priority ---");
+        pulse_auto;
+        wait_idle;
+        pause_rotate=1'b1;
+        pre_commit=commit_cnt;
+        pulse_next;
+        wait_cycles(2*AUTO_PERIOD);
+        check(commit_cnt==pre_commit,"T12: no auto/manual load while adjustment is active");
+        pre_idx=m_img_idx;
+        press_mode;
+        wait_idle;
+        check(emergency_mode && m_img_idx==3,"T12: emergency remains available while paused");
+        press_mode;
+        wait_idle;
+        check(!emergency_mode && m_img_idx==pre_idx,"T12: exit restores image while paused");
+        pause_rotate=1'b0;
+        wait_cycles(AUTO_PERIOD+1000);
+        check(m_img_idx!=pre_idx,"T12: automatic rotation resumes after adjustment");
         $display("\n--- Final invariant checks ---");
         check(bad_normal_commit == 0, "FINAL: no normal commit loaded emergency image");
         check(bad_emerg_commit == 0, "FINAL: no emergency commit loaded non-emergency image");

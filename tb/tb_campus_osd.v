@@ -7,7 +7,7 @@ wire ovs,ode;
 wire [23:0] orgb;
 campus_osd #(.CLK_FREQ_HZ(1000000)) dut(
  .clk(clk),.rst(rst),.in_vs(vs),.in_de(de),.in_rgb(rgb),
- .emergency_async(mode),.out_vs(ovs),.out_de(ode),.out_rgb(orgb));
+ .emergency_async(mode),.settings_async(8'h12),.out_vs(ovs),.out_de(ode),.out_rgb(orgb));
 integer errors=0,ink=0,shade=0,pixels=0,i,j;
 task check;
 input condition; input [511:0] message;
@@ -26,7 +26,7 @@ begin
    for(i=0;i<640;i=i+1) begin
      de=1; @(posedge clk); #1;
      if(!ode || ovs) errors=errors+1;
-     if(j>=8 && j<36 || j>=440 && j<472) begin
+     if(j>=8 && j<36 || j>=40 && j<68 || j>=440 && j<472) begin
        if(orgb==(active_mode?24'hFFD060:24'hFFFFFF)) ink=ink+1;
        else if(orgb==24'h202830) shade=shade+1;
        else errors=errors+1;

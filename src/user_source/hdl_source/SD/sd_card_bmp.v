@@ -17,6 +17,7 @@ module sd_card_bmp #(
     output reg                  display_valid,
     output                      o_emergency_mode,   // 0=普通模式 1=应急模式（面板指示）
     output [15:0]               debug_status,
+    output [7:0]                picture_settings,
 
     input                       write_finish_toggle,
     output reg [1:0]            write_buf_idx,
@@ -85,24 +86,12 @@ assign write_finish_pulse = wrfin_tgl_sync[2] ^ wrfin_tgl_sync[1];
 assign debug_status = {1'b0, img_found_count, 2'b00, img_idx,
                        2'b00, load_idx, scan_done, bmp_ready, load_busy, o_emergency_mode};
 
-key_press_debounce #(
-    .CLK_FREQ_HZ (CLK_FREQ_HZ),
-    .DEBOUNCE_MS (20)
-) u_key_next (
-    .clk        (clk),
-    .rst        (rst),
-    .button_in  (key_next),
-    .press_pulse(key_next_press)
-);
-
-key_press_debounce #(
-    .CLK_FREQ_HZ (CLK_FREQ_HZ),
-    .DEBOUNCE_MS (20)
-) u_key_auto (
-    .clk        (clk),
-    .rst        (rst),
-    .button_in  (key_auto),
-    .press_pulse(key_auto_press)
+wire settings_active;
+picture_key_control #(.CLK_FREQ_HZ(CLK_FREQ_HZ)) u_picture_keys (
+    .clk(clk), .rst(rst), .key_next(key_next), .key_auto(key_auto),
+    .emergency_mode(o_emergency_mode), .next_press(key_next_press),
+    .auto_press(key_auto_press), .settings_active(settings_active),
+    .settings(picture_settings)
 );
 
 // 普通模式/应急模式控制：模式按键同步消抖、模式切换、加载仲裁、显示提交许可
@@ -118,6 +107,7 @@ emergency_mode_ctrl #(
     .key_mode              (key_mode),
     .key_next_press        (key_next_press),
     .key_auto_press        (key_auto_press),
+    .pause_rotate          (settings_active),
     .scan_done             (scan_done),
     .bmp_ready             (bmp_ready),
     .first_image_committed (first_image_committed),
@@ -319,6 +309,72 @@ sd_card_top sd_card_top_m0(
 
 endmodule
 
+// Release-based short presses avoid issuing a normal action before recognizing a long press.
+module picture_key_control #(
+    parameter integer CLK_FREQ_HZ=100000000,
+    parameter integer DEBOUNCE_MS=20,
+    parameter integer LONG_PRESS_MS=1000
+)(
+    input clk,rst,key_next,key_auto,emergency_mode,
+    output reg next_press,auto_press,
+    output reg settings_active,
+    output [7:0] settings
+);
+wire next_down,auto_down;
+key_press_debounce #(.CLK_FREQ_HZ(CLK_FREQ_HZ),.DEBOUNCE_MS(DEBOUNCE_MS)) next_filter(
+    .clk(clk),.rst(rst),.button_in(key_next),.press_pulse(),.button_down(next_down));
+key_press_debounce #(.CLK_FREQ_HZ(CLK_FREQ_HZ),.DEBOUNCE_MS(DEBOUNCE_MS)) auto_filter(
+    .clk(clk),.rst(rst),.button_in(key_auto),.press_pulse(),.button_down(auto_down));
+localparam integer LONG_CYCLES=(CLK_FREQ_HZ/1000)*LONG_PRESS_MS;
+reg prev_next,prev_auto,next_long,auto_long,select_contrast;
+reg [31:0] next_count,auto_count;
+reg [2:0] brightness_level,contrast_level;
+assign settings={settings_active,select_contrast,brightness_level,contrast_level};
+always @(posedge clk or posedge rst) begin
+    if(rst) begin
+        prev_next<=0;prev_auto<=0;next_long<=0;auto_long<=0;
+        next_count<=0;auto_count<=0;next_press<=0;auto_press<=0;
+        settings_active<=0;select_contrast<=0;brightness_level<=2;contrast_level<=2;
+    end else begin
+        prev_next<=next_down;prev_auto<=auto_down;
+        next_press<=0;auto_press<=0;
+        if(!next_down) begin next_count<=0;next_long<=0;end
+        if(!auto_down) begin auto_count<=0;auto_long<=0;end
+        if(emergency_mode || (next_down && auto_down)) begin
+            if(emergency_mode) settings_active<=0;
+            next_count<=0;auto_count<=0;
+            next_long<=next_down;auto_long<=auto_down;
+        end else begin
+            if(next_down && !next_long) begin
+                if(next_count==LONG_CYCLES-1) begin
+                    next_long<=1;
+                    if(settings_active) select_contrast<=~select_contrast;
+                end else next_count<=next_count+1'b1;
+            end
+            if(auto_down && !auto_long) begin
+                if(auto_count==LONG_CYCLES-1) begin
+                    auto_long<=1;settings_active<=~settings_active;
+                end else auto_count<=auto_count+1'b1;
+            end
+            if(prev_next && !next_down && !next_long) begin
+                if(settings_active) begin
+                    if(select_contrast) begin
+                        if(contrast_level<4) contrast_level<=contrast_level+1'b1;
+                    end else if(brightness_level<4) brightness_level<=brightness_level+1'b1;
+                end else next_press<=1;
+            end
+            if(prev_auto && !auto_down && !auto_long) begin
+                if(settings_active) begin
+                    if(select_contrast) begin
+                        if(contrast_level>0) contrast_level<=contrast_level-1'b1;
+                    end else if(brightness_level>0) brightness_level<=brightness_level-1'b1;
+                end else auto_press<=1;
+            end
+        end
+    end
+end
+endmodule
+
 module key_press_debounce #(
     parameter integer CLK_FREQ_HZ = 100_000_000,
     parameter integer DEBOUNCE_MS = 20
@@ -326,7 +382,8 @@ module key_press_debounce #(
     input  wire clk,
     input  wire rst,
     input  wire button_in,    // 默认：松开=1，按下=0
-    output reg  press_pulse
+    output reg  press_pulse,
+    output wire button_down
 );
 
 localparam integer DEBOUNCE_CYCLES = (CLK_FREQ_HZ / 1000) * DEBOUNCE_MS;
@@ -335,6 +392,7 @@ reg button_sync0;
 reg button_sync1;
 reg button_stable;
 reg [31:0] cnt;
+assign button_down = !button_stable;
 
 always @(posedge clk or posedge rst) begin
     if (rst) begin
@@ -389,6 +447,7 @@ module emergency_mode_ctrl #(
     input             key_mode,              // 原始引脚，异步，松开=1 按下=0
     input             key_next_press,        // 已消抖的"手动下一张"单周期脉冲
     input             key_auto_press,        // 已消抖的"自动轮播开关"单周期脉冲
+    input             pause_rotate,
     // 系统状态（来自 sd_card_bmp.v）
     input             scan_done,             // TF 扫描已完成
     input             bmp_ready,             // BMP 解析模块就绪
@@ -498,9 +557,9 @@ module emergency_mode_ctrl #(
     // 避免快速连续切换或"切图与加载完成同拍"时误把普通图恢复进应急画面
     wire can_restore = pipe_free && display_valid &&
                        (mode_exit_req || (restore_req_pending && !emergency_mode));
-    wire can_manual  = pipe_free && display_valid && !emergency_mode && !mode_enter_req &&
+    wire can_manual  = pipe_free && display_valid && !emergency_mode && !mode_enter_req && !pause_rotate &&
                        next_req_pending && (img_found_count != 3'd0);
-    wire can_auto    = pipe_free && display_valid && !emergency_mode && !mode_enter_req &&
+    wire can_auto    = pipe_free && display_valid && !emergency_mode && !mode_enter_req && !pause_rotate &&
                        auto_play_en && auto_tick && (normal_count > 3'd1);
 
     always @(*) begin
@@ -589,7 +648,7 @@ module emergency_mode_ctrl #(
             next_req_pending <= 1'b0;
         end else begin
             // 手动下一张挂起（应急模式下被 !emergency_mode 屏蔽）
-            if (mode_enter_req) begin
+            if (mode_enter_req || pause_rotate) begin
                 next_req_pending <= 1'b0;
             end else if (key_next_press && !emergency_mode && (img_found_count != 3'd0)) begin
                 next_req_pending <= 1'b1;
@@ -608,7 +667,7 @@ module emergency_mode_ctrl #(
             end else if (key_auto_press && !emergency_mode && (img_found_count > 3'd1)) begin
                 auto_cnt <= 32'd0;
             end else if (auto_play_en && display_valid && !load_busy && first_image_committed &&
-                         !emergency_mode && (normal_count > 3'd1)) begin
+                         !emergency_mode && !pause_rotate && (normal_count > 3'd1)) begin
                 if (auto_tick) begin
                     auto_cnt <= 32'd0;
                 end else begin

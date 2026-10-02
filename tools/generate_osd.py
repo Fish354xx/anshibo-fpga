@@ -8,7 +8,8 @@ marker = '// BEGIN GENERATED CAMPUS OSD'
 normal = '安视播 | 普通模式 | 运行 '
 emergency = '安视播 | 应急模式 | 运行 '
 banner = '校园信息发布  文明校园 安全同行  按KEY3进入或退出应急提示  '
-glyphs = list(dict.fromkeys(' 0123456789:' + normal + emergency + banner))
+parameter_labels = [f'亮度 #/4  对比度 #/4  调节{state}  参数{param}' for state in ('关','开') for param in ('亮度','对比')]
+glyphs = list(dict.fromkeys(' 0123456789:' + normal + emergency + banner + ''.join(parameter_labels)))
 assert len(glyphs) <= 64 and len(normal) == len(emergency)
 ids = {c: i for i, c in enumerate(glyphs)}
 font = ImageFont.truetype('C:/Windows/Fonts/msyh.ttc', 16)
@@ -37,6 +38,7 @@ module campus_osd #(
 )(
     input clk, rst, in_vs, in_de, emergency_async,
     input [23:0] in_rgb,
+    input [7:0] settings_async,
     output out_vs, out_de,
     output [23:0] out_rgb
 );
@@ -48,20 +50,24 @@ reg scroll_div;
 reg [31:0] second_counter;
 reg [3:0] h10,h1,m10,m1,s10,s1;
 reg [23:0] frame_time;
+reg [7:0] settings_sync0,settings_sync1,frame_settings;
 wire frame_start= in_vs && !vs_prev;
 always @(posedge clk or posedge rst) begin
     if(rst) begin
         mode_sync0<=0; mode_sync1<=0; frame_mode<=0;
         vs_prev<=0; de_prev<=0; x<=0; y<=0;
         scroll<=0; scroll_div<=0; frame_time<=0;
+        settings_sync0<=8'h12; settings_sync1<=8'h12; frame_settings<=8'h12;
         second_counter<=0; h10<=0; h1<=0; m10<=0; m1<=0; s10<=0; s1<=0;
     end else begin
         mode_sync0<=emergency_async; mode_sync1<=mode_sync0;
+        settings_sync0<=settings_async; settings_sync1<=settings_sync0;
         vs_prev<=in_vs; de_prev<=in_de;
         if(frame_start) begin
             x<=0; y<=0;
             frame_mode<=mode_sync1;
             frame_time<={h10,h1,m10,m1,s10,s1};
+            frame_settings<=settings_sync1;
             scroll_div<=~scroll_div;
             if(scroll_div) scroll<=scroll+10'd1;
         end else begin
@@ -100,6 +106,8 @@ wire [9:0] header_x=x-10'd16;
 wire [9:0] ticker_x=x+scroll;
 wire header_band=(y>=8 && y<36);
 wire ticker_band=(y>=440 && y<472);
+wire parameter_band=(y>=40 && y<68);
+wire parameter_text=(y>=46 && y<62 && x>=16 && x<__PARAM_END__);
 wire header_text=(y>=14 && y<30 && x>=16 && x<__END_X__);
 wire ticker_text=(y>=448 && y<464);
 reg [5:0] glyph_id;
@@ -119,6 +127,16 @@ __TIME_CASES__
             glyph_id=6'd1+{2'b00,digit};
             if(header_x[9:4]==__COLON1__ || header_x[9:4]==__COLON2__) glyph_id=6'd11;
         end
+    end else if(parameter_text) begin
+        glyph_row=y-10'd46; glyph_col=header_x[3:0];
+        case(frame_settings[7:6])
+        2'd0: glyph_id=parameters_0(header_x[9:4]);
+        2'd1: glyph_id=parameters_1(header_x[9:4]);
+        2'd2: glyph_id=parameters_2(header_x[9:4]);
+        default: glyph_id=parameters_3(header_x[9:4]);
+        endcase
+        if(header_x[9:4]==__BRIGHT_COL__) glyph_id=6'd1+{3'b0,frame_settings[5:3]};
+        if(header_x[9:4]==__CONTRAST_COL__) glyph_id=6'd1+{3'b0,frame_settings[2:0]};
     end else if(ticker_text) begin
         glyph_row=y-10'd448; glyph_col=ticker_x[3:0];
         glyph_id=banner_label(ticker_x[9:4]);
@@ -128,14 +146,45 @@ reg [15:0] glyph_bits;
 reg [3:0] column_d;
 reg band_d,text_d,mode_d,de_d,vs_d;
 reg [23:0] rgb_d;
+function [7:0] correct_channel;
+input [7:0] channel;
+input [2:0] brightness,contrast;
+reg signed [12:0] delta,gain,offset,value;
+begin
+    delta=$signed({1'b0,channel})-13'sd128;
+    case(contrast)
+    0: gain=delta>>>1;
+    1: gain=(delta+(delta<<<1))>>>2;
+    3: gain=(delta+(delta<<<2))>>>2;
+    4: gain=(delta+(delta<<<1))>>>1;
+    default: gain=delta;
+    endcase
+    case(brightness)
+    0: offset=-13'sd64;
+    1: offset=-13'sd32;
+    3: offset=13'sd32;
+    4: offset=13'sd64;
+    default: offset=0;
+    endcase
+    value=gain+13'sd128+offset;
+    if(value<0) correct_channel=0;
+    else if(value>255) correct_channel=255;
+    else correct_channel=value[7:0];
+end
+endfunction
+wire [2:0] active_brightness=frame_mode?3'd2:frame_settings[5:3];
+wire [2:0] active_contrast=frame_mode?3'd2:frame_settings[2:0];
+wire [23:0] corrected_rgb={correct_channel(in_rgb[23:16],active_brightness,active_contrast),
+                          correct_channel(in_rgb[15:8],active_brightness,active_contrast),
+                          correct_channel(in_rgb[7:0],active_brightness,active_contrast)};
 always @(posedge clk or posedge rst) begin
     if(rst) begin
         column_d<=0; band_d<=0; text_d<=0; mode_d<=0;
         de_d<=0; vs_d<=0; rgb_d<=0;
     end else begin
-        column_d<=glyph_col; band_d<=header_band || ticker_band;
-        text_d<=header_text || ticker_text; mode_d<=frame_mode;
-        de_d<=in_de; vs_d<=in_vs; rgb_d<=in_rgb;
+        column_d<=glyph_col; band_d<=header_band || parameter_band || ticker_band;
+        text_d<=header_text || parameter_text || ticker_text; mode_d<=frame_mode;
+        de_d<=in_de; vs_d<=in_vs; rgb_d<=corrected_rgb;
     end
 end
 // Synchronous ROM read permits block RAM inference.
@@ -148,7 +197,10 @@ assign out_rgb= !de_d ? 24'd0 : ink ? (mode_d?24'hFFD060:24'hFFFFFF) : band_d ? 
 endmodule
 '''
 n = len(normal)
-module = module.replace('__LOOKUPS__', '\n'.join([lookup('normal_label',normal),lookup('emergency_label',emergency),lookup('banner_label',banner)]))
+module = module.replace('__LOOKUPS__', '\n'.join([lookup('normal_label',normal),lookup('emergency_label',emergency),lookup('banner_label',banner)] + [lookup(f'parameters_{i}',s.replace('#',' ')) for i,s in enumerate(parameter_labels)]))
+module = module.replace('__PARAM_END__',str(16+len(parameter_labels[0])*16))
+module = module.replace('__BRIGHT_COL__',str(parameter_labels[0].index('#')))
+module = module.replace('__CONTRAST_COL__',str(parameter_labels[0].rindex('#')))
 module = module.replace('__ROM__','\n'.join(f"glyph_rom[{i}]=16'h{v:04X};" for i,v in enumerate(rom)))
 module = module.replace('__END_X__',str(16+(n+8)*16)).replace('__PREFIX__',str(n))
 module = module.replace('__COLON1__',str(n+2)).replace('__COLON2__',str(n+5))

@@ -57,6 +57,7 @@ wire [3:0]  state_code;
 wire [6:0]  seg_data_0;
 wire [15:0] sd_debug_status;
 wire emergency_mode;
+wire [7:0] picture_settings;
 reg [19:0] debug_sync0, debug_sync1;
 wire [6:0] debug_seg_count, debug_seg_display, debug_seg_load;
 wire [6:0] debug_seg_flags, debug_seg_mode;
@@ -183,6 +184,7 @@ sd_card_bmp #(
     .key_mode          (key_mode),
     .debug_status      (sd_debug_status),
     .o_emergency_mode  (emergency_mode),
+    .picture_settings  (picture_settings),
     .state_code        (state_code),
     .bmp_width         (16'd640),
     .bmp_height        (16'd480),
@@ -246,7 +248,18 @@ video_delay video_delay_m0(
 );
 
 // 首图提交前黑屏；提交后一直显示当前显示缓冲区内容
-assign vout_data = display_valid ? vout_data_raw : 24'd0;
+// Transfer the slow display-valid flag into the pixel clock domain before RGB gating.
+reg display_valid_sync0, display_valid_sync1;
+always @(posedge video_clk or posedge rst_all) begin
+    if (rst_all) begin
+        display_valid_sync0 <= 1'b0;
+        display_valid_sync1 <= 1'b0;
+    end else begin
+        display_valid_sync0 <= display_valid;
+        display_valid_sync1 <= display_valid_sync0;
+    end
+end
+assign vout_data = display_valid_sync1 ? vout_data_raw : 24'd0;
 
 frame_read_write #(
     .WRITE_V_FLIP     (1),
@@ -352,6 +365,7 @@ audio_arc_calculate #(
 campus_osd u_campus_osd(
     .clk(video_clk), .rst(rst_all), .in_vs(vs), .in_de(de),
     .in_rgb(vout_data), .emergency_async(emergency_mode),
+    .settings_async(picture_settings),
     .out_vs(osd_vs), .out_de(osd_de), .out_rgb(osd_rgb)
 );
 video_rgb_to_axis_640x480 u_video_rgb_to_axis_640x480(
