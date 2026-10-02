@@ -4,6 +4,7 @@ module top(
     input                       rst_n,
     input                       key1,           // 手动下一张
     input                       key2,           // 自动播放 开/关
+    input                       key_mode,       // KEY3: emergency mode toggle
 
     output [5:0]                seg_sel,
     output [7:0]                seg_data,
@@ -52,6 +53,24 @@ wire        display_valid;
 
 wire [3:0]  state_code;
 wire [6:0]  seg_data_0;
+wire [15:0] sd_debug_status;
+reg [19:0] debug_sync0, debug_sync1;
+wire [6:0] debug_seg_count, debug_seg_display, debug_seg_load;
+wire [6:0] debug_seg_flags, debug_seg_mode;
+always @(posedge clk or posedge rst_all) begin
+    if (rst_all) begin
+        debug_sync0 <= 20'd0;
+        debug_sync1 <= 20'd0;
+    end else begin
+        debug_sync0 <= {state_code, sd_debug_status};
+        debug_sync1 <= debug_sync0;
+    end
+end
+seg_decoder debug_count(.bin_data(debug_sync1[15:12]), .seg_data(debug_seg_count));
+seg_decoder debug_display(.bin_data(debug_sync1[11:8]), .seg_data(debug_seg_display));
+seg_decoder debug_load(.bin_data(debug_sync1[7:4]), .seg_data(debug_seg_load));
+seg_decoder debug_flags(.bin_data(debug_sync1[3:0]), .seg_data(debug_seg_flags));
+seg_decoder debug_mode(.bin_data({3'b000,debug_sync1[0]}), .seg_data(debug_seg_mode));
 
 wire        video_read_req;
 wire        video_read_req_ack;
@@ -158,6 +177,8 @@ sd_card_bmp #(
     .rst               (rst_all),
     .key_next          (key1),
     .key_auto          (key2),
+    .key_mode          (key_mode),
+    .debug_status      (sd_debug_status),
     .state_code        (state_code),
     .bmp_width         (16'd640),
     .bmp_height        (16'd480),
@@ -178,7 +199,7 @@ sd_card_bmp #(
 );
 
 seg_decoder seg_decoder_m0(
-    .bin_data          (state_code),
+    .bin_data          (debug_sync1[19:16]),
     .seg_data          (seg_data_0)
 );
 
@@ -187,11 +208,11 @@ seg_scan seg_scan_m0(
     .rst_n             (rst_n),
     .seg_sel           (seg_sel),
     .seg_data          (seg_data),
-    .seg_data_0        ({1'b1,7'b1111_111}),
-    .seg_data_1        ({1'b1,7'b1111_111}),
-    .seg_data_2        ({1'b1,7'b1111_111}),
-    .seg_data_3        ({1'b1,7'b1111_111}),
-    .seg_data_4        ({1'b1,7'b1111_111}),
+    .seg_data_0        ({1'b1,debug_seg_count}),
+    .seg_data_1        ({1'b1,debug_seg_display}),
+    .seg_data_2        ({1'b1,debug_seg_load}),
+    .seg_data_3        ({1'b1,debug_seg_flags}),
+    .seg_data_4        ({1'b1,debug_seg_mode}),
     .seg_data_5        ({1'b1,seg_data_0})
 );
 

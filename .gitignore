@@ -9,3 +9,7 @@ __pycache__/
 *.pyc
 .env
 .env.*
+sim/work/
+sim/*.wlf
+transcript
+vsim.wlf
