@@ -11,7 +11,8 @@ picture_transition ctrl(.clk(clk),.rst(rst),.frame_start(vs),.pending_async(pend
 frame_commit_gate gate(.load_busy(busy),.source_done(source_done),.memory_done(memory_done),
  .display_valid(valid),.emergency_mode(emergency),.display_permit(permit),.black_ready(ready),
  .transition_pending(request),.commit_allowed(commit));
-campus_osd osd(.clk(clk),.rst(rst),.in_vs(vs),.in_de(de),.in_rgb(24'h80A0C0),
+campus_osd #(.WAVE_ENABLE(0)) osd(.clk(clk),.rst(rst),.in_vs(vs),.in_de(de),.in_rgb(24'h80A0C0),
+ .audio_valid(1'b0),.audio_sample(24'd0),
  .emergency_async(emergency),.settings_async(8'h12),.transition_pending_async(pending),
  .transition_black_ready(),.out_vs(),.out_de(),.out_rgb(rgb));
 integer errors=0,i,c,l;

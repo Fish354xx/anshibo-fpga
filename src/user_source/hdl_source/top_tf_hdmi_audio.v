@@ -373,6 +373,7 @@ campus_osd u_campus_osd(
     .in_rgb(vout_data), .emergency_async(emergency_mode),
     .transition_pending_async(transition_pending), .transition_black_ready(transition_black_ready),
     .settings_async(picture_settings),
+    .audio_valid(audio_valid), .audio_sample(audio_left_data),
     .out_vs(osd_vs), .out_de(osd_de), .out_rgb(osd_rgb)
 );
 video_rgb_to_axis_640x480 u_video_rgb_to_axis_640x480(

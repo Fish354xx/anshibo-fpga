@@ -9,7 +9,8 @@ wire [7:0] settings;
 picture_key_control #(.CLK_FREQ_HZ(10000),.DEBOUNCE_MS(1),.LONG_PRESS_MS(10)) keys(
  .clk(clk),.rst(rst),.key_next(next_key),.key_auto(auto_key),.emergency_mode(emergency),
  .next_press(next_press),.auto_press(auto_press),.settings_active(active),.settings(settings));
-campus_osd osd(.clk(clk),.rst(rst),.in_vs(vs),.in_de(de),.in_rgb(24'h80A0C0),
+campus_osd #(.WAVE_ENABLE(0)) osd(.clk(clk),.rst(rst),.in_vs(vs),.in_de(de),.in_rgb(24'h80A0C0),
+ .audio_valid(1'b0),.audio_sample(24'd0),
  .emergency_async(emergency),.settings_async(settings),.transition_pending_async(1'b0),
  .transition_black_ready(),.out_vs(),.out_de(),.out_rgb(adjusted_pixel));
 integer errors=0,next_count=0,auto_count=0,i,b,c,p,delta,gain,expected;

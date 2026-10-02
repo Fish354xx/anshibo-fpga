@@ -5,9 +5,10 @@ reg [23:0] rgb=24'h80A0C0;
 always #5 clk=~clk;
 wire ovs,ode;
 wire [23:0] orgb;
-campus_osd #(.CLK_FREQ_HZ(1000000)) dut(
+campus_osd #(.CLK_FREQ_HZ(1000000),.WAVE_ENABLE(0)) dut(
  .clk(clk),.rst(rst),.in_vs(vs),.in_de(de),.in_rgb(rgb),
  .emergency_async(mode),.settings_async(8'h12),.transition_pending_async(1'b0),
+ .audio_valid(1'b0),.audio_sample(24'd0),
  .transition_black_ready(),.out_vs(ovs),.out_de(ode),.out_rgb(orgb));
 integer errors=0,ink=0,shade=0,pixels=0,i,j;
 task check;
