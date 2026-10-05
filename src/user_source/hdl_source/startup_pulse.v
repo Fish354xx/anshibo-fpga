@@ -1,3 +1,6 @@
+// 文件：startup_pulse.v
+// 职责：复位释放后产生启动触发脉冲。
+// 来源：沿用官方参考源码；参见SOURCE_ORIGIN.md。
 
 module startup_pulse #(
     parameter [19:0] CNT_MAX = 20'd100000

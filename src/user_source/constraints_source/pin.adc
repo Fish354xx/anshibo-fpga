@@ -59,3 +59,10 @@ set_pin_assignment	{ seg_sel[5] }	{ LOCATION = D11; IOSTANDARD = LVCMOS33; DRIVE
 
 
 
+
+# HX4S20 HDL manual p18: SW1 high when up, low when down.
+set_pin_assignment { subtitle_switch } { LOCATION = C8; IOSTANDARD = LVCMOS33; PULLTYPE = NONE; }
+
+# HX4S20 SW2=C7, SW3=C6; up=1, down=0.
+set_pin_assignment { adjustment_switch } { LOCATION = C7; IOSTANDARD = LVCMOS33; PULLTYPE = NONE; }
+set_pin_assignment { contrast_switch } { LOCATION = C6; IOSTANDARD = LVCMOS33; PULLTYPE = NONE; }

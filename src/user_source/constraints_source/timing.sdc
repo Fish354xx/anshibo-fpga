@@ -94,3 +94,16 @@ set_false_path -to [get_regs {display_valid_sync0}]
 set_false_path -to [get_regs {sd_card_bmp_m0/transition_ready_sync[0]}]
 set_false_path -to [get_regs {u_campus_osd/u_transition/pending_sync0}]
 set_false_path -to [get_regs {u_campus_osd/u_transition/emergency_sync0}]
+
+# Exempt only the first stage of the asynchronous SW1 synchronizer.
+set_false_path -from [get_ports {subtitle_switch}] -to [get_regs {u_campus_osd/subtitle_sync0}]
+
+# Emergency audio gate: only asynchronous input synchronizer first stages are exempt.
+set_false_path -to [get_regs {u_emergency_audio_frame_gate/mode_sync0}]
+set_false_path -to [get_regs {u_emergency_audio_frame_gate/loaded_sync0}]
+set_false_path -to [get_regs {u_emergency_audio_frame_gate/target_sync0[*]}]
+set_false_path -to [get_regs {u_emergency_audio_frame_gate/active_sync0[*]}]
+
+# SW2/SW3: constrain the first synchronizer stage only.
+set_false_path -from [get_ports {adjustment_switch}] -to [get_regs {sd_card_bmp_m0/u_picture_keys/adjust_filter/button_sync0}]
+set_false_path -from [get_ports {contrast_switch}] -to [get_regs {sd_card_bmp_m0/u_picture_keys/contrast_filter/button_sync0}]

@@ -1,3 +1,8 @@
+// 文件：sd_card_bmp.v
+// 职责：协调扫描加载、双缓存提交、按键调节、轮播及应急模式。
+// 来源与修改说明：参见SOURCE_ORIGIN.md。
+// 优先级：应急模式优先；普通模式支持手动切图、轮播和参数调节。
+// 跨域：内存完成以toggle同步；转场握手在完整图片可用后提交缓存。
 
 module sd_card_bmp #(
     parameter integer CLK_FREQ_HZ       = 100_000_000,
@@ -7,6 +12,8 @@ module sd_card_bmp #(
 )(
     input                       clk,
     input                       rst,
+    input                       adjustment_switch,
+    input                       contrast_switch,
     input                       key_next,
     input                       key_auto,
     input                       key_mode,           // 模式切换按键（普通/应急），原始引脚
@@ -15,6 +22,7 @@ module sd_card_bmp #(
     input  [15:0]               bmp_width,
     input  [15:0]               bmp_height,
     output reg                  display_valid,
+    output                      o_emergency_loaded, // 应急图已完整提交到显示缓冲
     output                      o_emergency_mode,   // 0=普通模式 1=应急模式（面板指示）
     output [15:0]               debug_status,
     output [7:0]                picture_settings,
@@ -49,6 +57,8 @@ wire [23:0]      bmp_data;
 wire             sd_init_done;
 wire             bmp_ready;
 wire             scan_done;
+wire             scan_paused;
+wire scan_resume;
 wire             scan_found_valid;
 wire [31:0]      scan_found_sector;
 wire [2:0]       scan_found_total;
@@ -67,6 +77,7 @@ reg [31:0]       img_sector1;
 reg [31:0]       img_sector2;
 reg [31:0]       img_sector3;
 reg              load_busy;
+assign scan_resume=scan_paused && first_image_committed && bmp_ready && !load_busy;
 
 // 普通模式/应急模式控制器接口
 wire             ctrl_load_req;        // 加载请求（仅流水空闲时拉高，单周期）
@@ -76,6 +87,7 @@ wire             disp_commit_en;       // 本次事务结束后是否允许切�
 
 // bmp_ready 先表示"源文件读取/送 FIFO 完成"；真正切显示要等 write_finish_toggle 同步后
 reg              source_done_seen;
+reg              source_started_seen;
 reg              memory_done_seen;
 reg [1:0]        transition_ready_sync;
 wire             commit_allowed;
@@ -90,6 +102,7 @@ reg [2:0]        wrfin_tgl_sync;
 reg [1:0]        write_ack_sync;
 wire             write_finish_pulse;
 
+assign o_emergency_loaded = display_valid && (img_idx==2'd3);
 assign write_en           = bmp_data_wr_en;
 assign write_data         = {bmp_data[23:16], bmp_data[15:8], bmp_data[7:0], 8'b0};
 assign write_finish_pulse = wrfin_tgl_sync[2] ^ wrfin_tgl_sync[1];
@@ -100,6 +113,7 @@ assign debug_status = {1'b0, img_found_count, 2'b00, img_idx,
 wire settings_active;
 picture_key_control #(.CLK_FREQ_HZ(CLK_FREQ_HZ)) u_picture_keys (
     .clk(clk), .rst(rst), .key_next(key_next), .key_auto(key_auto),
+    .adjustment_switch(adjustment_switch), .contrast_switch(contrast_switch),
     .emergency_mode(o_emergency_mode), .next_press(key_next_press),
     .auto_press(key_auto_press), .settings_active(settings_active),
     .settings(picture_settings)
@@ -119,7 +133,7 @@ emergency_mode_ctrl #(
     .key_next_press        (key_next_press),
     .key_auto_press        (key_auto_press),
     .pause_rotate          (settings_active),
-    .scan_done             (scan_done),
+    .scan_done             (scan_done || (scan_paused && !first_image_committed)),
     .bmp_ready             (bmp_ready),
     .first_image_committed (first_image_committed),
     .display_valid         (display_valid),
@@ -180,6 +194,7 @@ always @(posedge clk or posedge rst) begin
         img_sector3           <= 32'd0;
         load_busy             <= 1'b0;
         source_done_seen      <= 1'b0;
+        source_started_seen   <= 1'b0;
         memory_done_seen      <= 1'b0;
         transition_ready_sync <= 2'b00;
         display_valid         <= 1'b0;
@@ -205,6 +220,7 @@ always @(posedge clk or posedge rst) begin
             img_sector3           <= 32'd0;
             load_busy             <= 1'b0;
             source_done_seen      <= 1'b0;
+            source_started_seen   <= 1'b0;
             memory_done_seen      <= 1'b0;
             display_valid         <= 1'b0;
         end else begin
@@ -223,7 +239,9 @@ always @(posedge clk or posedge rst) begin
             end
 
             // 记住 bmp_read 已经把源图送完 FIFO，但还不能切显示，得等整帧写完
-            if (load_busy && bmp_ready)
+            // 加载请求被接受前ready仍为1；先观察busy，避免把初始idle误记为读完。
+            if(load_busy && !bmp_ready) source_started_seen<=1'b1;
+            if (load_busy && source_started_seen && bmp_ready)
                 source_done_seen <= 1'b1;
 
             // 收到 write_finish_toggle 脉冲，本次 SDRAM 写事务安全结束。
@@ -237,6 +255,7 @@ always @(posedge clk or posedge rst) begin
             if (commit_allowed) begin
                 load_busy        <= 1'b0;
                 source_done_seen <= 1'b0;
+                source_started_seen <= 1'b0;
                 memory_done_seen <= 1'b0;
                 if (disp_commit_en) begin
                     disp_buf_idx          <= pending_buf_idx;
@@ -260,6 +279,7 @@ always @(posedge clk or posedge rst) begin
                 display_valid         <= 1'b0;
                 load_busy             <= 1'b0;
                 source_done_seen      <= 1'b0;
+            source_started_seen   <= 1'b0;
                 memory_done_seen      <= 1'b0;
             end
             // 唯一的加载发起口：由模式控制器仲裁（首图 / 应急图 / 恢复图 / 手动 / 自动），
@@ -272,18 +292,21 @@ always @(posedge clk or posedge rst) begin
                 load_start_pulse <= 1'b1;
                 load_busy        <= 1'b1;
                 source_done_seen <= 1'b0;
+                source_started_seen <= 1'b0;
                 memory_done_seen <= 1'b0;
             end
         end
     end
 end
 
-bmp_read bmp_read_m0(
+bmp_read #(.EARLY_FIRST_IMAGE(1)) bmp_read_m0(
     .clk                    (clk),
     .rst                    (rst),
     .ready                  (bmp_ready),
 
     .scan_start             (scan_start_pulse),
+    .scan_resume            (scan_resume),
+    .scan_paused            (scan_paused),
     .scan_start_sector      (SCAN_START_SECTOR),
     .scan_max_sector        (SCAN_MAX_SECTOR),
     .scan_target_count      (SCAN_TARGET_COUNT),
@@ -333,7 +356,6 @@ sd_card_top sd_card_top_m0(
 
 endmodule
 
-// Release-based short presses avoid issuing a normal action before recognizing a long press.
 // Retire rejected transactions immediately; only accepted normal switches fade.
 module frame_commit_gate(
     input load_busy,source_done,memory_done,display_valid,emergency_mode,display_permit,black_ready,
@@ -345,60 +367,57 @@ assign transition_pending=finished && needs_fade;
 assign commit_allowed=finished && (!needs_fade || black_ready);
 endmodule
 
+// SW2/SW3经过双级同步和消抖；拨码切换时取消尚未释放的按键事务。
+// KEY2/KEY4在释放时执行一次操作，按住不连发；应急模式屏蔽调节。
 module picture_key_control #(
     parameter integer CLK_FREQ_HZ=100000000,
-    parameter integer DEBOUNCE_MS=20,
-    parameter integer LONG_PRESS_MS=1000
+    parameter integer DEBOUNCE_MS=20
 )(
     input clk,rst,key_next,key_auto,emergency_mode,
+    input adjustment_switch,contrast_switch,
     output reg next_press,auto_press,
-    output reg settings_active,
+    output settings_active,
     output [7:0] settings
 );
-wire next_down,auto_down;
+wire next_down,auto_down,adjust_on,select_contrast;
 key_press_debounce #(.CLK_FREQ_HZ(CLK_FREQ_HZ),.DEBOUNCE_MS(DEBOUNCE_MS)) next_filter(
     .clk(clk),.rst(rst),.button_in(key_next),.press_pulse(),.button_down(next_down));
 key_press_debounce #(.CLK_FREQ_HZ(CLK_FREQ_HZ),.DEBOUNCE_MS(DEBOUNCE_MS)) auto_filter(
     .clk(clk),.rst(rst),.button_in(key_auto),.press_pulse(),.button_down(auto_down));
-localparam integer LONG_CYCLES=(CLK_FREQ_HZ/1000)*LONG_PRESS_MS;
-reg prev_next,prev_auto,next_long,auto_long,select_contrast;
-reg [31:0] next_count,auto_count;
+key_press_debounce #(.CLK_FREQ_HZ(CLK_FREQ_HZ),.DEBOUNCE_MS(DEBOUNCE_MS)) adjust_filter(
+    .clk(clk),.rst(rst),.button_in(~adjustment_switch),.press_pulse(),.button_down(adjust_on));
+key_press_debounce #(.CLK_FREQ_HZ(CLK_FREQ_HZ),.DEBOUNCE_MS(DEBOUNCE_MS)) contrast_filter(
+    .clk(clk),.rst(rst),.button_in(~contrast_switch),.press_pulse(),.button_down(select_contrast));
+reg prev_next,prev_auto,prev_adjust,prev_contrast,prev_emergency;
+reg next_blocked,auto_blocked;
 reg [2:0] brightness_level,contrast_level;
+wire control_changed=(prev_adjust!=adjust_on) || (prev_contrast!=select_contrast) ||
+                     (prev_emergency!=emergency_mode);
+assign settings_active=adjust_on && !emergency_mode;
 assign settings={settings_active,select_contrast,brightness_level,contrast_level};
 always @(posedge clk or posedge rst) begin
     if(rst) begin
-        prev_next<=0;prev_auto<=0;next_long<=0;auto_long<=0;
-        next_count<=0;auto_count<=0;next_press<=0;auto_press<=0;
-        settings_active<=0;select_contrast<=0;brightness_level<=2;contrast_level<=2;
+        prev_next<=0;prev_auto<=0;prev_adjust<=0;prev_contrast<=0;prev_emergency<=0;
+        next_blocked<=0;auto_blocked<=0;next_press<=0;auto_press<=0;
+        brightness_level<=2;contrast_level<=2;
     end else begin
         prev_next<=next_down;prev_auto<=auto_down;
+        prev_adjust<=adjust_on;prev_contrast<=select_contrast;prev_emergency<=emergency_mode;
         next_press<=0;auto_press<=0;
-        if(!next_down) begin next_count<=0;next_long<=0;end
-        if(!auto_down) begin auto_count<=0;auto_long<=0;end
-        if(emergency_mode || (next_down && auto_down)) begin
-            if(emergency_mode) settings_active<=0;
-            next_count<=0;auto_count<=0;
-            next_long<=next_down;auto_long<=auto_down;
+        if(!next_down) next_blocked<=0;
+        if(!auto_down) auto_blocked<=0;
+        if(emergency_mode || control_changed || (next_down && auto_down)) begin
+            if(next_down) next_blocked<=1;
+            if(auto_down) auto_blocked<=1;
         end else begin
-            if(next_down && !next_long) begin
-                if(next_count==LONG_CYCLES-1) begin
-                    next_long<=1;
-                    if(settings_active) select_contrast<=~select_contrast;
-                end else next_count<=next_count+1'b1;
-            end
-            if(auto_down && !auto_long) begin
-                if(auto_count==LONG_CYCLES-1) begin
-                    auto_long<=1;settings_active<=~settings_active;
-                end else auto_count<=auto_count+1'b1;
-            end
-            if(prev_next && !next_down && !next_long) begin
+            if(prev_next && !next_down && !next_blocked) begin
                 if(settings_active) begin
                     if(select_contrast) begin
                         if(contrast_level<4) contrast_level<=contrast_level+1'b1;
                     end else if(brightness_level<4) brightness_level<=brightness_level+1'b1;
                 end else next_press<=1;
             end
-            if(prev_auto && !auto_down && !auto_long) begin
+            if(prev_auto && !auto_down && !auto_blocked) begin
                 if(settings_active) begin
                     if(select_contrast) begin
                         if(contrast_level>0) contrast_level<=contrast_level-1'b1;

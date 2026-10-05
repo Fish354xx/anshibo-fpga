@@ -1,3 +1,6 @@
+// 文件：audio_arc_calculate.v
+// 职责：计算HDMI音频时钟恢复所用N/CTS参数。
+// 来源与修改说明：参见SOURCE_ORIGIN.md。
 
 
 

@@ -1,3 +1,6 @@
+// 文件：hdmi_phy_warpper.v
+// 职责：连接HDMI编码数据与物理输出通道。
+// 来源：沿用官方参考源码；参见SOURCE_ORIGIN.md。
 
 
 module hdmi_phy_wrapper#(

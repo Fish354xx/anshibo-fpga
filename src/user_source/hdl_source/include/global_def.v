@@ -1,3 +1,6 @@
+// 文件：global_def.v
+// 职责：定义SDRAM数据、地址与模式常量。
+// 来源与修改说明：参见SOURCE_ORIGIN.md。
 
 
 

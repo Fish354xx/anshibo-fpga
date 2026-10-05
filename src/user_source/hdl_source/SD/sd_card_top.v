@@ -1,3 +1,6 @@
+// 文件：sd_card_top.v
+// 职责：连接TF初始化、命令和扇区读写模块。
+// 来源：沿用官方参考源码；参见SOURCE_ORIGIN.md。
 
 module sd_card_top
 #(

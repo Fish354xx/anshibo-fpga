@@ -12,7 +12,7 @@ wire scan_done,found;
 wire [2:0] found_total;
 integer count=0,errors=0,cyc=0,b,i,px,py,exp_x,exp_y,base;
 always #5 clk=~clk;
-bmp_read dut(.clk(clk),.rst(rst),.ready(ready),.scan_start(scan),
+bmp_read dut(.clk(clk),.rst(rst),.ready(ready),.scan_resume(1'b0),.scan_paused(),.scan_start(scan),
  .scan_start_sector(32'd0),.scan_max_sector(32'd10),.scan_target_count(3'd4),
  .scan_done(scan_done),.scan_found_valid(found),.scan_found_sector(),.scan_found_total(found_total),
  .load_start(load),.load_sector(32'd0),.sd_init_done(1'b1),.state_code(),

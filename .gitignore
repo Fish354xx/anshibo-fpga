@@ -1,15 +1,20 @@
-# TD generated compilation outputs
+# Generated build and simulation files
 *_Runs/
 log/
+sim/work/
 *.log
 *.logw
+*.wlf
 *.dmp
-.recent_user_depot.ini
-__pycache__/
 *.pyc
+__pycache__/
+.lock.f
+.recent_user_depot.ini
+transcript
 .env
 .env.*
-sim/work/
-sim/*.wlf
-transcript
-vsim.wlf
+src/td_project/*.bit
+src/td_project/*.db
+src/td_project/*.rpt
+src/td_project/*.bid
+src/td_project/*.vdb

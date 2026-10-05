@@ -12,7 +12,7 @@ always #5 clk=~clk;
 audio_wave_snapshot snap(.clk(clk),.rst(rst),.frame_start(vs),.sample_valid(valid),
  .sample(sample),.read_index(index),.read_y(ry),.previous_y(py));
 campus_osd osd(.clk(clk),.rst(rst),.in_vs(vs),.in_de(de),.in_rgb(24'h80A0C0),
- .emergency_async(1'b0),.settings_async(8'h12),.transition_pending_async(1'b0),
+ .emergency_async(1'b0),.subtitle_enable_async(1'b1),.settings_async(8'h12),.transition_pending_async(1'b0),
  .transition_black_ready(),.audio_valid(valid),.audio_sample(sample),
  .out_vs(ovs),.out_de(ode),.out_rgb(rgb));
 task check;input condition;input [511:0] message;

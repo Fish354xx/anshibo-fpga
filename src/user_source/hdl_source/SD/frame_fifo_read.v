@@ -1,3 +1,6 @@
+// 文件：frame_fifo_read.v
+// 职责：通过读FIFO衔接SDRAM与视频像素时钟域。
+// 来源：官方参考模块；新增实际读帧缓存标签输出，参见SOURCE_ORIGIN.md。
 `timescale 1ns/1ps
 module frame_fifo_read
 #
@@ -34,6 +37,7 @@ module frame_fifo_read
 	input[ADDR_BITS - 1:0]           read_addr_1,                // data read module read request base address 1, used when read_addr_index = 1
 	input[ADDR_BITS - 1:0]           read_addr_2,                // data read module read request base address 1, used when read_addr_index = 2
 	input[ADDR_BITS - 1:0]           read_addr_3,                // data read module read request base address 1, used when read_addr_index = 3
+	output reg [1:0] read_active_index, // 当前帧实际锁存的缓存编号（mem_clk域）
 	input[1:0]                       read_addr_index,            // select valid base address from read_addr_0 read_addr_1 read_addr_2 read_addr_3
 	input[ADDR_BITS - 1:0]           read_len,                   // data read module read request data length
 	output reg                       fifo_aclr,                  // to fifo asynchronous clear
@@ -120,6 +124,7 @@ begin
 	begin
 		burst_cnt <= ZERO[BURST_BITS - 1:0];
 		App_rd_addr_r <= ZERO[ADDR_BITS - 1:0];
+        read_active_index <= 2'd0;
 		App_rd_en_d0 <= 1'b0;
 	end
 	else begin
@@ -133,6 +138,7 @@ begin
 		//
 		if(state == S_ACK)
 			begin
+                read_active_index <= read_addr_index_d1;
 				if(read_addr_index_d1 == 2'd0)
 					App_rd_addr_r <= read_addr_0;
 				else if(read_addr_index_d1 == 2'd1)

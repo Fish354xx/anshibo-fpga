@@ -7,7 +7,7 @@ wire ovs,ode;
 wire [23:0] orgb;
 campus_osd #(.CLK_FREQ_HZ(1000000),.WAVE_ENABLE(0)) dut(
  .clk(clk),.rst(rst),.in_vs(vs),.in_de(de),.in_rgb(rgb),
- .emergency_async(mode),.settings_async(8'h12),.transition_pending_async(1'b0),
+ .emergency_async(mode),.subtitle_enable_async(1'b1),.settings_async(8'h12),.transition_pending_async(1'b0),
  .audio_valid(1'b0),.audio_sample(24'd0),
  .transition_black_ready(),.out_vs(ovs),.out_de(ode),.out_rgb(orgb));
 integer errors=0,ink=0,shade=0,pixels=0,i,j;

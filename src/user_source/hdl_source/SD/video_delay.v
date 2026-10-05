@@ -1,3 +1,6 @@
+// 文件：video_delay.v
+// 职责：对齐视频同步和数据流水线。
+// 来源：沿用官方参考源码；参见SOURCE_ORIGIN.md。
 module video_delay
 #(
 	parameter DATA_WIDTH = 24                       // Video data one clock data width

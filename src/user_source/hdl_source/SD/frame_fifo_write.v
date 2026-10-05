@@ -1,3 +1,6 @@
+// 文件：frame_fifo_write.v
+// 职责：通过写FIFO衔接图片加载与SDRAM时钟域。
+// 来源：沿用官方参考源码；参见SOURCE_ORIGIN.md。
 `timescale 1ns/1ps
 module frame_fifo_write
 #

@@ -1,10 +1,15 @@
+// 文件：hdmi_audio_tone_i2s_64fs.v
+// 职责：生成交替应急提示音，普通模式输出静音，保持I2S连续传输。
+// 来源与修改说明：参见SOURCE_ORIGIN.md。
+// 复位：I_rst高有效；I_enable经两级同步进入音频时钟域。
+// 输出：24位有符号PCM；静音仍保持音频时钟和零样本发送。
 
 module hdmi_audio_tone_i2s_64fs #(
     parameter [31:0] PHASE_INC = 32'd39370534,   // 兼容旧顶层，实际本版内部不用它
     parameter signed [23:0] AMP = 24'sd2000000,
     parameter integer NOTE_HOLD_FRAMES = 12000   // 交替提示音，每个音约0.25秒
 )(
-    input  wire I_mclk,      // 12.288MHz
+    input  wire I_mclk,      // 实际12.295082MHz；完整立体声帧需256个主时钟周期
     input  wire I_rst,
     input  wire I_enable,    // emergency mode; synchronized into audio clock below
     output reg  O_i2s_BCLK,
@@ -54,7 +59,7 @@ always @(posedge I_mclk or posedge I_rst) begin
         S_note_frame_cnt<= 16'd0;
     end
     else begin
-        // 保持和你现有接收端兼容的 64fs 发送时序
+        // 保持与I2S接收端兼容的发送帧格式，每声道64个BCLK周期
         O_i2s_BCLK <= ~O_i2s_BCLK;
 
         if (O_i2s_BCLK == 1'b1) begin

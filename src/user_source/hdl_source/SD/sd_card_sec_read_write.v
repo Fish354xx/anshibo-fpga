@@ -1,3 +1,6 @@
+// 文件：sd_card_sec_read_write.v
+// 职责：执行TF卡扇区数据传输。
+// 来源：沿用官方参考源码；参见SOURCE_ORIGIN.md。
 
 module sd_card_sec_read_write
 #(

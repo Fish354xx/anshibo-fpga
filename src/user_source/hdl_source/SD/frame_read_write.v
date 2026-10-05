@@ -1,3 +1,6 @@
+// 文件：frame_read_write.v
+// 职责：协调SDRAM读写数据通路及缓存地址。
+// 来源与修改说明：参见SOURCE_ORIGIN.md。
 `timescale 1ns/1ps
 module frame_read_write
 #
@@ -40,6 +43,7 @@ module frame_read_write
 	input[ADDR_BITS - 1:0]           read_addr_1,                // data read module read request base address 1, used when read_addr_index = 1
 	input[ADDR_BITS - 1:0]           read_addr_2,                // data read module read request base address 1, used when read_addr_index = 2
 	input[ADDR_BITS - 1:0]           read_addr_3,                // data read module read request base address 1, used when read_addr_index = 3
+	output [1:0] read_active_index, // 当前读帧缓存编号，由读控制器提供
 	input[1:0]                       read_addr_index,            // select valid base address from read_addr_0 read_addr_1 read_addr_2 read_addr_3
 	input[ADDR_BITS - 1:0]           read_len,                   // data read module read request data length
 	input                            read_en,                    // data read module read request for one data, read_data valid next clock
@@ -188,7 +192,8 @@ frame_fifo_read_m0
 	.read_addr_1                (read_addr_1              ),
 	.read_addr_2                (read_addr_2              ),
 	.read_addr_3                (read_addr_3              ),
-	.read_addr_index            (read_addr_index          ),    
+	.read_addr_index            (read_addr_index          ),
+    .read_active_index          (read_active_index),    
 	.read_len                   (read_len                 ),
 	.fifo_aclr                  (read_fifo_aclr           ),
 	.wrusedw                	(wrusedw                  )

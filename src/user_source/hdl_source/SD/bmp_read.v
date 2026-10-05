@@ -1,10 +1,17 @@
-module bmp_read(
+// 文件：bmp_read.v
+// 职责：校验并读取BMP，使用行缓存完成最近邻缩放和背压限速。
+// 来源与修改说明：参见SOURCE_ORIGIN.md。
+// 约束：正高度RGB24非压缩BMP，宽1～1280、高1～960，输出640×480。
+// 协议：write_ready为写侧背压；帧提交需同时等待源读取和内存写入完成。
+module bmp_read #(parameter integer EARLY_FIRST_IMAGE=0)(
     input                       clk,
     input                       rst,
     output                      ready,
 
     // 上电扫描：从 scan_start_sector 开始，顺序寻找前 scan_target_count 张 BMP
     input                       scan_start,
+    input                       scan_resume,
+    output reg                  scan_paused,
     input  [31:0]               scan_start_sector,
     input  [31:0]               scan_max_sector,
     input  [2:0]                scan_target_count,
@@ -105,7 +112,53 @@ end
 always @(posedge clk)
     file_sector_count <= (file_len == 32'd0) ? 32'd1 : ((file_len + 32'd511) >> 9);
 assign next_scan_sector_if_match = scan_sector + file_sector_count;
-assign next_scan_sector_if_miss  = scan_sector + 32'd1;
+// 仅在签名和几何信息有效时跳过MBR/FAT32元数据；否则沿用逐扇区扫描。
+reg [15:0] boot_signature,bpb_bytes,bpb_reserved,bpb_roots,bpb_fat16,bpb_version;
+reg [7:0] partition_type,bpb_spc,bpb_fats;
+reg [31:0] partition_start,bpb_fat32,bpb_total,bpb_rootcluster;
+// 元数据几何计算提前流水化，字段在扇区前48字节完成，后续有足够稳定时间。
+reg [32:0] metadata_sectors,data_start;
+reg fat32_geometry_valid;
+always @(posedge clk) begin
+    metadata_sectors<={17'd0,bpb_reserved}+
+        (bpb_fats==2 ? {bpb_fat32,1'b0} : {1'b0,bpb_fat32});
+    data_start<={1'b0,scan_sector}+metadata_sectors;
+    fat32_geometry_valid<=bpb_bytes==512 && bpb_reserved!=0 &&
+        (bpb_fats==1 || bpb_fats==2) && bpb_spc!=0 && ((bpb_spc & (bpb_spc-1'b1))==0) &&
+        bpb_roots==0 && bpb_fat16==0 && bpb_version==0 && bpb_fat32!=0 && bpb_rootcluster>=2 &&
+        metadata_sectors<{1'b0,bpb_total} && data_start<= {1'b0,scan_max_sector};
+end
+wire valid_mbr=(scan_sector==0 && scan_found_total==0 && boot_signature==16'hAA55 &&
+    (partition_type==8'h0B || partition_type==8'h0C) && partition_start>0 && partition_start<=scan_max_sector);
+wire valid_fat32=(scan_found_total==0 && boot_signature==16'hAA55 &&
+    (header_0==8'hEB || header_0==8'hE9) && fat32_geometry_valid);
+assign next_scan_sector_if_miss=valid_mbr?partition_start:valid_fat32?data_start[31:0]:scan_sector+32'd1;
+always @(posedge clk or posedge rst) begin
+    if(rst) begin
+        boot_signature<=0;partition_type<=0;partition_start<=0;
+        bpb_bytes<=0;bpb_reserved<=0;bpb_roots<=0;bpb_fat16<=0;bpb_version<=0;
+        bpb_spc<=0;bpb_fats<=0;bpb_fat32<=0;bpb_total<=0;bpb_rootcluster<=0;
+    end else if(state==ST_SCAN && sd_sec_read_data_valid) begin
+        case(rd_cnt)
+            11:bpb_bytes[7:0]<=sd_sec_read_data;12:bpb_bytes[15:8]<=sd_sec_read_data;
+            13:bpb_spc<=sd_sec_read_data;14:bpb_reserved[7:0]<=sd_sec_read_data;
+            15:bpb_reserved[15:8]<=sd_sec_read_data;16:bpb_fats<=sd_sec_read_data;
+            17:bpb_roots[7:0]<=sd_sec_read_data;18:bpb_roots[15:8]<=sd_sec_read_data;
+            22:bpb_fat16[7:0]<=sd_sec_read_data;23:bpb_fat16[15:8]<=sd_sec_read_data;
+            32:bpb_total[7:0]<=sd_sec_read_data;33:bpb_total[15:8]<=sd_sec_read_data;
+            34:bpb_total[23:16]<=sd_sec_read_data;35:bpb_total[31:24]<=sd_sec_read_data;
+            36:bpb_fat32[7:0]<=sd_sec_read_data;37:bpb_fat32[15:8]<=sd_sec_read_data;
+            38:bpb_fat32[23:16]<=sd_sec_read_data;39:bpb_fat32[31:24]<=sd_sec_read_data;
+            42:bpb_version[7:0]<=sd_sec_read_data;43:bpb_version[15:8]<=sd_sec_read_data;
+            44:bpb_rootcluster[7:0]<=sd_sec_read_data;45:bpb_rootcluster[15:8]<=sd_sec_read_data;
+            46:bpb_rootcluster[23:16]<=sd_sec_read_data;47:bpb_rootcluster[31:24]<=sd_sec_read_data;
+            450:partition_type<=sd_sec_read_data;
+            454:partition_start[7:0]<=sd_sec_read_data;455:partition_start[15:8]<=sd_sec_read_data;
+            456:partition_start[23:16]<=sd_sec_read_data;457:partition_start[31:24]<=sd_sec_read_data;
+            510:boot_signature[7:0]<=sd_sec_read_data;511:boot_signature[15:8]<=sd_sec_read_data;
+        endcase
+    end
+end
 
 always @(posedge clk or posedge rst) begin
     if (rst) begin
@@ -182,6 +235,7 @@ always @(posedge clk or posedge rst) begin
         sd_sec_read_addr  <= 32'd0;
         write_req         <= 1'b0;
         scan_done         <= 1'b0;
+        scan_paused       <= 1'b0;
         scan_found_valid  <= 1'b0;
         scan_found_sector <= 32'd0;
         scan_found_total  <= 3'd0;
@@ -195,6 +249,7 @@ always @(posedge clk or posedge rst) begin
         sd_sec_read_addr  <= 32'd0;
         write_req         <= 1'b0;
         scan_done         <= 1'b0;
+        scan_paused       <= 1'b0;
         scan_found_valid  <= 1'b0;
         scan_found_sector <= 32'd0;
         scan_found_total  <= 3'd0;
@@ -212,10 +267,13 @@ always @(posedge clk or posedge rst) begin
 
                 if (scan_start) begin
                     scan_done        <= 1'b0;
+                    scan_paused      <= 1'b0;
                     scan_found_total <= 3'd0;
                     scan_sector      <= scan_start_sector;
                     sd_sec_read_addr <= scan_start_sector;
                     state            <= ST_SCAN;
+                end else if (scan_resume && scan_paused) begin
+                    scan_paused<=0; sd_sec_read_addr<=scan_sector; state<=ST_SCAN;
                 end else if (load_start) begin
                     load_sector_latched <= load_sector;
                     sd_sec_read_addr    <= load_sector;
@@ -240,6 +298,11 @@ always @(posedge clk or posedge rst) begin
                             state            <= ST_IDLE;
                             sd_sec_read_addr <= next_scan_sector_if_match;
                             scan_sector      <= next_scan_sector_if_match;
+                        end else if(EARLY_FIRST_IMAGE && scan_found_total==0) begin
+                            // 首图先加载显示；scan_sector保存续扫位置，计数不清零。
+                            scan_paused<=1;state<=ST_IDLE;
+                            sd_sec_read_addr<=next_scan_sector_if_match;
+                            scan_sector<=next_scan_sector_if_match;
                         end else begin
                             sd_sec_read_addr <= next_scan_sector_if_match;
                             scan_sector      <= next_scan_sector_if_match;

@@ -1,3 +1,6 @@
+// 文件：seg_scan.v
+// 职责：扫描数码管显示状态。
+// 来源与修改说明：参见SOURCE_ORIGIN.md。
 
 module seg_scan(
 	input           clk,

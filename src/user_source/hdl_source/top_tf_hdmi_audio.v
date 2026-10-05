@@ -1,9 +1,17 @@
+// 文件：top_tf_hdmi_audio.v
+// 职责：整合时钟、复位、TF帧缓存、画面处理及HDMI音视频链路。
+// 来源与修改说明：参见SOURCE_ORIGIN.md。
+// 时钟：系统50MHz、TF100MHz、SDRAM约41.667MHz、视频25MHz。
+// 复位：外部rst_n低有效；内部rst_all高有效。各子模块按所在时钟域运行。
 
 module top(
     input                       clk,
     input                       rst_n,
     input                       key1,           // 手动下一张
     input                       key2,           // 自动播放 开/关
+    input                       adjustment_switch, // SW2：1开启调节，0恢复普通按键操作
+    input                       contrast_switch,   // SW3：1选择对比度，0选择亮度
+    input                       subtitle_switch, // SW1：1显示文字与波形，0只显示图片
     input                       key_mode,       // KEY3: emergency mode toggle
 
     output [5:0]                seg_sel,
@@ -33,6 +41,7 @@ parameter FRAME_PIXELS  = 24'd307200;   // 640*480
 parameter BUF0_ADDR     = 24'd0;
 parameter BUF1_ADDR     = FRAME_PIXELS;
 
+wire rst_all;
 wire Sdr_init_done;
 wire Sdr_init_ref_vld;
 wire Sdr_busy;
@@ -57,6 +66,9 @@ wire [3:0]  state_code;
 wire [6:0]  seg_data_0;
 wire [15:0] sd_debug_status;
 wire emergency_mode;
+wire emergency_picture_loaded;
+wire emergency_audio_enable;
+wire [1:0] read_active_index;
 wire [7:0] picture_settings;
 wire transition_pending,transition_black_ready;
 wire sd_card_write_ready;
@@ -135,10 +147,9 @@ wire [9:0]  tmds_ch2_data;
 wire [9:0]  tmds_clk_data;
 
 // 统一复位：TF 图像链路 + HDMI 音频链路
-wire rst_all;
 assign rst_all = ~rst_n | ~audio_pll_lock;
 
-// 保持你原来的 TF / SDRAM / video 时钟
+// TF读取、SDRAM访问与视频输出使用独立时钟域
 sys_pll sys_pll_m0(
     .refclk     (clk),
     .clk0_out   (sd_card_clk),
@@ -154,7 +165,7 @@ video_pll video_pll_m0(
     .reset      (1'b0)
 );
 
-// 复用你 I2S->HDMI 工程里的 PLL，只取 12.288MHz 音频主时钟
+// 沿用官方音频PLL配置；CLKC2实际为12.295082MHz，采样率约48.028kHz
 PLL_HDMI_AUDIO u_audio_pll(
     .refclk     (clk),
     .reset      (1'b0),
@@ -184,8 +195,11 @@ sd_card_bmp #(
     .key_next          (key1),
     .key_auto          (key2),
     .key_mode          (key_mode),
+    .adjustment_switch (adjustment_switch),
+    .contrast_switch   (contrast_switch),
     .debug_status      (sd_debug_status),
     .o_emergency_mode  (emergency_mode),
+    .o_emergency_loaded(emergency_picture_loaded),
     .picture_settings  (picture_settings),
     .transition_pending(transition_pending),
     .transition_black_ready(transition_black_ready),
@@ -291,6 +305,7 @@ frame_read_write #(
     .read_addr_2       (24'd0),
     .read_addr_3       (24'd0),
     .read_addr_index   (disp_buf_idx),
+    .read_active_index (read_active_index),
     .read_len          (FRAME_PIXELS),
     .read_en           (video_read_en),
     .read_data         (video_read_data),
@@ -332,6 +347,12 @@ sdram U3(
     .Sdr_rd_dout       (Sdr_rd_dout)
 );
 
+// 音频仅在应急图所用缓存实际进入有效视频帧后启动，退出应急及时静音。
+emergency_audio_frame_gate u_emergency_audio_frame_gate(
+    .clk(video_clk),.rst(rst_all),.vs(vs),.de(de),
+    .mode_async(emergency_mode),.loaded_async(emergency_picture_loaded),
+    .target_index_async(disp_buf_idx),.active_index_async(read_active_index),
+    .audio_enable(emergency_audio_enable));
 // ===================== 音频：应急双音提示，普通模式发送静音采样 =====================
 hdmi_audio_tone_i2s_64fs #(
     .PHASE_INC (32'd39370534),
@@ -339,7 +360,7 @@ hdmi_audio_tone_i2s_64fs #(
 ) u_hdmi_audio_tone_i2s_64fs (
     .I_mclk      (audio_mclk),
     .I_rst       (rst_all),
-    .I_enable    (emergency_mode),
+    .I_enable    (emergency_audio_enable),
     .O_i2s_BCLK  (audio_i2s_bclk),
     .O_i2s_LRCK  (audio_i2s_lrck),
     .O_i2s_DOUT  (audio_i2s_dout)
@@ -372,7 +393,7 @@ campus_osd u_campus_osd(
     .clk(video_clk), .rst(rst_all), .in_vs(vs), .in_de(de),
     .in_rgb(vout_data), .emergency_async(emergency_mode),
     .transition_pending_async(transition_pending), .transition_black_ready(transition_black_ready),
-    .settings_async(picture_settings),
+    .subtitle_enable_async(subtitle_switch), .settings_async(picture_settings),
     .audio_valid(audio_valid), .audio_sample(audio_left_data),
     .out_vs(osd_vs), .out_de(osd_de), .out_rgb(osd_rgb)
 );
@@ -461,4 +482,34 @@ hdmi_phy_wrapper #(
     .O_tmds_clk_p       (HDMI_CLK_P)
 );
 
+endmodule
+
+// 应急音画启动门控。缓存标签来自读控制器实际锁存值，而不是加载请求。
+// 异步标志和缓冲编号经两级同步，首次有效像素前检查匹配；不改变视频数据路径。
+module emergency_audio_frame_gate(
+    input clk,rst,vs,de,mode_async,loaded_async,
+    input [1:0] target_index_async,active_index_async,
+    output reg audio_enable
+);
+reg mode_sync0,mode_sync1,loaded_sync0,loaded_sync1,loaded_sync2;
+reg [1:0] target_sync0,target_sync1,active_sync0,active_sync1;
+reg vs_prev,first_pixel_pending;
+always @(posedge clk or posedge rst) begin
+    if(rst) begin
+        mode_sync0<=0;mode_sync1<=0;loaded_sync0<=0;loaded_sync1<=0;loaded_sync2<=0;
+        target_sync0<=0;target_sync1<=0;active_sync0<=0;active_sync1<=0;
+        vs_prev<=0;first_pixel_pending<=0;audio_enable<=0;
+    end else begin
+        mode_sync0<=mode_async;mode_sync1<=mode_sync0;
+        loaded_sync0<=loaded_async;loaded_sync1<=loaded_sync0;loaded_sync2<=loaded_sync1;
+        target_sync0<=target_index_async;target_sync1<=target_sync0;
+        active_sync0<=active_index_async;active_sync1<=active_sync0;
+        vs_prev<=vs;
+        if(vs && !vs_prev) first_pixel_pending<=1;
+        else if(de && first_pixel_pending) first_pixel_pending<=0;
+        if(!mode_sync1 || !loaded_sync2) audio_enable<=0;
+        else if(de && first_pixel_pending)
+            audio_enable<=(active_sync1==target_sync1);
+    end
+end
 endmodule

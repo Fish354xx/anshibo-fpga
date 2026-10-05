@@ -1,3 +1,6 @@
+// 文件：I2S_receiver.v
+// 职责：将I2S串行数据转换为左右声道PCM样本。
+// 来源与修改说明：参见SOURCE_ORIGIN.md。
 
 
 module I2S_receiver (

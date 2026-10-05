@@ -2,16 +2,17 @@
 module tb_picture_settings;
 reg clk=0,rst=1,next_key=1,auto_key=1,emergency=0;
 reg vs=0,de=0;
+reg sw2=0,sw3=0;
 wire [23:0] adjusted_pixel;
 always #5 clk=~clk;
 wire next_press,auto_press,active;
 wire [7:0] settings;
-picture_key_control #(.CLK_FREQ_HZ(10000),.DEBOUNCE_MS(1),.LONG_PRESS_MS(10)) keys(
- .clk(clk),.rst(rst),.key_next(next_key),.key_auto(auto_key),.emergency_mode(emergency),
+picture_key_control #(.CLK_FREQ_HZ(10000),.DEBOUNCE_MS(1)) keys(
+ .clk(clk),.rst(rst),.key_next(next_key),.key_auto(auto_key),.emergency_mode(emergency),.adjustment_switch(sw2),.contrast_switch(sw3),
  .next_press(next_press),.auto_press(auto_press),.settings_active(active),.settings(settings));
 campus_osd #(.WAVE_ENABLE(0)) osd(.clk(clk),.rst(rst),.in_vs(vs),.in_de(de),.in_rgb(24'h80A0C0),
  .audio_valid(1'b0),.audio_sample(24'd0),
- .emergency_async(emergency),.settings_async(settings),.transition_pending_async(1'b0),
+ .emergency_async(emergency),.subtitle_enable_async(1'b1),.settings_async(settings),.transition_pending_async(1'b0),
  .transition_black_ready(),.out_vs(),.out_de(),.out_rgb(adjusted_pixel));
 integer errors=0,next_count=0,auto_count=0,i,b,c,p,delta,gain,expected;
 always @(posedge clk) begin
@@ -48,27 +49,38 @@ initial begin
  check(settings==8'h12,"default levels 2/4 with adjustment off");
  press(0,30);press(1,30);
  check(next_count==1 && auto_count==1,"normal short releases retain next/auto actions");
- press(1,160);
- check(active && auto_count==1,"long KEY4 enters without toggling auto-play");
+ sw2=1;cycles(30);
+ check(active && auto_count==1,"SW2 enables adjustment without toggling auto-play");
+ sw2=0;cycles(3);sw2=1;cycles(3);sw2=0;cycles(3);sw2=1;cycles(30);
+ check(active,"switch bounce does not disable adjustment");
  press(0,30);
- check(settings[5:3]==3,"short KEY2 increases brightness");
+ check(settings[5:3]==3,"KEY2 increases brightness");
  press(1,30);
- check(settings[5:3]==2,"short KEY4 decreases brightness");
- press(0,160);
- check(settings[6] && next_count==1,"long KEY2 selects contrast without next image");
+ check(settings[5:3]==2,"KEY4 decreases brightness");
+ sw3=1;cycles(30);
+ check(settings[6] && next_count==1,"SW3 selects contrast without next image");
  for(i=0;i<6;i=i+1) press(0,30);
  check(settings[2:0]==4,"contrast upper limit saturates");
  for(i=0;i<6;i=i+1) press(1,30);
  check(settings[2:0]==0,"contrast lower limit saturates");
- press(0,160);
+ sw3=0;cycles(30);
  for(i=0;i<6;i=i+1) press(0,30);
  check(settings[5:3]==4,"brightness upper limit saturates");
  for(i=0;i<6;i=i+1) press(1,30);
  check(settings[5:3]==0,"brightness lower limit saturates");
  emergency=1;cycles(5);press(0,30);press(1,160);
- check(!active && next_count==1 && auto_count==1,"emergency cancels adjustment and ignores keys");
- emergency=0;cycles(5);press(1,160);press(1,160);
- check(!active && auto_count==1,"long entry/exit emits no short action");
+ check(!active && next_count==1 && auto_count==1,"emergency ignores adjustment keys");
+ emergency=0;cycles(5);
+ check(active,"exit emergency restores SW2-selected adjustment");
+ next_key=0;cycles(30);sw2=0;cycles(30);next_key=1;cycles(30);
+ check(!active && next_count==1,"switch change cancels held key release");
+ press(1,160);
+ check(!active && auto_count==2,"long KEY4 does not enter adjustment");
+ sw2=1;cycles(30);
+ next_key=0;cycles(30);sw3=1;cycles(30);next_key=1;cycles(30);
+ check(settings[5:3]==0 && settings[2:0]==0,"parameter selection cancels held key");
+ sw3=0;cycles(30);next_key=0;auto_key=0;cycles(30);next_key=1;auto_key=1;cycles(30);
+ check(settings[5:3]==0 && settings[2:0]==0,"simultaneous keys do not alter parameters");
  // Exhaustive 8-bit channel validation, all 25 brightness/contrast combinations.
  for(b=0;b<5;b=b+1) for(c=0;c<5;c=c+1) for(p=0;p<256;p=p+1) begin
    delta=p-128;
@@ -87,7 +99,7 @@ initial begin
  check(errors==0,"6400 pixel cases: levels and clipping correct");
  start_frame;
  check(adjusted_pixel==24'h405060,"configured brightness and contrast affect background pixels");
- press(1,160);press(0,30);
+ press(0,30);
  check(settings[5:3]==1 && adjusted_pixel==24'h405060,"mid-frame parameter change waits for next frame");
  start_frame;
  check(adjusted_pixel==24'h607080,"new parameter applied consistently at frame boundary");

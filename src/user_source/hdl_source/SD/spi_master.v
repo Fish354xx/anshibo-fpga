@@ -1,3 +1,6 @@
+// 文件：spi_master.v
+// 职责：执行SPI位级收发。
+// 来源：沿用官方参考源码；参见SOURCE_ORIGIN.md。
 
 module spi_master
 (

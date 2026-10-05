@@ -1,3 +1,6 @@
+// 文件：seg_decoder.v
+// 职责：将状态数值转换为七段显示码。
+// 来源与修改说明：参见SOURCE_ORIGIN.md。
 
 module seg_decoder
 (

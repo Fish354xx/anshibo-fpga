@@ -1,3 +1,6 @@
+// 文件：video_timing_data.v
+// 职责：生成行场同步和有效像素读取控制。
+// 来源：沿用官方参考源码；参见SOURCE_ORIGIN.md。
 module video_timing_data
 #(
 	parameter DATA_WIDTH = 16                       // Video data one clock data width

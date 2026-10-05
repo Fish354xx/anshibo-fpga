@@ -1,3 +1,6 @@
+// 文件：sd_card_cmd.v
+// 职责：发送TF卡命令并接收响应。
+// 来源：沿用官方参考源码；参见SOURCE_ORIGIN.md。
 
 module sd_card_cmd(
 	input                       sys_clk,

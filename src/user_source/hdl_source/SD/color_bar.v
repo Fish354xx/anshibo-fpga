@@ -1,3 +1,6 @@
+// 文件：color_bar.v
+// 职责：生成视频坐标及测试像素数据，供时序模块使用。
+// 来源：沿用官方参考源码；参见SOURCE_ORIGIN.md。
 
 `include "video_define.v"
 module color_bar(
