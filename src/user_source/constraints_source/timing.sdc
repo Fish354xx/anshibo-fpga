@@ -107,3 +107,19 @@ set_false_path -to [get_regs {u_emergency_audio_frame_gate/active_sync0[*]}]
 # SW2/SW3: constrain the first synchronizer stage only.
 set_false_path -from [get_ports {adjustment_switch}] -to [get_regs {sd_card_bmp_m0/u_picture_keys/adjust_filter/button_sync0}]
 set_false_path -from [get_ports {contrast_switch}] -to [get_regs {sd_card_bmp_m0/u_picture_keys/contrast_filter/button_sync0}]
+
+# UART RX is asynchronous; retain timing between receiver synchronizer stages.
+set_false_path -from [get_ports {uart_rx}] -to [get_regs {u_uart_console/receiver/rx_sync0}]
+
+# Software reset assertion is asynchronous. Only the reset-release synchronizers
+# handle release; exempt only software-request paths ending at asynchronous reset pins.
+set_false_path -from [get_pins {serial_reset_hold_reg*.q*}] -to [get_pins {*.sr}]
+
+
+
+
+# Subtitle toggle handshake first stages and stable bundled commit metadata.
+# Bank/length/enable are held until video frame-boundary acknowledgement returns.
+set_false_path -to [get_regs {u_remote_text/ack_sync0}]
+set_false_path -to [get_regs {u_remote_text/request_sync0}]
+set_false_path -from [get_regs {u_remote_text/requested_bank u_remote_text/requested_active u_remote_text/requested_length[*]}] -to [get_regs {u_remote_text/active_bank u_remote_text/active u_remote_text/active_length[*]}]

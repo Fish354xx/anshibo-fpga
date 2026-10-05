@@ -6,6 +6,7 @@
 
 module sd_card_bmp #(
     parameter integer CLK_FREQ_HZ       = 100_000_000,
+    parameter integer REMOTE_ENABLE = 0,
     parameter [31:0]  SCAN_START_SECTOR = 32'd0,
     parameter [31:0]  SCAN_MAX_SECTOR   = 32'd131071,
     parameter [2:0]   SCAN_TARGET_COUNT = 3'd4
@@ -14,6 +15,12 @@ module sd_card_bmp #(
     input                       rst,
     input                       adjustment_switch,
     input                       contrast_switch,
+    input                       command_valid,
+    input [3:0]                 command_code,
+    input [2:0]                 command_value,
+    output                      auto_play_active,
+    input                       remote_next,       // 同时钟域串口切图脉冲
+    output [2:0]                next_block_reason, // 串口操作拒绝原因
     input                       key_next,
     input                       key_auto,
     input                       key_mode,           // 模式切换按键（普通/应急），原始引脚
@@ -111,9 +118,15 @@ assign debug_status = {1'b0, img_found_count, 2'b00, img_idx,
                        2'b00, load_idx, scan_done, bmp_ready, load_busy, o_emergency_mode};
 
 wire settings_active;
+assign next_block_reason = (!scan_done || !display_valid) ? 3'd1 :
+                           o_emergency_mode ? 3'd2 : settings_active ? 3'd3 :
+                           (img_found_count<2) ? 3'd5 : load_busy ? 3'd4 : 3'd0;
 picture_key_control #(.CLK_FREQ_HZ(CLK_FREQ_HZ)) u_picture_keys (
     .clk(clk), .rst(rst), .key_next(key_next), .key_auto(key_auto),
     .adjustment_switch(adjustment_switch), .contrast_switch(contrast_switch),
+    .remote_brightness_valid(REMOTE_ENABLE && command_valid && command_code==5),
+    .remote_contrast_valid(REMOTE_ENABLE && command_valid && command_code==6),
+    .remote_level(command_value),
     .emergency_mode(o_emergency_mode), .next_press(key_next_press),
     .auto_press(key_auto_press), .settings_active(settings_active),
     .settings(picture_settings)
@@ -121,6 +134,7 @@ picture_key_control #(.CLK_FREQ_HZ(CLK_FREQ_HZ)) u_picture_keys (
 
 // 普通模式/应急模式控制：模式按键同步消抖、模式切换、加载仲裁、显示提交许可
 emergency_mode_ctrl #(
+    .REMOTE_ENABLE(REMOTE_ENABLE),
     .CLK_FREQ_HZ          (CLK_FREQ_HZ),
     .DEBOUNCE_MS          (20),
     .EMERGENCY_INDEX      (2'd3),
@@ -129,8 +143,12 @@ emergency_mode_ctrl #(
 ) u_emergency_mode_ctrl (
     .clk                   (clk),
     .rst                   (rst),
+    .remote_valid          (command_valid),
+    .remote_code           (command_code),
+    .remote_value          (command_value),
+    .auto_play_active      (auto_play_active),
     .key_mode              (key_mode),
-    .key_next_press        (key_next_press),
+    .key_next_press        (key_next_press | remote_next),
     .key_auto_press        (key_auto_press),
     .pause_rotate          (settings_active),
     .scan_done             (scan_done || (scan_paused && !first_image_committed)),
@@ -375,6 +393,8 @@ module picture_key_control #(
 )(
     input clk,rst,key_next,key_auto,emergency_mode,
     input adjustment_switch,contrast_switch,
+    input remote_brightness_valid,remote_contrast_valid,
+    input [2:0] remote_level,
     output reg next_press,auto_press,
     output settings_active,
     output [7:0] settings
@@ -425,6 +445,10 @@ always @(posedge clk or posedge rst) begin
                 end else auto_press<=1;
             end
         end
+        if(remote_brightness_valid && !emergency_mode && remote_level<=4)
+            brightness_level<=remote_level;
+        if(remote_contrast_valid && !emergency_mode && remote_level<=4)
+            contrast_level<=remote_level;
     end
 end
 endmodule
@@ -489,6 +513,7 @@ endmodule
 //   - 扫描到的合法图片不足 4 张时拒绝进入应急模式，保持普通显示、不卡死
 //   - 进入应急时若正在写普通图，等当前写事务结束（load_busy=0）后最高优先级加载应急图
 module emergency_mode_ctrl #(
+    parameter integer REMOTE_ENABLE = 0,
     parameter integer CLK_FREQ_HZ = 100_000_000,
     parameter integer DEBOUNCE_MS = 20,
     parameter [1:0]   EMERGENCY_INDEX      = 2'd3,
@@ -498,6 +523,10 @@ module emergency_mode_ctrl #(
     input             clk,
     input             rst,
     // 按键
+    input             remote_valid,
+    input [3:0]       remote_code,
+    input [2:0]       remote_value,
+    output            auto_play_active,
     input             key_mode,              // 原始引脚，异步，松开=1 按下=0
     input             key_next_press,        // 已消抖的"手动下一张"单周期脉冲
     input             key_auto_press,        // 已消抖的"自动轮播开关"单周期脉冲
@@ -586,6 +615,12 @@ module emergency_mode_ctrl #(
     reg       restore_req_pending;  // 待服务：恢复普通图
     reg       load_is_emergency;    // 当前在飞行的这次加载是否为应急图
     reg       auto_play_en;         // 自动轮播开关（应急期间保持不变）
+    reg       specific_pending;
+    reg [1:0] requested_index;
+    wire remote_show = REMOTE_ENABLE && remote_valid && remote_code==2;
+    wire remote_auto = REMOTE_ENABLE && remote_valid && remote_code==3;
+    wire remote_emergency = REMOTE_ENABLE && remote_valid && remote_code==4;
+    assign auto_play_active=auto_play_en;
     reg       next_req_pending;     // 手动下一张挂起
 
     // ---------------- (6) 模式切换请求（组合） ----------------
@@ -596,9 +631,9 @@ module emergency_mode_ctrl #(
                               (cur_img_idx != EMERGENCY_INDEX);
 
     // 首图显示出来之前按模式键会被忽略；图片不足 4 张时恒为 0（拒绝进入）
-    wire mode_enter_req = mode_key_press && scan_done && display_valid &&
+    wire mode_enter_req = (mode_key_press || (remote_emergency && remote_value[0])) && scan_done && display_valid &&
                           !emergency_mode && (img_found_count >= EMERGENCY_MIN_IMAGES);
-    wire mode_exit_req  = mode_key_press && scan_done && emergency_mode;
+    wire mode_exit_req  = (mode_key_press || (remote_emergency && !remote_value[0])) && scan_done && emergency_mode;
 
     // ---------------- (7) 加载仲裁（优先级从高到低） ----------------
     // 所有请求都要求流水空闲（!load_busy），即当前 SDRAM 写事务已安全结束
@@ -634,7 +669,7 @@ module emergency_mode_ctrl #(
             load_req_is_emergency = 1'b0;
         end else if (can_manual) begin
             load_req              = 1'b1;
-            load_req_idx          = next_index_limited(cur_img_idx, normal_count);
+            load_req_idx          = specific_pending ? requested_index : next_index_limited(cur_img_idx, normal_count);
             load_req_is_emergency = 1'b0;
         end else if (can_auto) begin
             load_req              = 1'b1;
@@ -700,25 +735,32 @@ module emergency_mode_ctrl #(
             auto_play_en     <= 1'b0;
             auto_cnt         <= 32'd0;
             next_req_pending <= 1'b0;
+            specific_pending <= 1'b0;requested_index<=0;
         end else begin
             // 手动下一张挂起（应急模式下被 !emergency_mode 屏蔽）
             if (mode_enter_req || pause_rotate) begin
-                next_req_pending <= 1'b0;
+                next_req_pending <= 1'b0;specific_pending<=0;
+            end else if (remote_show && !emergency_mode && remote_value<normal_count) begin
+                next_req_pending<=1;specific_pending<=1;requested_index<=remote_value[1:0];
             end else if (key_next_press && !emergency_mode && (img_found_count != 3'd0)) begin
-                next_req_pending <= 1'b1;
+                next_req_pending <= 1'b1;specific_pending<=0;
             end else if (load_req && (can_manual || can_first)) begin
-                next_req_pending <= 1'b0;
+                next_req_pending <= 1'b0;specific_pending<=0;
             end
 
             // 自动轮播开关（应急模式下被 !emergency_mode 屏蔽，状态原样保留）
-            if (key_auto_press && !emergency_mode && !mode_enter_req && (img_found_count > 3'd1)) begin
+            if(remote_show && !emergency_mode && !mode_enter_req) begin
+                auto_play_en<=0;
+            end else if(remote_auto && !emergency_mode && !mode_enter_req) begin
+                auto_play_en<=remote_value[0];
+            end else if (key_auto_press && !emergency_mode && !mode_enter_req && (img_found_count > 3'd1)) begin
                 auto_play_en <= ~auto_play_en;
             end
 
             // 自动轮播计时（单一赋值链）
             if (load_req) begin
                 auto_cnt <= 32'd0;
-            end else if (key_auto_press && !emergency_mode && (img_found_count > 3'd1)) begin
+            end else if (remote_auto || remote_show || (key_auto_press && !emergency_mode && (img_found_count > 3'd1))) begin
                 auto_cnt <= 32'd0;
             end else if (auto_play_en && display_valid && !load_busy && first_image_committed &&
                          !emergency_mode && !pause_rotate && (normal_count > 3'd1)) begin

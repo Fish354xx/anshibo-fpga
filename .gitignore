@@ -1,4 +1,4 @@
-# Generated build and simulation files
+# TD and ModelSim generated working files
 *_Runs/
 log/
 sim/work/
@@ -18,3 +18,7 @@ src/td_project/*.db
 src/td_project/*.rpt
 src/td_project/*.bid
 src/td_project/*.vdb
+src/td_project/*.qor
+# Keep verification transcripts with their documented evidence.
+!measurements/remote_text/*.log
+!measurements/remote_controls/*.log

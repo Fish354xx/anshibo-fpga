@@ -49,3 +49,10 @@
 启动优化涉及bmp_read的MBR/BPB元数据检查和跳跃、暂停与续扫，以及sd_card_bmp的首图提交与源完成握手。
 
 应急音画启动同步：顶层新增emergency_audio_frame_gate，读缓存模块提供当前帧实际锁存编号，sd_card_bmp提供应急图片提交状态；音源等待实际应急帧有效像素开始。
+
+## 串口管理扩展
+
+uart_console.v为本项目实现的8N1收发、命令解析和状态应答模块；顶层及sd_card_bmp.v接入串口切图脉冲与操作状态反馈。电脑工具仅发送人工指令、解析状态，不承担图片或音频处理。
+
+动态字幕字形通过tools/build_text_font.py从开发电脑Windows黑体simhei.ttf生成16×16固定ROM，未附带字体文件；字符映射表与ROM一同生成。运行期间电脑仅发送字符编号。
+

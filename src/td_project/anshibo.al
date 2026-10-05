@@ -2,7 +2,7 @@
 <Project Version="3" Minor="2" Path=".">
     <Project_Created_Time></Project_Created_Time>
     <TD_Version>6.2.168116</TD_Version>
-    <UCode>01000000</UCode>
+    <UCode>01110001</UCode>
     <Name>anshibo</Name>
     <HardWare>
         <Family>EG4</Family>
@@ -245,6 +245,14 @@
                     <Attr Name="CompileOrder" Val="34"/>
                 </FileInfo>
             </File>
+            <File Path="../user_source/hdl_source/uart_console.v">
+                <FileInfo>
+                    <Attr Name="UsedInSyn" Val="true"/>
+                    <Attr Name="UsedInP&R" Val="true"/>
+                    <Attr Name="BelongTo" Val="design_1"/>
+                    <Attr Name="CompileOrder" Val="35"/>
+                </FileInfo>
+            </File>
         </Verilog>
         <ADC_FILE>
             <File Path="../user_source/constraints_source/pin.adc">
@@ -343,3 +351,4 @@
     <Project_Settings>
     </Project_Settings>
 </Project>
+

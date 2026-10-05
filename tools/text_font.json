@@ -1,0 +1,2394 @@
+[
+  {
+    "character": " ",
+    "id": 0
+  },
+  {
+    "character": "!",
+    "id": 1
+  },
+  {
+    "character": "\"",
+    "id": 2
+  },
+  {
+    "character": "#",
+    "id": 3
+  },
+  {
+    "character": "$",
+    "id": 4
+  },
+  {
+    "character": "%",
+    "id": 5
+  },
+  {
+    "character": "&",
+    "id": 6
+  },
+  {
+    "character": "'",
+    "id": 7
+  },
+  {
+    "character": "(",
+    "id": 8
+  },
+  {
+    "character": ")",
+    "id": 9
+  },
+  {
+    "character": "*",
+    "id": 10
+  },
+  {
+    "character": "+",
+    "id": 11
+  },
+  {
+    "character": ",",
+    "id": 12
+  },
+  {
+    "character": "-",
+    "id": 13
+  },
+  {
+    "character": ".",
+    "id": 14
+  },
+  {
+    "character": "/",
+    "id": 15
+  },
+  {
+    "character": "0",
+    "id": 16
+  },
+  {
+    "character": "1",
+    "id": 17
+  },
+  {
+    "character": "2",
+    "id": 18
+  },
+  {
+    "character": "3",
+    "id": 19
+  },
+  {
+    "character": "4",
+    "id": 20
+  },
+  {
+    "character": "5",
+    "id": 21
+  },
+  {
+    "character": "6",
+    "id": 22
+  },
+  {
+    "character": "7",
+    "id": 23
+  },
+  {
+    "character": "8",
+    "id": 24
+  },
+  {
+    "character": "9",
+    "id": 25
+  },
+  {
+    "character": ":",
+    "id": 26
+  },
+  {
+    "character": ";",
+    "id": 27
+  },
+  {
+    "character": "<",
+    "id": 28
+  },
+  {
+    "character": "=",
+    "id": 29
+  },
+  {
+    "character": ">",
+    "id": 30
+  },
+  {
+    "character": "?",
+    "id": 31
+  },
+  {
+    "character": "@",
+    "id": 32
+  },
+  {
+    "character": "A",
+    "id": 33
+  },
+  {
+    "character": "B",
+    "id": 34
+  },
+  {
+    "character": "C",
+    "id": 35
+  },
+  {
+    "character": "D",
+    "id": 36
+  },
+  {
+    "character": "E",
+    "id": 37
+  },
+  {
+    "character": "F",
+    "id": 38
+  },
+  {
+    "character": "G",
+    "id": 39
+  },
+  {
+    "character": "H",
+    "id": 40
+  },
+  {
+    "character": "I",
+    "id": 41
+  },
+  {
+    "character": "J",
+    "id": 42
+  },
+  {
+    "character": "K",
+    "id": 43
+  },
+  {
+    "character": "L",
+    "id": 44
+  },
+  {
+    "character": "M",
+    "id": 45
+  },
+  {
+    "character": "N",
+    "id": 46
+  },
+  {
+    "character": "O",
+    "id": 47
+  },
+  {
+    "character": "P",
+    "id": 48
+  },
+  {
+    "character": "Q",
+    "id": 49
+  },
+  {
+    "character": "R",
+    "id": 50
+  },
+  {
+    "character": "S",
+    "id": 51
+  },
+  {
+    "character": "T",
+    "id": 52
+  },
+  {
+    "character": "U",
+    "id": 53
+  },
+  {
+    "character": "V",
+    "id": 54
+  },
+  {
+    "character": "W",
+    "id": 55
+  },
+  {
+    "character": "X",
+    "id": 56
+  },
+  {
+    "character": "Y",
+    "id": 57
+  },
+  {
+    "character": "Z",
+    "id": 58
+  },
+  {
+    "character": "[",
+    "id": 59
+  },
+  {
+    "character": "\\",
+    "id": 60
+  },
+  {
+    "character": "]",
+    "id": 61
+  },
+  {
+    "character": "^",
+    "id": 62
+  },
+  {
+    "character": "_",
+    "id": 63
+  },
+  {
+    "character": "`",
+    "id": 64
+  },
+  {
+    "character": "a",
+    "id": 65
+  },
+  {
+    "character": "b",
+    "id": 66
+  },
+  {
+    "character": "c",
+    "id": 67
+  },
+  {
+    "character": "d",
+    "id": 68
+  },
+  {
+    "character": "e",
+    "id": 69
+  },
+  {
+    "character": "f",
+    "id": 70
+  },
+  {
+    "character": "g",
+    "id": 71
+  },
+  {
+    "character": "h",
+    "id": 72
+  },
+  {
+    "character": "i",
+    "id": 73
+  },
+  {
+    "character": "j",
+    "id": 74
+  },
+  {
+    "character": "k",
+    "id": 75
+  },
+  {
+    "character": "l",
+    "id": 76
+  },
+  {
+    "character": "m",
+    "id": 77
+  },
+  {
+    "character": "n",
+    "id": 78
+  },
+  {
+    "character": "o",
+    "id": 79
+  },
+  {
+    "character": "p",
+    "id": 80
+  },
+  {
+    "character": "q",
+    "id": 81
+  },
+  {
+    "character": "r",
+    "id": 82
+  },
+  {
+    "character": "s",
+    "id": 83
+  },
+  {
+    "character": "t",
+    "id": 84
+  },
+  {
+    "character": "u",
+    "id": 85
+  },
+  {
+    "character": "v",
+    "id": 86
+  },
+  {
+    "character": "w",
+    "id": 87
+  },
+  {
+    "character": "x",
+    "id": 88
+  },
+  {
+    "character": "y",
+    "id": 89
+  },
+  {
+    "character": "z",
+    "id": 90
+  },
+  {
+    "character": "{",
+    "id": 91
+  },
+  {
+    "character": "|",
+    "id": 92
+  },
+  {
+    "character": "}",
+    "id": 93
+  },
+  {
+    "character": "~",
+    "id": 94
+  },
+  {
+    "character": "今",
+    "id": 95
+  },
+  {
+    "character": "天",
+    "id": 96
+  },
+  {
+    "character": "下",
+    "id": 97
+  },
+  {
+    "character": "午",
+    "id": 98
+  },
+  {
+    "character": "点",
+    "id": 99
+  },
+  {
+    "character": "在",
+    "id": 100
+  },
+  {
+    "character": "教",
+    "id": 101
+  },
+  {
+    "character": "学",
+    "id": 102
+  },
+  {
+    "character": "楼",
+    "id": 103
+  },
+  {
+    "character": "举",
+    "id": 104
+  },
+  {
+    "character": "行",
+    "id": 105
+  },
+  {
+    "character": "消",
+    "id": 106
+  },
+  {
+    "character": "防",
+    "id": 107
+  },
+  {
+    "character": "演",
+    "id": 108
+  },
+  {
+    "character": "练",
+    "id": 109
+  },
+  {
+    "character": "请",
+    "id": 110
+  },
+  {
+    "character": "同",
+    "id": 111
+  },
+  {
+    "character": "们",
+    "id": 112
+  },
+  {
+    "character": "有",
+    "id": 113
+  },
+  {
+    "character": "序",
+    "id": 114
+  },
+  {
+    "character": "离",
+    "id": 115
+  },
+  {
+    "character": "开",
+    "id": 116
+  },
+  {
+    "character": "室",
+    "id": 117
+  },
+  {
+    "character": "前",
+    "id": 118
+  },
+  {
+    "character": "往",
+    "id": 119
+  },
+  {
+    "character": "操",
+    "id": 120
+  },
+  {
+    "character": "场",
+    "id": 121
+  },
+  {
+    "character": "集",
+    "id": 122
+  },
+  {
+    "character": "合",
+    "id": 123
+  },
+  {
+    "character": "注",
+    "id": 124
+  },
+  {
+    "character": "意",
+    "id": 125
+  },
+  {
+    "character": "安",
+    "id": 126
+  },
+  {
+    "character": "全",
+    "id": 127
+  },
+  {
+    "character": "校",
+    "id": 128
+  },
+  {
+    "character": "园",
+    "id": 129
+  },
+  {
+    "character": "通",
+    "id": 130
+  },
+  {
+    "character": "知",
+    "id": 131
+  },
+  {
+    "character": "实",
+    "id": 132
+  },
+  {
+    "character": "验",
+    "id": 133
+  },
+  {
+    "character": "课",
+    "id": 134
+  },
+  {
+    "character": "程",
+    "id": 135
+  },
+  {
+    "character": "排",
+    "id": 136
+  },
+  {
+    "character": "当",
+    "id": 137
+  },
+  {
+    "character": "日",
+    "id": 138
+  },
+  {
+    "character": "占",
+    "id": 139
+  },
+  {
+    "character": "用",
+    "id": 140
+  },
+  {
+    "character": "应",
+    "id": 141
+  },
+  {
+    "character": "急",
+    "id": 142
+  },
+  {
+    "character": "疏",
+    "id": 143
+  },
+  {
+    "character": "散",
+    "id": 144
+  },
+  {
+    "character": "保",
+    "id": 145
+  },
+  {
+    "character": "持",
+    "id": 146
+  },
+  {
+    "character": "冷",
+    "id": 147
+  },
+  {
+    "character": "静",
+    "id": 148
+  },
+  {
+    "character": "禁",
+    "id": 149
+  },
+  {
+    "character": "止",
+    "id": 150
+  },
+  {
+    "character": "乘",
+    "id": 151
+  },
+  {
+    "character": "坐",
+    "id": 152
+  },
+  {
+    "character": "电",
+    "id": 153
+  },
+  {
+    "character": "梯",
+    "id": 154
+  },
+  {
+    "character": "沿",
+    "id": 155
+  },
+  {
+    "character": "绿",
+    "id": 156
+  },
+  {
+    "character": "色",
+    "id": 157
+  },
+  {
+    "character": "出",
+    "id": 158
+  },
+  {
+    "character": "口",
+    "id": 159
+  },
+  {
+    "character": "指",
+    "id": 160
+  },
+  {
+    "character": "示",
+    "id": 161
+  },
+  {
+    "character": "方",
+    "id": 162
+  },
+  {
+    "character": "向",
+    "id": 163
+  },
+  {
+    "character": "撤",
+    "id": 164
+  },
+  {
+    "character": "听",
+    "id": 165
+  },
+  {
+    "character": "从",
+    "id": 166
+  },
+  {
+    "character": "老",
+    "id": 167
+  },
+  {
+    "character": "师",
+    "id": 168
+  },
+  {
+    "character": "工",
+    "id": 169
+  },
+  {
+    "character": "作",
+    "id": 170
+  },
+  {
+    "character": "人",
+    "id": 171
+  },
+  {
+    "character": "员",
+    "id": 172
+  },
+  {
+    "character": "挥",
+    "id": 173
+  },
+  {
+    "character": "勿",
+    "id": 174
+  },
+  {
+    "character": "拥",
+    "id": 175
+  },
+  {
+    "character": "挤",
+    "id": 176
+  },
+  {
+    "character": "推",
+    "id": 177
+  },
+  {
+    "character": "搡",
+    "id": 178
+  },
+  {
+    "character": "返",
+    "id": 179
+  },
+  {
+    "character": "回",
+    "id": 180
+  },
+  {
+    "character": "取",
+    "id": 181
+  },
+  {
+    "character": "物",
+    "id": 182
+  },
+  {
+    "character": "祝",
+    "id": 183
+  },
+  {
+    "character": "大",
+    "id": 184
+  },
+  {
+    "character": "家",
+    "id": 185
+  },
+  {
+    "character": "习",
+    "id": 186
+  },
+  {
+    "character": "愉",
+    "id": 187
+  },
+  {
+    "character": "快",
+    "id": 188
+  },
+  {
+    "character": "文",
+    "id": 189
+  },
+  {
+    "character": "明",
+    "id": 190
+  },
+  {
+    "character": "信",
+    "id": 191
+  },
+  {
+    "character": "息",
+    "id": 192
+  },
+  {
+    "character": "发",
+    "id": 193
+  },
+  {
+    "character": "布",
+    "id": 194
+  },
+  {
+    "character": "欢",
+    "id": 195
+  },
+  {
+    "character": "迎",
+    "id": 196
+  },
+  {
+    "character": "使",
+    "id": 197
+  },
+  {
+    "character": "视",
+    "id": 198
+  },
+  {
+    "character": "播",
+    "id": 199
+  },
+  {
+    "character": "系",
+    "id": 200
+  },
+  {
+    "character": "统",
+    "id": 201
+  },
+  {
+    "character": "计",
+    "id": 202
+  },
+  {
+    "character": "算",
+    "id": 203
+  },
+  {
+    "character": "机",
+    "id": 204
+  },
+  {
+    "character": "子",
+    "id": 205
+  },
+  {
+    "character": "院",
+    "id": 206
+  },
+  {
+    "character": "数",
+    "id": 207
+  },
+  {
+    "character": "英",
+    "id": 208
+  },
+  {
+    "character": "语",
+    "id": 209
+  },
+  {
+    "character": "理",
+    "id": 210
+  },
+  {
+    "character": "化",
+    "id": 211
+  },
+  {
+    "character": "生",
+    "id": 212
+  },
+  {
+    "character": "历",
+    "id": 213
+  },
+  {
+    "character": "史",
+    "id": 214
+  },
+  {
+    "character": "地",
+    "id": 215
+  },
+  {
+    "character": "音",
+    "id": 216
+  },
+  {
+    "character": "乐",
+    "id": 217
+  },
+  {
+    "character": "体",
+    "id": 218
+  },
+  {
+    "character": "育",
+    "id": 219
+  },
+  {
+    "character": "美",
+    "id": 220
+  },
+  {
+    "character": "术",
+    "id": 221
+  },
+  {
+    "character": "政",
+    "id": 222
+  },
+  {
+    "character": "治",
+    "id": 223
+  },
+  {
+    "character": "选",
+    "id": 224
+  },
+  {
+    "character": "修",
+    "id": 225
+  },
+  {
+    "character": "必",
+    "id": 226
+  },
+  {
+    "character": "一",
+    "id": 227
+  },
+  {
+    "character": "二",
+    "id": 228
+  },
+  {
+    "character": "三",
+    "id": 229
+  },
+  {
+    "character": "四",
+    "id": 230
+  },
+  {
+    "character": "五",
+    "id": 231
+  },
+  {
+    "character": "六",
+    "id": 232
+  },
+  {
+    "character": "七",
+    "id": 233
+  },
+  {
+    "character": "八",
+    "id": 234
+  },
+  {
+    "character": "九",
+    "id": 235
+  },
+  {
+    "character": "十",
+    "id": 236
+  },
+  {
+    "character": "百",
+    "id": 237
+  },
+  {
+    "character": "千",
+    "id": 238
+  },
+  {
+    "character": "万",
+    "id": 239
+  },
+  {
+    "character": "零",
+    "id": 240
+  },
+  {
+    "character": "年",
+    "id": 241
+  },
+  {
+    "character": "月",
+    "id": 242
+  },
+  {
+    "character": "份",
+    "id": 243
+  },
+  {
+    "character": "周",
+    "id": 244
+  },
+  {
+    "character": "星",
+    "id": 245
+  },
+  {
+    "character": "期",
+    "id": 246
+  },
+  {
+    "character": "时",
+    "id": 247
+  },
+  {
+    "character": "分",
+    "id": 248
+  },
+  {
+    "character": "秒",
+    "id": 249
+  },
+  {
+    "character": "上",
+    "id": 250
+  },
+  {
+    "character": "中",
+    "id": 251
+  },
+  {
+    "character": "晚",
+    "id": 252
+  },
+  {
+    "character": "早",
+    "id": 253
+  },
+  {
+    "character": "自",
+    "id": 254
+  },
+  {
+    "character": "会",
+    "id": 255
+  },
+  {
+    "character": "议",
+    "id": 256
+  },
+  {
+    "character": "培",
+    "id": 257
+  },
+  {
+    "character": "训",
+    "id": 258
+  },
+  {
+    "character": "讲",
+    "id": 259
+  },
+  {
+    "character": "座",
+    "id": 260
+  },
+  {
+    "character": "活",
+    "id": 261
+  },
+  {
+    "character": "动",
+    "id": 262
+  },
+  {
+    "character": "考",
+    "id": 263
+  },
+  {
+    "character": "试",
+    "id": 264
+  },
+  {
+    "character": "始",
+    "id": 265
+  },
+  {
+    "character": "结",
+    "id": 266
+  },
+  {
+    "character": "束",
+    "id": 267
+  },
+  {
+    "character": "调",
+    "id": 268
+  },
+  {
+    "character": "停",
+    "id": 269
+  },
+  {
+    "character": "补",
+    "id": 270
+  },
+  {
+    "character": "间",
+    "id": 271
+  },
+  {
+    "character": "联",
+    "id": 272
+  },
+  {
+    "character": "话",
+    "id": 273
+  },
+  {
+    "character": "负",
+    "id": 274
+  },
+  {
+    "character": "责",
+    "id": 275
+  },
+  {
+    "character": "值",
+    "id": 276
+  },
+  {
+    "character": "班",
+    "id": 277
+  },
+  {
+    "character": "号",
+    "id": 278
+  },
+  {
+    "character": "栋",
+    "id": 279
+  },
+  {
+    "character": "层",
+    "id": 280
+  },
+  {
+    "character": "门",
+    "id": 281
+  },
+  {
+    "character": "窗",
+    "id": 282
+  },
+  {
+    "character": "桌",
+    "id": 283
+  },
+  {
+    "character": "椅",
+    "id": 284
+  },
+  {
+    "character": "照",
+    "id": 285
+  },
+  {
+    "character": "空",
+    "id": 286
+  },
+  {
+    "character": "水",
+    "id": 287
+  },
+  {
+    "character": "源",
+    "id": 288
+  },
+  {
+    "character": "设",
+    "id": 289
+  },
+  {
+    "character": "备",
+    "id": 290
+  },
+  {
+    "character": "仪",
+    "id": 291
+  },
+  {
+    "character": "器",
+    "id": 292
+  },
+  {
+    "character": "表",
+    "id": 293
+  },
+  {
+    "character": "规",
+    "id": 294
+  },
+  {
+    "character": "先",
+    "id": 295
+  },
+  {
+    "character": "检",
+    "id": 296
+  },
+  {
+    "character": "查",
+    "id": 297
+  },
+  {
+    "character": "再",
+    "id": 298
+  },
+  {
+    "character": "启",
+    "id": 299
+  },
+  {
+    "character": "关",
+    "id": 300
+  },
+  {
+    "character": "断",
+    "id": 301
+  },
+  {
+    "character": "清",
+    "id": 302
+  },
+  {
+    "character": "洁",
+    "id": 303
+  },
+  {
+    "character": "卫",
+    "id": 304
+  },
+  {
+    "character": "借",
+    "id": 305
+  },
+  {
+    "character": "还",
+    "id": 306
+  },
+  {
+    "character": "登",
+    "id": 307
+  },
+  {
+    "character": "记",
+    "id": 308
+  },
+  {
+    "character": "佩",
+    "id": 309
+  },
+  {
+    "character": "戴",
+    "id": 310
+  },
+  {
+    "character": "护",
+    "id": 311
+  },
+  {
+    "character": "目",
+    "id": 312
+  },
+  {
+    "character": "镜",
+    "id": 313
+  },
+  {
+    "character": "手",
+    "id": 314
+  },
+  {
+    "character": "套",
+    "id": 315
+  },
+  {
+    "character": "罩",
+    "id": 316
+  },
+  {
+    "character": "不",
+    "id": 317
+  },
+  {
+    "character": "得",
+    "id": 318
+  },
+  {
+    "character": "饮",
+    "id": 319
+  },
+  {
+    "character": "食",
+    "id": 320
+  },
+  {
+    "character": "吸",
+    "id": 321
+  },
+  {
+    "character": "烟",
+    "id": 322
+  },
+  {
+    "character": "携",
+    "id": 323
+  },
+  {
+    "character": "带",
+    "id": 324
+  },
+  {
+    "character": "危",
+    "id": 325
+  },
+  {
+    "character": "险",
+    "id": 326
+  },
+  {
+    "character": "品",
+    "id": 327
+  },
+  {
+    "character": "湿",
+    "id": 328
+  },
+  {
+    "character": "触",
+    "id": 329
+  },
+  {
+    "character": "碰",
+    "id": 330
+  },
+  {
+    "character": "插",
+    "id": 331
+  },
+  {
+    "character": "现",
+    "id": 332
+  },
+  {
+    "character": "异",
+    "id": 333
+  },
+  {
+    "character": "常",
+    "id": 334
+  },
+  {
+    "character": "立",
+    "id": 335
+  },
+  {
+    "character": "即",
+    "id": 336
+  },
+  {
+    "character": "报",
+    "id": 337
+  },
+  {
+    "character": "告",
+    "id": 338
+  },
+  {
+    "character": "维",
+    "id": 339
+  },
+  {
+    "character": "故",
+    "id": 340
+  },
+  {
+    "character": "障",
+    "id": 341
+  },
+  {
+    "character": "处",
+    "id": 342
+  },
+  {
+    "character": "热",
+    "id": 343
+  },
+  {
+    "character": "高",
+    "id": 344
+  },
+  {
+    "character": "压",
+    "id": 345
+  },
+  {
+    "character": "低",
+    "id": 346
+  },
+  {
+    "character": "温",
+    "id": 347
+  },
+  {
+    "character": "锋",
+    "id": 348
+  },
+  {
+    "character": "利",
+    "id": 349
+  },
+  {
+    "character": "易",
+    "id": 350
+  },
+  {
+    "character": "燃",
+    "id": 351
+  },
+  {
+    "character": "爆",
+    "id": 352
+  },
+  {
+    "character": "炸",
+    "id": 353
+  },
+  {
+    "character": "毒",
+    "id": 354
+  },
+  {
+    "character": "性",
+    "id": 355
+  },
+  {
+    "character": "腐",
+    "id": 356
+  },
+  {
+    "character": "蚀",
+    "id": 357
+  },
+  {
+    "character": "措",
+    "id": 358
+  },
+  {
+    "character": "施",
+    "id": 359
+  },
+  {
+    "character": "垃",
+    "id": 360
+  },
+  {
+    "character": "圾",
+    "id": 361
+  },
+  {
+    "character": "类",
+    "id": 362
+  },
+  {
+    "character": "节",
+    "id": 363
+  },
+  {
+    "character": "约",
+    "id": 364
+  },
+  {
+    "character": "资",
+    "id": 365
+  },
+  {
+    "character": "爱",
+    "id": 366
+  },
+  {
+    "character": "公",
+    "id": 367
+  },
+  {
+    "character": "共",
+    "id": 368
+  },
+  {
+    "character": "财",
+    "id": 369
+  },
+  {
+    "character": "图",
+    "id": 370
+  },
+  {
+    "character": "书",
+    "id": 371
+  },
+  {
+    "character": "馆",
+    "id": 372
+  },
+  {
+    "character": "堂",
+    "id": 373
+  },
+  {
+    "character": "宿",
+    "id": 374
+  },
+  {
+    "character": "舍",
+    "id": 375
+  },
+  {
+    "character": "走",
+    "id": 376
+  },
+  {
+    "character": "廊",
+    "id": 377
+  },
+  {
+    "character": "厅",
+    "id": 378
+  },
+  {
+    "character": "入",
+    "id": 379
+  },
+  {
+    "character": "右",
+    "id": 380
+  },
+  {
+    "character": "左",
+    "id": 381
+  },
+  {
+    "character": "直",
+    "id": 382
+  },
+  {
+    "character": "转",
+    "id": 383
+  },
+  {
+    "character": "弯",
+    "id": 384
+  },
+  {
+    "character": "紧",
+    "id": 385
+  },
+  {
+    "character": "救",
+    "id": 386
+  },
+  {
+    "character": "援",
+    "id": 387
+  },
+  {
+    "character": "警",
+    "id": 388
+  },
+  {
+    "character": "火",
+    "id": 389
+  },
+  {
+    "character": "灾",
+    "id": 390
+  },
+  {
+    "character": "震",
+    "id": 391
+  },
+  {
+    "character": "洪",
+    "id": 392
+  },
+  {
+    "character": "雷",
+    "id": 393
+  },
+  {
+    "character": "雨",
+    "id": 394
+  },
+  {
+    "character": "恶",
+    "id": 395
+  },
+  {
+    "character": "劣",
+    "id": 396
+  },
+  {
+    "character": "气",
+    "id": 397
+  },
+  {
+    "character": "避",
+    "id": 398
+  },
+  {
+    "character": "逃",
+    "id": 399
+  },
+  {
+    "character": "道",
+    "id": 400
+  },
+  {
+    "character": "车",
+    "id": 401
+  },
+  {
+    "character": "辆",
+    "id": 402
+  },
+  {
+    "character": "路",
+    "id": 403
+  },
+  {
+    "character": "交",
+    "id": 404
+  },
+  {
+    "character": "慢",
+    "id": 405
+  },
+  {
+    "character": "速",
+    "id": 406
+  },
+  {
+    "character": "谨",
+    "id": 407
+  },
+  {
+    "character": "慎",
+    "id": 408
+  },
+  {
+    "character": "礼",
+    "id": 409
+  },
+  {
+    "character": "让",
+    "id": 410
+  },
+  {
+    "character": "预",
+    "id": 411
+  },
+  {
+    "character": "签",
+    "id": 412
+  },
+  {
+    "character": "到",
+    "id": 413
+  },
+  {
+    "character": "提",
+    "id": 414
+  },
+  {
+    "character": "醒",
+    "id": 415
+  },
+  {
+    "character": "重",
+    "id": 416
+  },
+  {
+    "character": "要",
+    "id": 417
+  },
+  {
+    "character": "最",
+    "id": 418
+  },
+  {
+    "character": "新",
+    "id": 419
+  },
+  {
+    "character": "暂",
+    "id": 420
+  },
+  {
+    "character": "恢",
+    "id": 421
+  },
+  {
+    "character": "复",
+    "id": 422
+  },
+  {
+    "character": "正",
+    "id": 423
+  },
+  {
+    "character": "状",
+    "id": 424
+  },
+  {
+    "character": "态",
+    "id": 425
+  },
+  {
+    "character": "远",
+    "id": 426
+  },
+  {
+    "character": "本",
+    "id": 427
+  },
+  {
+    "character": "亮",
+    "id": 428
+  },
+  {
+    "character": "度",
+    "id": 429
+  },
+  {
+    "character": "对",
+    "id": 430
+  },
+  {
+    "character": "比",
+    "id": 431
+  },
+  {
+    "character": "字",
+    "id": 432
+  },
+  {
+    "character": "幕",
+    "id": 433
+  },
+  {
+    "character": "波",
+    "id": 434
+  },
+  {
+    "character": "形",
+    "id": 435
+  },
+  {
+    "character": "显",
+    "id": 436
+  },
+  {
+    "character": "隐",
+    "id": 437
+  },
+  {
+    "character": "藏",
+    "id": 438
+  },
+  {
+    "character": "参",
+    "id": 439
+  },
+  {
+    "character": "放",
+    "id": 440
+  },
+  {
+    "character": "片",
+    "id": 441
+  },
+  {
+    "character": "声",
+    "id": 442
+  },
+  {
+    "character": "测",
+    "id": 443
+  },
+  {
+    "character": "网",
+    "id": 444
+  },
+  {
+    "character": "连",
+    "id": 445
+  },
+  {
+    "character": "接",
+    "id": 446
+  },
+  {
+    "character": "成",
+    "id": 447
+  },
+  {
+    "character": "功",
+    "id": 448
+  },
+  {
+    "character": "失",
+    "id": 449
+  },
+  {
+    "character": "败",
+    "id": 450
+  },
+  {
+    "character": "更",
+    "id": 451
+  },
+  {
+    "character": "内",
+    "id": 452
+  },
+  {
+    "character": "容",
+    "id": 453
+  },
+  {
+    "character": "确",
+    "id": 454
+  },
+  {
+    "character": "认",
+    "id": 455
+  },
+  {
+    "character": "置",
+    "id": 456
+  },
+  {
+    "character": "存",
+    "id": 457
+  },
+  {
+    "character": "传",
+    "id": 458
+  },
+  {
+    "character": "载",
+    "id": 459
+  },
+  {
+    "character": "区",
+    "id": 460
+  },
+  {
+    "character": "南",
+    "id": 461
+  },
+  {
+    "character": "北",
+    "id": 462
+  },
+  {
+    "character": "东",
+    "id": 463
+  },
+  {
+    "character": "西",
+    "id": 464
+  },
+  {
+    "character": "央",
+    "id": 465
+  },
+  {
+    "character": "编",
+    "id": 466
+  },
+  {
+    "character": "总",
+    "id": 467
+  },
+  {
+    "character": "量",
+    "id": 468
+  },
+  {
+    "character": "剩",
+    "id": 469
+  },
+  {
+    "character": "余",
+    "id": 470
+  },
+  {
+    "character": "闲",
+    "id": 471
+  },
+  {
+    "character": "满",
+    "id": 472
+  },
+  {
+    "character": "闭",
+    "id": 473
+  },
+  {
+    "character": "仅",
+    "id": 474
+  },
+  {
+    "character": "限",
+    "id": 475
+  },
+  {
+    "character": "授",
+    "id": 476
+  },
+  {
+    "character": "权",
+    "id": 477
+  },
+  {
+    "character": "未",
+    "id": 478
+  },
+  {
+    "character": "经",
+    "id": 479
+  },
+  {
+    "character": "许",
+    "id": 480
+  },
+  {
+    "character": "可",
+    "id": 481
+  },
+  {
+    "character": "严",
+    "id": 482
+  },
+  {
+    "character": "擅",
+    "id": 483
+  },
+  {
+    "character": "拆",
+    "id": 484
+  },
+  {
+    "character": "卸",
+    "id": 485
+  },
+  {
+    "character": "移",
+    "id": 486
+  },
+  {
+    "character": "改",
+    "id": 487
+  },
+  {
+    "character": "据",
+    "id": 488
+  },
+  {
+    "character": "件",
+    "id": 489
+  },
+  {
+    "character": "个",
+    "id": 490
+  },
+  {
+    "character": "私",
+    "id": 491
+  },
+  {
+    "character": "账",
+    "id": 492
+  },
+  {
+    "character": "密",
+    "id": 493
+  },
+  {
+    "character": "码",
+    "id": 494
+  },
+  {
+    "character": "络",
+    "id": 495
+  },
+  {
+    "character": "享",
+    "id": 496
+  },
+  {
+    "character": "陌",
+    "id": 497
+  },
+  {
+    "character": "链",
+    "id": 498
+  },
+  {
+    "character": "诈",
+    "id": 499
+  },
+  {
+    "character": "骗",
+    "id": 500
+  },
+  {
+    "character": "惕",
+    "id": 501
+  },
+  {
+    "character": "健",
+    "id": 502
+  },
+  {
+    "character": "康",
+    "id": 503
+  },
+  {
+    "character": "心",
+    "id": 504
+  },
+  {
+    "character": "咨",
+    "id": 505
+  },
+  {
+    "character": "询",
+    "id": 506
+  },
+  {
+    "character": "疫",
+    "id": 507
+  },
+  {
+    "character": "情",
+    "id": 508
+  },
+  {
+    "character": "染",
+    "id": 509
+  },
+  {
+    "character": "洗",
+    "id": 510
+  },
+  {
+    "character": "距",
+    "id": 511
+  },
+  {
+    "character": "惜",
+    "id": 512
+  },
+  {
+    "character": "粮",
+    "id": 513
+  },
+  {
+    "character": "管",
+    "id": 514
+  },
+  {
+    "character": "熄",
+    "id": 515
+  },
+  {
+    "character": "灯",
+    "id": 516
+  },
+  {
+    "character": "访",
+    "id": 517
+  },
+  {
+    "character": "客",
+    "id": 518
+  },
+  {
+    "character": "任",
+    "id": 519
+  },
+  {
+    "character": "支",
+    "id": 520
+  },
+  {
+    "character": "服",
+    "id": 521
+  },
+  {
+    "character": "务",
+    "id": 522
+  },
+  {
+    "character": "帮",
+    "id": 523
+  },
+  {
+    "character": "助",
+    "id": 524
+  },
+  {
+    "character": "反",
+    "id": 525
+  },
+  {
+    "character": "馈",
+    "id": 526
+  },
+  {
+    "character": "见",
+    "id": 527
+  },
+  {
+    "character": "建",
+    "id": 528
+  },
+  {
+    "character": "栏",
+    "id": 529
+  },
+  {
+    "character": "招",
+    "id": 530
+  },
+  {
+    "character": "领",
+    "id": 531
+  },
+  {
+    "character": "寻",
+    "id": 532
+  },
+  {
+    "character": "找",
+    "id": 533
+  },
+  {
+    "character": "奖",
+    "id": 534
+  },
+  {
+    "character": "赛",
+    "id": 535
+  },
+  {
+    "character": "名",
+    "id": 536
+  },
+  {
+    "character": "截",
+    "id": 537
+  },
+  {
+    "character": "绩",
+    "id": 538
+  },
+  {
+    "character": "寒",
+    "id": 539
+  },
+  {
+    "character": "暑",
+    "id": 540
+  },
+  {
+    "character": "假",
+    "id": 541
+  },
+  {
+    "character": "毕",
+    "id": 542
+  },
+  {
+    "character": "业",
+    "id": 543
+  },
+  {
+    "character": "志",
+    "id": 544
+  },
+  {
+    "character": "愿",
+    "id": 545
+  },
+  {
+    "character": "者",
+    "id": 546
+  },
+  {
+    "character": "社",
+    "id": 547
+  },
+  {
+    "character": "团",
+    "id": 548
+  },
+  {
+    "character": "聘",
+    "id": 549
+  },
+  {
+    "character": "践",
+    "id": 550
+  },
+  {
+    "character": "创",
+    "id": 551
+  },
+  {
+    "character": "科",
+    "id": 552
+  },
+  {
+    "character": "研",
+    "id": 553
+  },
+  {
+    "character": "项",
+    "id": 554
+  },
+  {
+    "character": "答",
+    "id": 555
+  },
+  {
+    "character": "辩",
+    "id": 556
+  },
+  {
+    "character": "展",
+    "id": 557
+  },
+  {
+    "character": "评",
+    "id": 558
+  },
+  {
+    "character": "审",
+    "id": 559
+  },
+  {
+    "character": "专",
+    "id": 560
+  },
+  {
+    "character": "组",
+    "id": 561
+  },
+  {
+    "character": "材",
+    "id": 562
+  },
+  {
+    "character": "料",
+    "id": 563
+  },
+  {
+    "character": "档",
+    "id": 564
+  },
+  {
+    "character": "代",
+    "id": 565
+  },
+  {
+    "character": "频",
+    "id": 566
+  },
+  {
+    "character": "华",
+    "id": 567
+  },
+  {
+    "character": "民",
+    "id": 568
+  },
+  {
+    "character": "和",
+    "id": 569
+  },
+  {
+    "character": "国",
+    "id": 570
+  },
+  {
+    "character": "庆",
+    "id": 571
+  },
+  {
+    "character": "劳",
+    "id": 572
+  },
+  {
+    "character": "儿",
+    "id": 573
+  },
+  {
+    "character": "童",
+    "id": 574
+  },
+  {
+    "character": "青",
+    "id": 575
+  },
+  {
+    "character": "元",
+    "id": 576
+  },
+  {
+    "character": "旦",
+    "id": 577
+  },
+  {
+    "character": "春",
+    "id": 578
+  },
+  {
+    "character": "秋",
+    "id": 579
+  },
+  {
+    "character": "端",
+    "id": 580
+  },
+  {
+    "character": "阳",
+    "id": 581
+  },
+  {
+    "character": "贺",
+    "id": 582
+  },
+  {
+    "character": "，",
+    "id": 583
+  },
+  {
+    "character": "。",
+    "id": 584
+  },
+  {
+    "character": "：",
+    "id": 585
+  },
+  {
+    "character": "；",
+    "id": 586
+  },
+  {
+    "character": "！",
+    "id": 587
+  },
+  {
+    "character": "？",
+    "id": 588
+  },
+  {
+    "character": "（",
+    "id": 589
+  },
+  {
+    "character": "）",
+    "id": 590
+  },
+  {
+    "character": "【",
+    "id": 591
+  },
+  {
+    "character": "】",
+    "id": 592
+  },
+  {
+    "character": "、",
+    "id": 593
+  },
+  {
+    "character": "－",
+    "id": 594
+  },
+  {
+    "character": "＋",
+    "id": 595
+  },
+  {
+    "character": "％",
+    "id": 596
+  },
+  {
+    "character": "／",
+    "id": 597
+  }
+]

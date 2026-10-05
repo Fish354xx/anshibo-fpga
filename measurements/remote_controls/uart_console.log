@@ -1,0 +1,99 @@
+# vsim -do {run -all; quit -f} -l C:/Users/Fish/Desktop/111/anshibo_remote_project/sim/uart_console.log -lib C:/Users/Fish/Desktop/111/anshibo_remote_project/sim/work -c tb_uart_console 
+# Loading C:/Users/Fish/Desktop/111/anshibo_remote_project/sim/work.tb_uart_console
+# Loading C:/Users/Fish/Desktop/111/anshibo_remote_project/sim/work.uart_console
+# Loading C:/Users/Fish/Desktop/111/anshibo_remote_project/sim/work.uart_rx_8n1
+# Loading C:/Users/Fish/Desktop/111/anshibo_remote_project/sim/work.uart_tx_8n1
+# Loading C:/Users/Fish/Desktop/111/anshibo_remote_project/sim/work.emergency_mode_ctrl
+# ** Warning: (vsim-3017) C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_uart_console.v(13): [TFMPC] - Too few port connections. Expected 21, found 9.
+# 
+#         Region: /tb_uart_console/dut
+# ** Warning: (vsim-3722) C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'auto_status'.
+# 
+# ** Warning: (vsim-3722) C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'overlay_status'.
+# 
+# ** Warning: (vsim-3722) C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'command_valid'.
+# 
+# ** Warning: (vsim-3722) C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'command_code'.
+# 
+# ** Warning: (vsim-3722) C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'command_value'.
+# 
+# ** Warning: (vsim-3722) C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'overlay_override'.
+# 
+# ** Warning: (vsim-3722) C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'overlay_value'.
+# 
+# ** Warning: (vsim-3722) C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'adjust_override'.
+# 
+# ** Warning: (vsim-3722) C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'adjust_value'.
+# 
+# ** Warning: (vsim-3722) C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'select_override'.
+# 
+# ** Warning: (vsim-3722) C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'select_value'.
+# 
+# ** Warning: (vsim-3722) C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'soft_reset'.
+# 
+# ** Warning: (vsim-3017) C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_uart_console.v(20): [TFMPC] - Too few port connections. Expected 22, found 18.
+# 
+#         Region: /tb_uart_console/ctrl
+# ** Warning: (vsim-3722) C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_uart_console.v(20): [TFMPC] - Missing connection for port 'remote_valid'.
+# 
+# ** Warning: (vsim-3722) C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_uart_console.v(20): [TFMPC] - Missing connection for port 'remote_code'.
+# 
+# ** Warning: (vsim-3722) C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_uart_console.v(20): [TFMPC] - Missing connection for port 'remote_value'.
+# 
+# ** Warning: (vsim-3722) C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_uart_console.v(20): [TFMPC] - Missing connection for port 'auto_play_active'.
+# 
+# run -all 
+# PASS response: PONG
+# 
+# 
+# PASS response: OK NEXT
+# 
+# 
+# PASS response: STATUS D=420C S=1 P=12
+# 
+# 
+# PASS response: STATUS D=1234 S=7 P=AB
+# 
+# 
+# PASS response: ERR NOTREADY
+# 
+# 
+# PASS response: ERR EMERGENCY
+# 
+# 
+# PASS response: ERR ADJUST
+# 
+# 
+# PASS response: ERR BUSY
+# 
+# 
+# PASS response: ERR NOIMAGE
+# 
+# 
+# PASS response: ERR CMD
+# 
+# 
+# PASS response: ERR LINE
+# 
+# 
+# PASS response: ERR LINE
+# 
+# 
+# PASS response: OK NEXT
+# 
+# 
+# PASS response: STATUS D=1234 S=7 P=AB
+# 
+# 
+# PASS response: ERR BUSY
+# 
+# 
+# PASS response: ERR CMD
+# 
+# 
+# PASS response: OK NEXT
+# 
+# 
+# UART CONSOLE: ALL CHECKS PASSED
+# ** Note: $finish    : C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_uart_console.v(101)
+#    Time: 28815610 ns  Iteration: 1  Instance: /tb_uart_console

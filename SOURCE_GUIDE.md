@@ -20,3 +20,5 @@ VS Code打开本包，TD打开src/td_project/anshibo.al。主要RTL位于src/use
 | src/user_source/constraints_source/timing.sdc | 时序约束 |
 
 按顶层、控制、画面、BMP、音频顺序阅读。.enc.v是加密官方模块，旧test/、rom/备用例程已移除。tools/generate_osd.py会重新生成部分画面代码，修改时应同步考虑生成脚本。
+
+串口扩展：uart_console.v负责接收与发送，SD/sd_card_bmp.v负责切图仲裁；tools/launch_uart.cmd启动电脑控制工具，协议见UART_CONTROL.md。

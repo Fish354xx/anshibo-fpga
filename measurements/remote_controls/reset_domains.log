@@ -1,0 +1,7 @@
+# vsim -do {run -all; quit -f} -l C:/Users/Fish/Desktop/111/anshibo_remote_project/sim/reset_domains.log -lib C:/Users/Fish/Desktop/111/anshibo_remote_project/sim/work -c tb_reset_domains 
+# Loading C:/Users/Fish/Desktop/111/anshibo_remote_project/sim/work.tb_reset_domains
+# Loading C:/Users/Fish/Desktop/111/anshibo_remote_project/sim/work.reset_domain_sync
+# run -all 
+# RESET DOMAINS: ALL CHECKS PASSED
+# ** Note: $finish    : C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_reset_domains.v(21)
+#    Time: 167001 ps  Iteration: 0  Instance: /tb_reset_domains

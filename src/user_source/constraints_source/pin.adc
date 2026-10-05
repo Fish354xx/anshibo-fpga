@@ -66,3 +66,7 @@ set_pin_assignment { subtitle_switch } { LOCATION = C8; IOSTANDARD = LVCMOS33; P
 # HX4S20 SW2=C7, SW3=C6; up=1, down=0.
 set_pin_assignment { adjustment_switch } { LOCATION = C7; IOSTANDARD = LVCMOS33; PULLTYPE = NONE; }
 set_pin_assignment { contrast_switch } { LOCATION = C6; IOSTANDARD = LVCMOS33; PULLTYPE = NONE; }
+
+# HX4S20 manual p11: net RXD is CH340 TXD; net TXD is CH340 RXD.
+set_pin_assignment { uart_rx } { LOCATION = F12; IOSTANDARD = LVCMOS33; PULLTYPE = PULLUP; }
+set_pin_assignment { uart_tx } { LOCATION = D12; IOSTANDARD = LVCMOS33; DRIVESTRENGTH = 8; PULLTYPE = NONE; }

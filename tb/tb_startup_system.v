@@ -3,7 +3,7 @@ module tb_startup_system;
 reg clk=0,rst=1,mem_done=0;always #5 clk=~clk;
 wire req,en,valid;wire [31:0] data;integer count=0;
 sd_card_bmp #(.CLK_FREQ_HZ(100000),.SCAN_MAX_SECTOR(400)) dut(
- .clk(clk),.rst(rst),.adjustment_switch(1'b0),.contrast_switch(1'b0),.key_next(1'b1),.key_auto(1'b1),.key_mode(1'b1),
+ .clk(clk),.rst(rst),.remote_next(1'b0),.next_block_reason(),.adjustment_switch(1'b0),.contrast_switch(1'b0),.key_next(1'b1),.key_auto(1'b1),.key_mode(1'b1),
  .state_code(),.bmp_width(16'd640),.bmp_height(16'd480),.display_valid(valid),
  .o_emergency_mode(),.debug_status(),.picture_settings(),.transition_pending(),
  .transition_black_ready(1'b1),.write_finish_toggle(mem_done),.write_buf_idx(),.disp_buf_idx(),

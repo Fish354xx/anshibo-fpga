@@ -1,0 +1,42 @@
+# vsim -do {run -all; quit -f} -l C:/Users/Fish/Desktop/111/anshibo_remote_project/sim/picture_settings.log -lib C:/Users/Fish/Desktop/111/anshibo_remote_project/sim/work -c tb_picture_settings 
+# Loading C:/Users/Fish/Desktop/111/anshibo_remote_project/sim/work.tb_picture_settings
+# Loading C:/Users/Fish/Desktop/111/anshibo_remote_project/sim/work.picture_key_control
+# Loading C:/Users/Fish/Desktop/111/anshibo_remote_project/sim/work.key_press_debounce
+# Loading C:/Users/Fish/Desktop/111/anshibo_remote_project/sim/work.campus_osd
+# Loading C:/Users/Fish/Desktop/111/anshibo_remote_project/sim/work.picture_transition
+# Loading C:/Users/Fish/Desktop/111/anshibo_remote_project/sim/work.audio_wave_snapshot
+# ** Warning: (vsim-3017) C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_picture_settings.v(12): [TFMPC] - Too few port connections. Expected 14, found 11.
+# 
+#         Region: /tb_picture_settings/keys
+# ** Warning: (vsim-3722) C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_picture_settings.v(12): [TFMPC] - Missing connection for port 'remote_brightness_valid'.
+# 
+# ** Warning: (vsim-3722) C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_picture_settings.v(12): [TFMPC] - Missing connection for port 'remote_contrast_valid'.
+# 
+# ** Warning: (vsim-3722) C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_picture_settings.v(12): [TFMPC] - Missing connection for port 'remote_level'.
+# 
+# run -all 
+# PASS: default levels 2/4 with adjustment off
+# PASS: normal short releases retain next/auto actions
+# PASS: SW2 enables adjustment without toggling auto-play
+# PASS: switch bounce does not disable adjustment
+# PASS: KEY2 increases brightness
+# PASS: KEY4 decreases brightness
+# PASS: SW3 selects contrast without next image
+# PASS: contrast upper limit saturates
+# PASS: contrast lower limit saturates
+# PASS: brightness upper limit saturates
+# PASS: brightness lower limit saturates
+# PASS: emergency ignores adjustment keys
+# PASS: exit emergency restores SW2-selected adjustment
+# PASS: switch change cancels held key release
+# PASS: long KEY4 does not enter adjustment
+# PASS: parameter selection cancels held key
+# PASS: simultaneous keys do not alter parameters
+# PASS: 6400 pixel cases: levels and clipping correct
+# PASS: configured brightness and contrast affect background pixels
+# PASS: mid-frame parameter change waits for next frame
+# PASS: new parameter applied consistently at frame boundary
+# PASS: emergency frame bypasses user brightness and contrast
+# SETTINGS RESULT: ALL CHECKS PASSED
+# ** Note: $finish    : C:/Users/Fish/Desktop/111/anshibo_remote_project/tb/tb_picture_settings.v(109)
+#    Time: 26800 ns  Iteration: 1  Instance: /tb_picture_settings

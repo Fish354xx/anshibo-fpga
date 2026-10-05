@@ -5,6 +5,8 @@
 // 复位：外部rst_n低有效；内部rst_all高有效。各子模块按所在时钟域运行。
 
 module top(
+    input                       uart_rx,        // USB-UART CH340 TXD -> FPGA F12
+    output                      uart_tx,        // FPGA D12 -> CH340 RXD
     input                       clk,
     input                       rst_n,
     input                       key1,           // 手动下一张
@@ -41,16 +43,24 @@ parameter FRAME_PIXELS  = 24'd307200;   // 640*480
 parameter BUF0_ADDR     = 24'd0;
 parameter BUF1_ADDR     = FRAME_PIXELS;
 
+wire sd_card_clk,ext_mem_clk,video_clk,hdmi_5x_clk,audio_mclk;
 wire rst_all;
+wire rst_sd,rst_mem,rst_video,rst_audio,rst_sys,rst_phy;
+reset_domain_sync u_reset_sd(.clk(sd_card_clk),.request(rst_all),.rst(rst_sd));
+reset_domain_sync u_reset_mem(.clk(ext_mem_clk),.request(rst_all),.rst(rst_mem));
+reset_domain_sync u_reset_video(.clk(video_clk),.request(rst_all),.rst(rst_video));
+reset_domain_sync u_reset_audio(.clk(audio_mclk),.request(rst_all),.rst(rst_audio));
+reset_domain_sync u_reset_sys(.clk(clk),.request(rst_all),.rst(rst_sys));
+reset_domain_sync u_reset_phy(.clk(hdmi_5x_clk),.request(rst_all),.rst(rst_phy));
 wire Sdr_init_done;
 wire Sdr_init_ref_vld;
 wire Sdr_busy;
 
-wire sd_card_clk;
-wire ext_mem_clk;
+
+
 wire ext_mem_clk_sft;
-wire video_clk;
-wire hdmi_5x_clk;
+
+
 
 wire hs;
 wire vs;
@@ -70,13 +80,50 @@ wire emergency_picture_loaded;
 wire emergency_audio_enable;
 wire [1:0] read_active_index;
 wire [7:0] picture_settings;
+wire uart_next;
+wire [2:0] uart_next_block_reason;
+wire command_valid,auto_play_active,uart_reset;
+wire [3:0] command_code;
+wire [2:0] command_value;
+wire [9:0] text_glyph,text_read_glyph;
+wire text_ready,text_open,text_active,text_changed,text_frame_start;
+wire [6:0] text_length;
+wire [5:0] text_read_index;
+remote_text_buffer u_remote_text(
+ .write_clk(sd_card_clk),.write_rst(rst_sd),.command_valid(command_valid),
+ .command_code(command_code),.glyph(text_glyph),.ready(text_ready),
+ .transaction_open(text_open),.length(text_length),.video_clk(video_clk),.video_rst(rst_video),
+ .frame_start(text_frame_start),.read_index(text_read_index),
+ .active(text_active),.changed(text_changed),.read_glyph(text_read_glyph));
+wire overlay_override,overlay_value,adjust_override,adjust_value,select_override,select_value;
+wire effective_overlay=overlay_override ? overlay_value : subtitle_switch;
+wire effective_adjust=adjust_override ? adjust_value : adjustment_switch;
+wire effective_select=select_override ? select_value : contrast_switch;
+wire physical_reset;
+reg [7:0] serial_reset_hold;
+always @(posedge sd_card_clk or posedge physical_reset) begin
+    if(physical_reset) serial_reset_hold<=0;
+    else if(uart_reset) serial_reset_hold<=8'hFF;
+    else if(serial_reset_hold!=0) serial_reset_hold<=serial_reset_hold-1'b1;
+end
+// 与TF控制同100MHz域，无需跨域传递命令脉冲。
+uart_console #(.CLK_FREQ_HZ(100_000_000),.BAUD(115200),.EXTENDED_STATUS(1)) u_uart_console(
+    .clk(sd_card_clk),.rst(rst_sd),.rx(uart_rx),.tx(uart_tx),
+    .next_block_reason(uart_next_block_reason),.debug_status(sd_debug_status),
+    .state_code(state_code),.picture_settings(picture_settings),.next_pulse(uart_next),
+    .command_valid(command_valid),.command_code(command_code),.command_value(command_value),
+    .auto_status(auto_play_active),.overlay_status(effective_overlay),.soft_reset(uart_reset),
+    .text_ready(text_ready),.text_open(text_open),.text_length(text_length),.text_glyph(text_glyph),
+    .overlay_override(overlay_override),.overlay_value(overlay_value),
+    .adjust_override(adjust_override),.adjust_value(adjust_value),
+    .select_override(select_override),.select_value(select_value));
 wire transition_pending,transition_black_ready;
 wire sd_card_write_ready;
 reg [19:0] debug_sync0, debug_sync1;
 wire [6:0] debug_seg_count, debug_seg_display, debug_seg_load;
 wire [6:0] debug_seg_flags, debug_seg_mode;
-always @(posedge clk or posedge rst_all) begin
-    if (rst_all) begin
+always @(posedge clk or posedge rst_sys) begin
+    if (rst_sys) begin
         debug_sync0 <= 20'd0;
         debug_sync1 <= 20'd0;
     end else begin
@@ -120,7 +167,7 @@ wire de_0;
 
 // HDMI 1.4b 音频发射相关
 wire        audio_pll_lock;
-wire        audio_mclk;
+
 wire        audio_i2s_bclk;
 wire        audio_i2s_lrck;
 wire        audio_i2s_dout;
@@ -147,7 +194,8 @@ wire [9:0]  tmds_ch2_data;
 wire [9:0]  tmds_clk_data;
 
 // 统一复位：TF 图像链路 + HDMI 音频链路
-assign rst_all = ~rst_n | ~audio_pll_lock;
+assign physical_reset = ~rst_n | ~audio_pll_lock;
+assign rst_all = physical_reset | (serial_reset_hold!=0);
 
 // TF读取、SDRAM访问与视频输出使用独立时钟域
 sys_pll sys_pll_m0(
@@ -176,8 +224,8 @@ PLL_HDMI_AUDIO u_audio_pll(
 );
 
 // mem_clk 域把 write_finish 单拍转成 toggle，供 sd_card_clk 域可靠同步
-always @(posedge ext_mem_clk or posedge rst_all) begin
-    if (rst_all)
+always @(posedge ext_mem_clk or posedge rst_mem) begin
+    if (rst_mem)
         frame_write_toggle_mem <= 1'b0;
     else if (frame_write_finish)
         frame_write_toggle_mem <= ~frame_write_toggle_mem;
@@ -185,18 +233,25 @@ end
 
 // ===================== TF 多图扫描与缓存（双缓冲） =====================
 sd_card_bmp #(
+    .REMOTE_ENABLE     (1),
     .CLK_FREQ_HZ       (100_000_000),
     .SCAN_START_SECTOR (32'd0),
     .SCAN_MAX_SECTOR   (32'd131071),
     .SCAN_TARGET_COUNT (3'd4)
 ) sd_card_bmp_m0(
     .clk               (sd_card_clk),
-    .rst               (rst_all),
+    .rst               (rst_sd),
+    .command_valid     (command_valid),
+    .command_code      (command_code),
+    .command_value     (command_value),
+    .auto_play_active  (auto_play_active),
+    .remote_next       (uart_next),
+    .next_block_reason (uart_next_block_reason),
     .key_next          (key1),
     .key_auto          (key2),
     .key_mode          (key_mode),
-    .adjustment_switch (adjustment_switch),
-    .contrast_switch   (contrast_switch),
+    .adjustment_switch (effective_adjust),
+    .contrast_switch   (effective_select),
     .debug_status      (sd_debug_status),
     .o_emergency_mode  (emergency_mode),
     .o_emergency_loaded(emergency_picture_loaded),
@@ -244,7 +299,7 @@ seg_scan seg_scan_m0(
 // ===================== 原图像时序与帧缓存 =====================
 video_timing_data video_timing_data_m0(
     .video_clk         (video_clk),
-    .rst               (rst_all),
+    .rst               (rst_video),
     .read_req          (video_read_req),
     .read_req_ack      (video_read_req_ack),
     .hs                (hs_0),
@@ -254,7 +309,7 @@ video_timing_data video_timing_data_m0(
 
 video_delay video_delay_m0(
     .video_clk         (video_clk),
-    .rst               (rst_all),
+    .rst               (rst_video),
     .read_en           (video_read_en),
     .read_data         (video_read_data[31:8]),
     .hs                (hs_0),
@@ -269,8 +324,8 @@ video_delay video_delay_m0(
 // 首图提交前黑屏；提交后一直显示当前显示缓冲区内容
 // Transfer the slow display-valid flag into the pixel clock domain before RGB gating.
 reg display_valid_sync0, display_valid_sync1;
-always @(posedge video_clk or posedge rst_all) begin
-    if (rst_all) begin
+always @(posedge video_clk or posedge rst_video) begin
+    if (rst_video) begin
         display_valid_sync0 <= 1'b0;
         display_valid_sync1 <= 1'b0;
     end else begin
@@ -286,7 +341,7 @@ frame_read_write #(
     .FRAME_HEIGHT     (480)
 ) frame_read_write_m0(
     .mem_clk           (ext_mem_clk),
-    .rst               (rst_all),
+    .rst               (rst_mem),
     .Sdr_init_done     (Sdr_init_done),
     .Sdr_init_ref_vld  (Sdr_init_ref_vld),
     .Sdr_busy          (Sdr_busy),
@@ -333,7 +388,7 @@ frame_read_write #(
 sdram U3(
     .Clk               (ext_mem_clk),
     .Clk_sft           (ext_mem_clk_sft),
-    .Rst               (rst_all),
+    .Rst               (rst_mem),
     .Sdr_init_done     (Sdr_init_done),
     .Sdr_init_ref_vld  (Sdr_init_ref_vld),
     .Sdr_busy          (Sdr_busy),
@@ -349,7 +404,7 @@ sdram U3(
 
 // 音频仅在应急图所用缓存实际进入有效视频帧后启动，退出应急及时静音。
 emergency_audio_frame_gate u_emergency_audio_frame_gate(
-    .clk(video_clk),.rst(rst_all),.vs(vs),.de(de),
+    .clk(video_clk),.rst(rst_video),.vs(vs),.de(de),
     .mode_async(emergency_mode),.loaded_async(emergency_picture_loaded),
     .target_index_async(disp_buf_idx),.active_index_async(read_active_index),
     .audio_enable(emergency_audio_enable));
@@ -359,7 +414,7 @@ hdmi_audio_tone_i2s_64fs #(
     .AMP       (24'sd2000000)
 ) u_hdmi_audio_tone_i2s_64fs (
     .I_mclk      (audio_mclk),
-    .I_rst       (rst_all),
+    .I_rst       (rst_audio),
     .I_enable    (emergency_audio_enable),
     .O_i2s_BCLK  (audio_i2s_bclk),
     .O_i2s_LRCK  (audio_i2s_lrck),
@@ -368,7 +423,7 @@ hdmi_audio_tone_i2s_64fs #(
 
 I2S_receiver u_I2S_receiver(
     .I_clk              (video_clk),
-    .I_rst              (rst_all),
+    .I_rst              (rst_video),
     .I_i2s_BCLK         (audio_i2s_bclk),
     .I_i2s_LRCK         (audio_i2s_lrck),
     .I_i2s_DOUT         (audio_i2s_dout),
@@ -381,7 +436,7 @@ audio_arc_calculate #(
     .ACR_N         (6144)
 ) u_audio_arc_calculate (
     .I_clk         (video_clk),
-    .I_rst         (rst_all),
+    .I_rst         (rst_video),
     .I_audio_valid (audio_valid),
     .O_acr_valid   (acr_valid),
     .O_acr_cts     (acr_cts),
@@ -389,17 +444,20 @@ audio_arc_calculate #(
 );
 
 // ===================== RGB/DE 转 AXIS 视频 =====================
-campus_osd u_campus_osd(
-    .clk(video_clk), .rst(rst_all), .in_vs(vs), .in_de(de),
+campus_osd #(.DYNAMIC_TEXT_ENABLE(1)) u_campus_osd(
+    .clk(video_clk), .rst(rst_video), .in_vs(vs), .in_de(de),
     .in_rgb(vout_data), .emergency_async(emergency_mode),
     .transition_pending_async(transition_pending), .transition_black_ready(transition_black_ready),
-    .subtitle_enable_async(subtitle_switch), .settings_async(picture_settings),
+    .subtitle_enable_async(effective_overlay), .settings_async(picture_settings),
+    .dynamic_text_active(text_active),.dynamic_text_changed(text_changed),
+    .dynamic_text_glyph(text_read_glyph),.dynamic_text_index(text_read_index),
+    .dynamic_frame_start(text_frame_start),
     .audio_valid(audio_valid), .audio_sample(audio_left_data),
     .out_vs(osd_vs), .out_de(osd_de), .out_rgb(osd_rgb)
 );
 video_rgb_to_axis_640x480 u_video_rgb_to_axis_640x480(
     .I_clk         (video_clk),
-    .I_rst         (rst_all),
+    .I_rst         (rst_video),
     .I_vs          (osd_vs),
     .I_de          (osd_de),
     .I_rgb         (osd_rgb),
@@ -414,7 +472,7 @@ startup_pulse #(
     .CNT_MAX(20'd100000)
 ) u_startup_pulse (
     .I_clk   (video_clk),
-    .I_rst   (rst_all),
+    .I_rst   (rst_video),
     .O_pulse (edid_trig)
 );
 
@@ -438,7 +496,7 @@ hdmi_1_4b_transmitter_core_wrapper #(
     .IIC_SCL_DIV            ( 250        )
 ) u_hdmi_1_4b_transmitter_core_wrapper(
     .I_pixel_clk        (video_clk),
-    .I_rst              (rst_all),
+    .I_rst              (rst_video),
     .I_edid_read_trig   (edid_trig),
     .O_edid_read_valid  (edid_valid),
     .O_edid_read_data   (edid_data),
@@ -471,7 +529,7 @@ hdmi_phy_wrapper #(
 ) u_hdmi2phy_wrapper(
     .I_pixel_clk        (video_clk),
     .I_serial_clk       (hdmi_5x_clk),
-    .I_rst              (rst_all),
+    .I_rst              (rst_phy),
     .I_tmds_channel_0   (tmds_ch0_data),
     .I_tmds_channel_1   (tmds_ch1_data),
     .I_tmds_channel_2   (tmds_ch2_data),
@@ -513,3 +571,14 @@ always @(posedge clk or posedge rst) begin
     end
 end
 endmodule
+
+// 异步置位、两级同步释放；软件复位不直接跨域解除。
+module reset_domain_sync(input clk,request,output rst);
+reg [1:0] release_pipe;
+always @(posedge clk or posedge request) begin
+ if(request)release_pipe<=2'b11;
+ else release_pipe<={release_pipe[0],1'b0};
+end
+assign rst=release_pipe[1];
+endmodule
+
