@@ -77,6 +77,7 @@ module campus_osd #(
     parameter integer CLK_FREQ_HZ=25000000,
     parameter integer WAVE_ENABLE=1,
     parameter integer DYNAMIC_TEXT_ENABLE=0,
+    parameter integer GRADED_ALERT_ENABLE=0,
     parameter integer SUBTITLE_DEBOUNCE_CYCLES=CLK_FREQ_HZ/50
 )(
     input clk, rst, in_vs, in_de, emergency_async,
@@ -84,6 +85,9 @@ module campus_osd #(
     input [23:0] in_rgb,
     input [7:0] settings_async,
     input dynamic_text_active,dynamic_text_changed,
+    input [1:0] alert_level_async,alert_candidate_async,
+    input alert_select_async,alert_picture_ready,alert_restore_ready,
+    output reg[1:0]alert_audio_level,
     input [9:0] dynamic_text_glyph,
     output [5:0] dynamic_text_index,
     output dynamic_frame_start,
@@ -109,6 +113,34 @@ reg [23:0] frame_time;
 reg [7:0] settings_sync0,settings_sync1,frame_settings;
 wire frame_start= in_vs && !vs_prev;
 assign dynamic_frame_start=frame_start;
+reg[1:0]alert_sync0,alert_sync1,candidate_sync0,candidate_sync1,frame_alert,frame_candidate;
+reg select_sync0,select_sync1,frame_select,alert_first_pixel;
+always @(posedge clk or posedge rst)begin
+ if(rst)begin
+  alert_sync0<=0;alert_sync1<=0;candidate_sync0<=0;candidate_sync1<=0;
+  select_sync0<=0;select_sync1<=0;frame_alert<=0;frame_candidate<=0;frame_select<=0;
+  alert_audio_level<=0;alert_first_pixel<=0;
+ end else begin
+  alert_sync0<=alert_level_async;alert_sync1<=alert_sync0;
+  candidate_sync0<=alert_candidate_async;candidate_sync1<=candidate_sync0;
+  select_sync0<=alert_select_async;select_sync1<=select_sync0;
+  if(frame_start)begin
+   if(!GRADED_ALERT_ENABLE)frame_alert<=0;
+   else if(alert_sync1>=2)begin if(alert_picture_ready)frame_alert<=alert_sync1;end
+   else if(frame_alert<2||alert_restore_ready)frame_alert<=alert_sync1;
+   frame_candidate<=candidate_sync1;frame_select<=GRADED_ALERT_ENABLE&&select_sync1;
+   alert_first_pixel<=1;
+  end else if(in_de&&alert_first_pixel)begin
+   alert_audio_level<=frame_alert;alert_first_pixel<=0;
+  end
+ end
+end
+wire alert_band,alert_text;
+wire[9:0]alert_glyph;wire[3:0]alert_row,alert_col;
+wire[23:0]alert_background,alert_ink;
+alert_overlay_layout u_alert_layout(.x(x),.y(y),.scroll(scroll),.level(frame_alert),
+ .candidate(frame_candidate),.selecting(frame_select),.band(alert_band),.text(alert_text),
+ .glyph(alert_glyph),.row(alert_row),.col(alert_col),.background(alert_background),.ink(alert_ink));
 always @(posedge clk or posedge rst) begin
     if(rst) begin
         subtitle_sync0<=1'b1; subtitle_sync1<=1'b1;
@@ -9984,133 +10016,133 @@ dynamic_font_rom[9564]=16'h0400;
 dynamic_font_rom[9565]=16'h0400;
 dynamic_font_rom[9566]=16'h0000;
 dynamic_font_rom[9567]=16'h0000;
-dynamic_font_rom[9568]=16'h0000;
-dynamic_font_rom[9569]=16'h0000;
-dynamic_font_rom[9570]=16'h0000;
-dynamic_font_rom[9571]=16'h0000;
-dynamic_font_rom[9572]=16'h0000;
-dynamic_font_rom[9573]=16'h0000;
-dynamic_font_rom[9574]=16'h0000;
-dynamic_font_rom[9575]=16'h0000;
-dynamic_font_rom[9576]=16'h0000;
-dynamic_font_rom[9577]=16'h0000;
-dynamic_font_rom[9578]=16'h0000;
-dynamic_font_rom[9579]=16'h0000;
-dynamic_font_rom[9580]=16'h0000;
-dynamic_font_rom[9581]=16'h0000;
-dynamic_font_rom[9582]=16'h0000;
+dynamic_font_rom[9568]=16'h1000;
+dynamic_font_rom[9569]=16'h13F8;
+dynamic_font_rom[9570]=16'h1088;
+dynamic_font_rom[9571]=16'h2688;
+dynamic_font_rom[9572]=16'h6498;
+dynamic_font_rom[9573]=16'h7890;
+dynamic_font_rom[9574]=16'h189C;
+dynamic_font_rom[9575]=16'h10C4;
+dynamic_font_rom[9576]=16'h2CC4;
+dynamic_font_rom[9577]=16'h7968;
+dynamic_font_rom[9578]=16'h0128;
+dynamic_font_rom[9579]=16'h3F10;
+dynamic_font_rom[9580]=16'h6628;
+dynamic_font_rom[9581]=16'h0CC6;
+dynamic_font_rom[9582]=16'h0102;
 dynamic_font_rom[9583]=16'h0000;
-dynamic_font_rom[9584]=16'h0000;
-dynamic_font_rom[9585]=16'h0000;
-dynamic_font_rom[9586]=16'h0000;
-dynamic_font_rom[9587]=16'h0000;
-dynamic_font_rom[9588]=16'h0000;
-dynamic_font_rom[9589]=16'h0000;
-dynamic_font_rom[9590]=16'h0000;
-dynamic_font_rom[9591]=16'h0000;
-dynamic_font_rom[9592]=16'h0000;
-dynamic_font_rom[9593]=16'h0000;
-dynamic_font_rom[9594]=16'h0000;
-dynamic_font_rom[9595]=16'h0000;
-dynamic_font_rom[9596]=16'h0000;
-dynamic_font_rom[9597]=16'h0000;
+dynamic_font_rom[9584]=16'h0048;
+dynamic_font_rom[9585]=16'h004C;
+dynamic_font_rom[9586]=16'h0040;
+dynamic_font_rom[9587]=16'h7FFE;
+dynamic_font_rom[9588]=16'h0040;
+dynamic_font_rom[9589]=16'h1244;
+dynamic_font_rom[9590]=16'h124C;
+dynamic_font_rom[9591]=16'h7FE8;
+dynamic_font_rom[9592]=16'h7FA8;
+dynamic_font_rom[9593]=16'h1238;
+dynamic_font_rom[9594]=16'h1230;
+dynamic_font_rom[9595]=16'h1230;
+dynamic_font_rom[9596]=16'h327A;
+dynamic_font_rom[9597]=16'h61CE;
 dynamic_font_rom[9598]=16'h0000;
 dynamic_font_rom[9599]=16'h0000;
-dynamic_font_rom[9600]=16'h0000;
-dynamic_font_rom[9601]=16'h0000;
-dynamic_font_rom[9602]=16'h0000;
-dynamic_font_rom[9603]=16'h0000;
-dynamic_font_rom[9604]=16'h0000;
-dynamic_font_rom[9605]=16'h0000;
-dynamic_font_rom[9606]=16'h0000;
-dynamic_font_rom[9607]=16'h0000;
-dynamic_font_rom[9608]=16'h0000;
-dynamic_font_rom[9609]=16'h0000;
-dynamic_font_rom[9610]=16'h0000;
-dynamic_font_rom[9611]=16'h0000;
-dynamic_font_rom[9612]=16'h0000;
-dynamic_font_rom[9613]=16'h0000;
-dynamic_font_rom[9614]=16'h0000;
+dynamic_font_rom[9600]=16'h000C;
+dynamic_font_rom[9601]=16'h3F8C;
+dynamic_font_rom[9602]=16'h018C;
+dynamic_font_rom[9603]=16'h018C;
+dynamic_font_rom[9604]=16'h3F8C;
+dynamic_font_rom[9605]=16'h200C;
+dynamic_font_rom[9606]=16'h200C;
+dynamic_font_rom[9607]=16'h200C;
+dynamic_font_rom[9608]=16'h3F8C;
+dynamic_font_rom[9609]=16'h018C;
+dynamic_font_rom[9610]=16'h010C;
+dynamic_font_rom[9611]=16'h010C;
+dynamic_font_rom[9612]=16'h010C;
+dynamic_font_rom[9613]=16'h0F0C;
+dynamic_font_rom[9614]=16'h0800;
 dynamic_font_rom[9615]=16'h0000;
-dynamic_font_rom[9616]=16'h0000;
-dynamic_font_rom[9617]=16'h0000;
-dynamic_font_rom[9618]=16'h0000;
-dynamic_font_rom[9619]=16'h0000;
-dynamic_font_rom[9620]=16'h0000;
-dynamic_font_rom[9621]=16'h0000;
-dynamic_font_rom[9622]=16'h0000;
-dynamic_font_rom[9623]=16'h0000;
-dynamic_font_rom[9624]=16'h0000;
-dynamic_font_rom[9625]=16'h0000;
-dynamic_font_rom[9626]=16'h0000;
-dynamic_font_rom[9627]=16'h0000;
-dynamic_font_rom[9628]=16'h0000;
-dynamic_font_rom[9629]=16'h0000;
+dynamic_font_rom[9616]=16'h1060;
+dynamic_font_rom[9617]=16'h1020;
+dynamic_font_rom[9618]=16'h13FE;
+dynamic_font_rom[9619]=16'h7B02;
+dynamic_font_rom[9620]=16'h1362;
+dynamic_font_rom[9621]=16'h1040;
+dynamic_font_rom[9622]=16'h1040;
+dynamic_font_rom[9623]=16'h1FFE;
+dynamic_font_rom[9624]=16'h7088;
+dynamic_font_rom[9625]=16'h5188;
+dynamic_font_rom[9626]=16'h11D0;
+dynamic_font_rom[9627]=16'h1070;
+dynamic_font_rom[9628]=16'h107C;
+dynamic_font_rom[9629]=16'h3786;
 dynamic_font_rom[9630]=16'h0000;
 dynamic_font_rom[9631]=16'h0000;
-dynamic_font_rom[9632]=16'h0000;
-dynamic_font_rom[9633]=16'h0000;
-dynamic_font_rom[9634]=16'h0000;
-dynamic_font_rom[9635]=16'h0000;
-dynamic_font_rom[9636]=16'h0000;
-dynamic_font_rom[9637]=16'h0000;
-dynamic_font_rom[9638]=16'h0000;
-dynamic_font_rom[9639]=16'h0000;
-dynamic_font_rom[9640]=16'h0000;
-dynamic_font_rom[9641]=16'h0000;
-dynamic_font_rom[9642]=16'h0000;
-dynamic_font_rom[9643]=16'h0000;
-dynamic_font_rom[9644]=16'h0000;
-dynamic_font_rom[9645]=16'h0000;
-dynamic_font_rom[9646]=16'h0000;
+dynamic_font_rom[9632]=16'h0860;
+dynamic_font_rom[9633]=16'h1860;
+dynamic_font_rom[9634]=16'h13FC;
+dynamic_font_rom[9635]=16'h2060;
+dynamic_font_rom[9636]=16'h4C60;
+dynamic_font_rom[9637]=16'h0BFE;
+dynamic_font_rom[9638]=16'h1008;
+dynamic_font_rom[9639]=16'h3008;
+dynamic_font_rom[9640]=16'h77FE;
+dynamic_font_rom[9641]=16'h5008;
+dynamic_font_rom[9642]=16'h1188;
+dynamic_font_rom[9643]=16'h1088;
+dynamic_font_rom[9644]=16'h1018;
+dynamic_font_rom[9645]=16'h1038;
+dynamic_font_rom[9646]=16'h1000;
 dynamic_font_rom[9647]=16'h0000;
-dynamic_font_rom[9648]=16'h0000;
-dynamic_font_rom[9649]=16'h0000;
-dynamic_font_rom[9650]=16'h0000;
-dynamic_font_rom[9651]=16'h0000;
-dynamic_font_rom[9652]=16'h0000;
-dynamic_font_rom[9653]=16'h0000;
-dynamic_font_rom[9654]=16'h0000;
-dynamic_font_rom[9655]=16'h0000;
-dynamic_font_rom[9656]=16'h0000;
-dynamic_font_rom[9657]=16'h0000;
-dynamic_font_rom[9658]=16'h0000;
-dynamic_font_rom[9659]=16'h0000;
-dynamic_font_rom[9660]=16'h0000;
-dynamic_font_rom[9661]=16'h0000;
-dynamic_font_rom[9662]=16'h0000;
+dynamic_font_rom[9648]=16'h1800;
+dynamic_font_rom[9649]=16'h10FE;
+dynamic_font_rom[9650]=16'h3E22;
+dynamic_font_rom[9651]=16'h6426;
+dynamic_font_rom[9652]=16'h7F4C;
+dynamic_font_rom[9653]=16'h2D48;
+dynamic_font_rom[9654]=16'h3F18;
+dynamic_font_rom[9655]=16'h2D58;
+dynamic_font_rom[9656]=16'h2D7E;
+dynamic_font_rom[9657]=16'h3F18;
+dynamic_font_rom[9658]=16'h2DFE;
+dynamic_font_rom[9659]=16'h2D18;
+dynamic_font_rom[9660]=16'h6D18;
+dynamic_font_rom[9661]=16'h4318;
+dynamic_font_rom[9662]=16'h0018;
 dynamic_font_rom[9663]=16'h0000;
-dynamic_font_rom[9664]=16'h0000;
-dynamic_font_rom[9665]=16'h0000;
-dynamic_font_rom[9666]=16'h0000;
-dynamic_font_rom[9667]=16'h0000;
-dynamic_font_rom[9668]=16'h0000;
-dynamic_font_rom[9669]=16'h0000;
-dynamic_font_rom[9670]=16'h0000;
-dynamic_font_rom[9671]=16'h0000;
-dynamic_font_rom[9672]=16'h0000;
-dynamic_font_rom[9673]=16'h0000;
-dynamic_font_rom[9674]=16'h0000;
-dynamic_font_rom[9675]=16'h0000;
-dynamic_font_rom[9676]=16'h0000;
-dynamic_font_rom[9677]=16'h0000;
-dynamic_font_rom[9678]=16'h0000;
+dynamic_font_rom[9664]=16'h0060;
+dynamic_font_rom[9665]=16'h7C60;
+dynamic_font_rom[9666]=16'h64D0;
+dynamic_font_rom[9667]=16'h6898;
+dynamic_font_rom[9668]=16'h690E;
+dynamic_font_rom[9669]=16'h7EFA;
+dynamic_font_rom[9670]=16'h6820;
+dynamic_font_rom[9671]=16'h6C20;
+dynamic_font_rom[9672]=16'h67FC;
+dynamic_font_rom[9673]=16'h6420;
+dynamic_font_rom[9674]=16'h79A8;
+dynamic_font_rom[9675]=16'h612C;
+dynamic_font_rom[9676]=16'h6226;
+dynamic_font_rom[9677]=16'h60E0;
+dynamic_font_rom[9678]=16'h6000;
 dynamic_font_rom[9679]=16'h0000;
-dynamic_font_rom[9680]=16'h0000;
-dynamic_font_rom[9681]=16'h0000;
-dynamic_font_rom[9682]=16'h0000;
-dynamic_font_rom[9683]=16'h0000;
-dynamic_font_rom[9684]=16'h0000;
-dynamic_font_rom[9685]=16'h0000;
-dynamic_font_rom[9686]=16'h0000;
-dynamic_font_rom[9687]=16'h0000;
-dynamic_font_rom[9688]=16'h0000;
-dynamic_font_rom[9689]=16'h0000;
-dynamic_font_rom[9690]=16'h0000;
-dynamic_font_rom[9691]=16'h0000;
-dynamic_font_rom[9692]=16'h0000;
-dynamic_font_rom[9693]=16'h0000;
-dynamic_font_rom[9694]=16'h0000;
+dynamic_font_rom[9680]=16'h11FC;
+dynamic_font_rom[9681]=16'h118C;
+dynamic_font_rom[9682]=16'h1088;
+dynamic_font_rom[9683]=16'h7CD0;
+dynamic_font_rom[9684]=16'h1060;
+dynamic_font_rom[9685]=16'h11DE;
+dynamic_font_rom[9686]=16'h1B66;
+dynamic_font_rom[9687]=16'h7020;
+dynamic_font_rom[9688]=16'h53FC;
+dynamic_font_rom[9689]=16'h1020;
+dynamic_font_rom[9690]=16'h1020;
+dynamic_font_rom[9691]=16'h17FE;
+dynamic_font_rom[9692]=16'h1020;
+dynamic_font_rom[9693]=16'h7020;
+dynamic_font_rom[9694]=16'h0060;
 dynamic_font_rom[9695]=16'h0000;
 dynamic_font_rom[9696]=16'h0000;
 dynamic_font_rom[9697]=16'h0000;
@@ -17891,6 +17923,8 @@ reg [3:0] column_d;
 reg band_d,text_d,mode_d,de_d,vs_d;
 reg [23:0] rgb_d;
 reg wave_band_d,wave_border_d,wave_grid_d,wave_join_d;
+reg alert_band_d;
+reg[23:0]alert_background_d,alert_ink_d;
 reg [9:0] wave_pixel_y;
 function [7:0] correct_channel;
 input [7:0] channel;
@@ -17928,9 +17962,13 @@ always @(posedge clk or posedge rst) begin
         column_d<=0; band_d<=0; text_d<=0; mode_d<=0;
         de_d<=0; vs_d<=0; rgb_d<=0;
         wave_band_d<=0;wave_border_d<=0;wave_grid_d<=0;wave_join_d<=0;wave_pixel_y<=0;
+        alert_band_d<=0;alert_background_d<=0;alert_ink_d<=0;
     end else begin
-        column_d<=glyph_col; band_d<=frame_subtitle && (header_band || parameter_band || ticker_band);
-        text_d<=frame_subtitle && (header_text || parameter_text || ticker_text || wave_label_text); mode_d<=frame_mode;
+        column_d<=(GRADED_ALERT_ENABLE&&alert_band)?alert_col:glyph_col;
+        band_d<=frame_subtitle && (header_band || parameter_band || ticker_band);
+        text_d<=(GRADED_ALERT_ENABLE&&alert_band)?alert_text:
+         frame_subtitle && (header_text || parameter_text || ticker_text || wave_label_text); mode_d<=frame_mode;
+        alert_band_d<=GRADED_ALERT_ENABLE&&alert_band;alert_background_d<=alert_background;alert_ink_d<=alert_ink;
         de_d<=in_de; vs_d<=in_vs; rgb_d<=corrected_rgb;
         wave_band_d<=frame_subtitle && wave_band;wave_border_d<=frame_subtitle && wave_border;wave_grid_d<=frame_subtitle && wave_grid;
         wave_join_d<=(wave_x[1:0]==0);wave_pixel_y<=y;
@@ -17942,8 +17980,8 @@ reg [15:0] dynamic_bits,static_bits;
 reg dynamic_d;
 always @(posedge clk)begin
  static_bits<=glyph_rom[{glyph_id,glyph_row}];
- dynamic_bits<=dynamic_font_rom[{dynamic_text_glyph,glyph_row}];
- dynamic_d<=use_dynamic;
+ dynamic_bits<=dynamic_font_rom[(GRADED_ALERT_ENABLE&&alert_band)?{alert_glyph,alert_row}:{dynamic_text_glyph,glyph_row}];
+ dynamic_d<=use_dynamic || (GRADED_ALERT_ENABLE&&alert_band);
 end
 always @(*)glyph_bits=dynamic_d?dynamic_bits:static_bits;
 wire ink=text_d && glyph_bits[15-column_d];
@@ -17962,7 +18000,8 @@ wire [8:0] wave_low=(wave_y<wave_prev_y)?wave_y:wave_prev_y;
 wire [8:0] wave_high=(wave_y>wave_prev_y)?wave_y:wave_prev_y;
 wire wave_ink=wave_band_d && (wave_join_d ? (wave_pixel_y>=wave_low && wave_pixel_y<=wave_high) :
     (wave_pixel_y+1>=wave_y && wave_pixel_y<=wave_y+1));
-assign out_rgb= !de_d ? 24'd0 : ink ? (mode_d?24'hFFD060:24'hFFFFFF) :
+assign out_rgb= !de_d ? 24'd0 : alert_band_d ? (ink?alert_ink_d:alert_background_d) :
+    ink ? (mode_d?24'hFFD060:24'hFFFFFF) :
     wave_ink ? (mode_d?24'hFFD060:24'h00FFD0) : wave_border_d ? 24'h80A0B0 :
     wave_grid_d ? 24'h304850 : (band_d || wave_band_d) ? shaded : faded_rgb;
 endmodule
@@ -18047,3 +18086,215 @@ always @(posedge clk or posedge rst) begin
     end
 end
 endmodule
+
+// ALERT_OVERLAY_BEGIN
+module alert_overlay_layout(input [9:0]x,y,scroll,input[1:0]level,candidate,
+input selecting,output reg band,text,output reg[9:0]glyph,output reg[3:0]row,col,
+output reg[23:0]background,ink);
+function[9:0]reminder;input[5:0]i;begin case(i)
+0:reminder=10'd227;
+1:reminder=10'd598;
+2:reminder=10'd414;
+3:reminder=10'd415;
+4:reminder=10'd585;
+5:reminder=10'd110;
+6:reminder=10'd300;
+7:reminder=10'd124;
+8:reminder=10'd128;
+9:reminder=10'd129;
+10:reminder=10'd130;
+11:reminder=10'd131;
+default:reminder=0;endcase end endfunction
+function[9:0]warning_title;input[5:0]i;begin case(i)
+0:warning_title=10'd228;
+1:warning_title=10'd598;
+2:warning_title=10'd388;
+3:warning_title=10'd599;
+default:warning_title=0;endcase end endfunction
+function[9:0]critical_title;input[5:0]i;begin case(i)
+0:critical_title=10'd229;
+1:critical_title=10'd598;
+2:critical_title=10'd385;
+3:critical_title=10'd142;
+default:critical_title=0;endcase end endfunction
+function[9:0]warning_action1;input[5:0]i;begin case(i)
+0:warning_action1=10'd110;
+1:warning_action1=10'd420;
+2:warning_action1=10'd269;
+3:warning_action1=10'd137;
+4:warning_action1=10'd118;
+5:warning_action1=10'd261;
+6:warning_action1=10'd262;
+default:warning_action1=0;endcase end endfunction
+function[9:0]warning_action2;input[5:0]i;begin case(i)
+0:warning_action2=10'd165;
+1:warning_action2=10'd166;
+2:warning_action2=10'd332;
+3:warning_action2=10'd121;
+4:warning_action2=10'd169;
+5:warning_action2=10'd170;
+6:warning_action2=10'd171;
+7:warning_action2=10'd172;
+8:warning_action2=10'd160;
+9:warning_action2=10'd600;
+default:warning_action2=0;endcase end endfunction
+function[9:0]warning_action3;input[5:0]i;begin case(i)
+0:warning_action3=10'd124;
+1:warning_action3=10'd125;
+2:warning_action3=10'd130;
+3:warning_action3=10'd105;
+4:warning_action3=10'd126;
+5:warning_action3=10'd127;
+default:warning_action3=0;endcase end endfunction
+function[9:0]critical_action;input[5:0]i;begin case(i)
+0:critical_action=10'd110;
+1:critical_action=10'd601;
+2:critical_action=10'd143;
+3:critical_action=10'd144;
+4:critical_action=10'd160;
+5:critical_action=10'd600;
+6:critical_action=10'd113;
+7:critical_action=10'd114;
+8:critical_action=10'd115;
+9:critical_action=10'd116;
+default:critical_action=0;endcase end endfunction
+function[9:0]warning_ticker;input[5:0]i;begin case(i)
+0:warning_ticker=10'd228;
+1:warning_ticker=10'd598;
+2:warning_ticker=10'd388;
+3:warning_ticker=10'd599;
+4:warning_ticker=10'd0;
+5:warning_ticker=10'd0;
+6:warning_ticker=10'd110;
+7:warning_ticker=10'd420;
+8:warning_ticker=10'd269;
+9:warning_ticker=10'd137;
+10:warning_ticker=10'd118;
+11:warning_ticker=10'd261;
+12:warning_ticker=10'd262;
+13:warning_ticker=10'd583;
+14:warning_ticker=10'd165;
+15:warning_ticker=10'd166;
+16:warning_ticker=10'd332;
+17:warning_ticker=10'd121;
+18:warning_ticker=10'd169;
+19:warning_ticker=10'd170;
+20:warning_ticker=10'd171;
+21:warning_ticker=10'd172;
+22:warning_ticker=10'd160;
+23:warning_ticker=10'd600;
+24:warning_ticker=10'd0;
+25:warning_ticker=10'd0;
+default:warning_ticker=0;endcase end endfunction
+function[9:0]critical_ticker;input[5:0]i;begin case(i)
+0:critical_ticker=10'd229;
+1:critical_ticker=10'd598;
+2:critical_ticker=10'd385;
+3:critical_ticker=10'd142;
+4:critical_ticker=10'd0;
+5:critical_ticker=10'd0;
+6:critical_ticker=10'd110;
+7:critical_ticker=10'd145;
+8:critical_ticker=10'd146;
+9:critical_ticker=10'd147;
+10:critical_ticker=10'd148;
+11:critical_ticker=10'd583;
+12:critical_ticker=10'd601;
+13:critical_ticker=10'd143;
+14:critical_ticker=10'd144;
+15:critical_ticker=10'd160;
+16:critical_ticker=10'd600;
+17:critical_ticker=10'd113;
+18:critical_ticker=10'd114;
+19:critical_ticker=10'd115;
+20:critical_ticker=10'd116;
+21:critical_ticker=10'd583;
+22:critical_ticker=10'd149;
+23:critical_ticker=10'd150;
+24:critical_ticker=10'd151;
+25:critical_ticker=10'd152;
+26:critical_ticker=10'd153;
+27:critical_ticker=10'd154;
+28:critical_ticker=10'd0;
+29:critical_ticker=10'd0;
+default:critical_ticker=0;endcase end endfunction
+function[9:0]select0;input[5:0]i;begin case(i)
+0:select0=10'd602;
+1:select0=10'd454;
+2:select0=10'd455;
+3:select0=10'd585;
+4:select0=10'd603;
+5:select0=10'd604;
+6:select0=10'd427;
+7:select0=10'd215;
+8:select0=10'd411;
+9:select0=10'd388;
+default:select0=0;endcase end endfunction
+function[9:0]select1;input[5:0]i;begin case(i)
+0:select1=10'd602;
+1:select1=10'd454;
+2:select1=10'd455;
+3:select1=10'd585;
+4:select1=10'd227;
+5:select1=10'd598;
+6:select1=10'd414;
+7:select1=10'd415;
+default:select1=0;endcase end endfunction
+function[9:0]select2;input[5:0]i;begin case(i)
+0:select2=10'd602;
+1:select2=10'd454;
+2:select2=10'd455;
+3:select2=10'd585;
+4:select2=10'd228;
+5:select2=10'd598;
+6:select2=10'd388;
+7:select2=10'd599;
+default:select2=0;endcase end endfunction
+function[9:0]select3;input[5:0]i;begin case(i)
+0:select3=10'd602;
+1:select3=10'd454;
+2:select3=10'd455;
+3:select3=10'd585;
+4:select3=10'd229;
+5:select3=10'd598;
+6:select3=10'd385;
+7:select3=10'd142;
+default:select3=0;endcase end endfunction
+function[9:0]help;input[5:0]i;begin case(i)
+0:help=10'd43;
+1:help=10'd37;
+2:help=10'd57;
+3:help=10'd18;
+4:help=10'd224;
+5:help=10'd605;
+6:help=10'd0;
+7:help=10'd0;
+8:help=10'd43;
+9:help=10'd37;
+10:help=10'd57;
+11:help=10'd19;
+12:help=10'd454;
+13:help=10'd455;
+default:help=0;endcase end endfunction
+wire[9:0]tx=x+scroll;
+always @(*)begin
+band=0;text=0;glyph=0;row=0;col=0;background=24'hFFC040;ink=24'h182838;
+if(level==1&&y>=416&&y<440)begin band=1;
+if(y>=420&&y<436&&x>=16)begin text=1;row=y-420;col=(x-16)&15;glyph=reminder((x-16)>>4);end end
+if(level==2)begin band=1;background=24'h182838;ink=24'hFFF4D0;
+if(x>=96&&y>=96&&y<128)begin text=1;row=(y-96)>>1;col=((x-96)>>1)&15;glyph=warning_title((x-96)>>5);end
+if(x>=96&&y>=180&&y<196)begin text=1;row=y-180;col=(x-96)&15;glyph=warning_action1((x-96)>>4);end
+if(x>=96&&y>=224&&y<240)begin text=1;row=y-224;col=(x-96)&15;glyph=warning_action2((x-96)>>4);end
+if(x>=96&&y>=268&&y<284)begin text=1;row=y-268;col=(x-96)&15;glyph=warning_action3((x-96)>>4);end
+if(y>=80&&y<144)begin background=24'hFFC040;ink=24'h182838;end end
+if(level==3&&y>=80&&y<144)begin band=1;background=24'hBA2028;ink=24'hFFFFFF;
+if(x>=96&&y>=96&&y<128)begin text=1;row=(y-96)>>1;col=((x-96)>>1)&15;glyph=critical_title((x-96)>>5);end end
+if(level==3&&y>=156&&y<188)begin band=1;background=24'h182838;ink=24'hFFFFFF;
+if(x>=96&&y>=164&&y<180)begin text=1;row=y-164;col=(x-96)&15;glyph=critical_action((x-96)>>4);end end
+if(level>=2&&y>=440&&y<472)begin band=1;background=(level==3)?24'hBA2028:24'hFFC040;ink=(level==3)?24'hFFFFFF:24'h182838;
+if(y>=448&&y<464)begin text=1;row=y-448;col=tx[3:0];glyph=(level==3)?critical_ticker(tx[9:4]):warning_ticker(tx[9:4]);end end
+if(selecting&&y>=368&&y<416)begin band=1;background=24'h133C68;ink=24'hFFFFFF;text=0;
+if(x>=16&&y>=376&&y<392)begin text=1;row=y-376;col=(x-16)&15;case(candidate)
+0:glyph=select0((x-16)>>4);1:glyph=select1((x-16)>>4);2:glyph=select2((x-16)>>4);3:glyph=select3((x-16)>>4);endcase end
+if(x>=16&&y>=396&&y<412)begin text=1;row=y-396;col=(x-16)&15;glyph=help((x-16)>>4);end end
+end endmodule

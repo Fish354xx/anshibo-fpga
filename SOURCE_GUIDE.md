@@ -22,3 +22,5 @@ VS Code打开本包，TD打开src/td_project/anshibo.al。主要RTL位于src/use
 按顶层、控制、画面、BMP、音频顺序阅读。.enc.v是加密官方模块，旧test/、rom/备用例程已移除。tools/generate_osd.py会重新生成部分画面代码，修改时应同步考虑生成脚本。
 
 串口扩展：uart_console.v负责接收与发送，SD/sd_card_bmp.v负责切图仲裁；tools/launch_uart.cmd启动电脑控制工具，协议见UART_CONTROL.md。
+
+分级阶段：graded_alert_ctrl.v管理本地按键、等级记录与后台仲裁；top_tf_hdmi_audio.v将高等级映射到原有应急缓存控制。video_rgb_to_axis_640x480.v复用动态字库显示分级模板，hdmi_audio_tone_i2s_64fs.v按等级选择间歇或持续提示。tools/build_alert_overlay.py为当前模板生成工具；不要运行旧generate_osd.py覆盖扩展画面逻辑。

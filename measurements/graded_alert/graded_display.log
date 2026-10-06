@@ -1,0 +1,27 @@
+# vsim -do {run -all; quit -f} -l C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/graded_display.log -lib C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work -c tb_graded_display 
+# Loading C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work.tb_graded_display
+# Loading C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work.emergency_audio_frame_gate
+# Loading C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work.campus_osd
+# Loading C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work.alert_overlay_layout
+# Loading C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work.picture_transition
+# Loading C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work.audio_wave_snapshot
+# ** Warning: (vsim-3017) tb/tb_graded_display.v(14): [TFMPC] - Too few port connections. Expected 26, found 21.
+# 
+#         Region: /tb_graded_display/dut
+# ** Warning: (vsim-3722) tb/tb_graded_display.v(14): [TFMPC] - Missing connection for port 'dynamic_text_index'.
+# 
+# ** Warning: (vsim-3722) tb/tb_graded_display.v(14): [TFMPC] - Missing connection for port 'dynamic_frame_start'.
+# 
+# ** Warning: (vsim-3722) tb/tb_graded_display.v(14): [TFMPC] - Missing connection for port 'transition_black_ready'.
+# 
+# ** Warning: (vsim-3722) tb/tb_graded_display.v(14): [TFMPC] - Missing connection for port 'out_vs'.
+# 
+# ** Warning: (vsim-3722) tb/tb_graded_display.v(14): [TFMPC] - Missing connection for port 'out_de'.
+# 
+# ** Warning: Design size of 6 instances exceeds ModelSim ALTERA recommended capacity.
+# This may because you are loading cell libraries which are not recommended with
+# the ModelSim Altera version. Expect performance to be adversely affected.
+# run -all 
+# GRADED DISPLAY: ALL CHECKS PASSED
+# ** Note: $finish    : tb/tb_graded_display.v(45)
+#    Time: 49165960 ns  Iteration: 1  Instance: /tb_graded_display

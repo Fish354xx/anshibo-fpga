@@ -85,6 +85,19 @@ wire [2:0] uart_next_block_reason;
 wire command_valid,auto_play_active,uart_reset;
 wire [3:0] command_code;
 wire [2:0] command_value;
+wire[1:0]local_alert_level,remote_alert_level,effective_alert_level,alert_candidate,alert_audio_level;
+wire alert_selecting,alert_backend_key,alert_major_valid,alert_major_value;
+wire alert_picture_ready,alert_restore_ready;
+wire sd_command_valid=alert_major_valid || (command_valid&&command_code!=4&&command_code!=13);
+wire[3:0]sd_command_code=alert_major_valid?4'd4:command_code;
+wire[2:0]sd_command_value=alert_major_valid?{2'b0,alert_major_value}:command_value;
+graded_alert_ctrl u_graded_alert(
+ .clk(sd_card_clk),.rst(rst_sd),.key_mode(key_mode),.key_next(key1),
+ .ready(uart_next_block_reason!=1),.major_available(sd_debug_status[14:12]>=4),
+ .command_valid(command_valid),.command_code(command_code),.command_value(command_value),
+ .backend_major(emergency_mode),.local_level(local_alert_level),.remote_level(remote_alert_level),
+ .effective_level(effective_alert_level),.selecting(alert_selecting),.candidate(alert_candidate),
+ .backend_next_key(alert_backend_key),.major_command_valid(alert_major_valid),.major_command_value(alert_major_value));
 wire [9:0] text_glyph,text_read_glyph;
 wire text_ready,text_open,text_active,text_changed,text_frame_start;
 wire [6:0] text_length;
@@ -107,13 +120,14 @@ always @(posedge sd_card_clk or posedge physical_reset) begin
     else if(serial_reset_hold!=0) serial_reset_hold<=serial_reset_hold-1'b1;
 end
 // 与TF控制同100MHz域，无需跨域传递命令脉冲。
-uart_console #(.CLK_FREQ_HZ(100_000_000),.BAUD(115200),.EXTENDED_STATUS(1)) u_uart_console(
+uart_console #(.CLK_FREQ_HZ(100_000_000),.BAUD(115200),.EXTENDED_STATUS(1),.GRADED_ALERT_ENABLE(1)) u_uart_console(
     .clk(sd_card_clk),.rst(rst_sd),.rx(uart_rx),.tx(uart_tx),
     .next_block_reason(uart_next_block_reason),.debug_status(sd_debug_status),
     .state_code(state_code),.picture_settings(picture_settings),.next_pulse(uart_next),
     .command_valid(command_valid),.command_code(command_code),.command_value(command_value),
     .auto_status(auto_play_active),.overlay_status(effective_overlay),.soft_reset(uart_reset),
     .text_ready(text_ready),.text_open(text_open),.text_length(text_length),.text_glyph(text_glyph),
+    .effective_alert(effective_alert_level),.local_alert(local_alert_level),.remote_alert(remote_alert_level),
     .overlay_override(overlay_override),.overlay_value(overlay_value),
     .adjust_override(adjust_override),.adjust_value(adjust_value),
     .select_override(select_override),.select_value(select_value));
@@ -241,15 +255,15 @@ sd_card_bmp #(
 ) sd_card_bmp_m0(
     .clk               (sd_card_clk),
     .rst               (rst_sd),
-    .command_valid     (command_valid),
-    .command_code      (command_code),
-    .command_value     (command_value),
+    .command_valid     (sd_command_valid),
+    .command_code      (sd_command_code),
+    .command_value     (sd_command_value),
     .auto_play_active  (auto_play_active),
     .remote_next       (uart_next),
     .next_block_reason (uart_next_block_reason),
-    .key_next          (key1),
+    .key_next          (alert_backend_key),
     .key_auto          (key2),
-    .key_mode          (key_mode),
+    .key_mode          (1'b1),
     .adjustment_switch (effective_adjust),
     .contrast_switch   (effective_select),
     .debug_status      (sd_debug_status),
@@ -407,15 +421,17 @@ emergency_audio_frame_gate u_emergency_audio_frame_gate(
     .clk(video_clk),.rst(rst_video),.vs(vs),.de(de),
     .mode_async(emergency_mode),.loaded_async(emergency_picture_loaded),
     .target_index_async(disp_buf_idx),.active_index_async(read_active_index),
-    .audio_enable(emergency_audio_enable));
+    .audio_enable(emergency_audio_enable),.picture_ready(alert_picture_ready),.restore_ready(alert_restore_ready));
 // ===================== 音频：应急双音提示，普通模式发送静音采样 =====================
 hdmi_audio_tone_i2s_64fs #(
+    .GRADED_ENABLE(1),
     .PHASE_INC (32'd39370534),
     .AMP       (24'sd2000000)
 ) u_hdmi_audio_tone_i2s_64fs (
     .I_mclk      (audio_mclk),
     .I_rst       (rst_audio),
     .I_enable    (emergency_audio_enable),
+    .I_alert_level(alert_audio_level),
     .O_i2s_BCLK  (audio_i2s_bclk),
     .O_i2s_LRCK  (audio_i2s_lrck),
     .O_i2s_DOUT  (audio_i2s_dout)
@@ -444,12 +460,15 @@ audio_arc_calculate #(
 );
 
 // ===================== RGB/DE 转 AXIS 视频 =====================
-campus_osd #(.DYNAMIC_TEXT_ENABLE(1)) u_campus_osd(
+campus_osd #(.DYNAMIC_TEXT_ENABLE(1),.GRADED_ALERT_ENABLE(1)) u_campus_osd(
     .clk(video_clk), .rst(rst_video), .in_vs(vs), .in_de(de),
     .in_rgb(vout_data), .emergency_async(emergency_mode),
     .transition_pending_async(transition_pending), .transition_black_ready(transition_black_ready),
     .subtitle_enable_async(effective_overlay), .settings_async(picture_settings),
     .dynamic_text_active(text_active),.dynamic_text_changed(text_changed),
+    .alert_level_async(effective_alert_level),.alert_select_async(alert_selecting),.alert_candidate_async(alert_candidate),
+    .alert_picture_ready(alert_picture_ready),.alert_restore_ready(alert_restore_ready),
+    .alert_audio_level(alert_audio_level),
     .dynamic_text_glyph(text_read_glyph),.dynamic_text_index(text_read_index),
     .dynamic_frame_start(text_frame_start),
     .audio_valid(audio_valid), .audio_sample(audio_left_data),
@@ -547,11 +566,14 @@ endmodule
 module emergency_audio_frame_gate(
     input clk,rst,vs,de,mode_async,loaded_async,
     input [1:0] target_index_async,active_index_async,
-    output reg audio_enable
+    output reg audio_enable,
+    output picture_ready,restore_ready
 );
 reg mode_sync0,mode_sync1,loaded_sync0,loaded_sync1,loaded_sync2;
 reg [1:0] target_sync0,target_sync1,active_sync0,active_sync1;
 reg vs_prev,first_pixel_pending;
+assign picture_ready=mode_sync1&&loaded_sync2&&(active_sync1==target_sync1);
+assign restore_ready=!mode_sync1&&!loaded_sync2&&(active_sync1==target_sync1);
 always @(posedge clk or posedge rst) begin
     if(rst) begin
         mode_sync0<=0;mode_sync1<=0;loaded_sync0<=0;loaded_sync1<=0;loaded_sync2<=0;

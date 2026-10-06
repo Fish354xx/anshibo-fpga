@@ -2390,5 +2390,37 @@
   {
     "character": "／",
     "id": 597
+  },
+  {
+    "character": "级",
+    "id": 598
+  },
+  {
+    "character": "戒",
+    "id": 599
+  },
+  {
+    "character": "引",
+    "id": 600
+  },
+  {
+    "character": "按",
+    "id": 601
+  },
+  {
+    "character": "待",
+    "id": 602
+  },
+  {
+    "character": "解",
+    "id": 603
+  },
+  {
+    "character": "除",
+    "id": 604
+  },
+  {
+    "character": "择",
+    "id": 605
   }
 ]

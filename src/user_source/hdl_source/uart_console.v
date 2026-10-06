@@ -4,7 +4,8 @@
 module uart_console #(
     parameter integer CLK_FREQ_HZ=100000000,
     parameter integer BAUD=115200,
-    parameter integer EXTENDED_STATUS=0
+    parameter integer EXTENDED_STATUS=0,
+    parameter integer GRADED_ALERT_ENABLE=0
 )(
     input clk,rst,rx,output tx,
     input [2:0] next_block_reason,
@@ -13,6 +14,7 @@ module uart_console #(
     input [7:0] picture_settings,
     input auto_status,overlay_status,text_ready,text_open,
     input [6:0] text_length,
+    input [1:0] effective_alert,local_alert,remote_alert,
     output reg next_pulse,command_valid,
     output reg [3:0] command_code,
     output reg [2:0] command_value,
@@ -30,14 +32,43 @@ reg [255:0] line_buffer;
 reg [5:0] line_length;
 reg line_error,busy_reply_pending,reset_pending;
 reg [511:0] reply_buffer;
+reg [4:0] reply_kind;
+reg [2:0] reply_warmup;
+reg [5:0] byte_index;
+reg [7:0] byte_candidate;
+reg [15:0] status_debug;
+reg [3:0] status_state;
+reg [7:0] status_settings;
+reg status_auto,status_overlay;
+reg [2:0] status_ownership;
+reg [1:0] status_effective,status_local,status_remote;
 reg [6:0] remaining;
 wire [7:0] uppercase=(rx_data>="a" && rx_data<="z") ? rx_data-8'd32 : rx_data;
 wire reply_busy=(remaining!=0)||!tx_ready||tx_start||busy_reply_pending||reset_pending;
+// UART字节间隔远大于一个系统周期，先寄存宽组合判断，缩短解析路径。
+reg reply_busy_d,text_ready_d,text_open_d,text_full_d,text_empty_d;
+always @(posedge clk or posedge rst)begin
+ if(rst)begin reply_busy_d<=0;text_ready_d<=0;text_open_d<=0;text_full_d<=0;text_empty_d<=1;end
+ else begin
+  reply_busy_d<=reply_busy;text_ready_d<=text_ready;text_open_d<=text_open;
+  text_full_d<=text_length>=64;text_empty_d<=text_length==0;
+ end
+end
 wire ready_for_control=(next_block_reason!=1);
 wire [2:0] image_count=debug_status[14:12];
 wire [7:0] argument=line_buffer[7:0];
 // 命令匹配提前寄存，拆开长比较与应答选择，满足100MHz时序。
-reg [21:0] decoded;
+reg [23:0] decoded;
+reg [4:0] operation;
+integer op_index;
+always @(posedge clk or posedge rst)begin
+ if(rst)operation<=31;
+ else begin
+  operation<=31;
+  for(op_index=0;op_index<24;op_index=op_index+1)
+   if(decoded[op_index])operation<=op_index;
+ end
+end
 always @(posedge clk or posedge rst) begin
  if(rst) decoded<=0;
  else begin
@@ -63,6 +94,8 @@ always @(posedge clk or posedge rst) begin
   decoded[19]<=(line_length==9 && (line_buffer>>24)=="TCHAR ");
   decoded[20]<=(line_buffer=="TCOMMIT");
   decoded[21]<=(line_buffer=="TDEFAULT");
+  decoded[22]<=(GRADED_ALERT_ENABLE && line_length==7 && (line_buffer>>8)=="ALERT ");
+  decoded[23]<=(GRADED_ALERT_ENABLE && line_buffer=="ALERT CLEAR");
  end
 end
 
@@ -88,9 +121,58 @@ function [2:0] level_value;
   else level_value=arg-8'd48;
  end
 endfunction
+// Reply code -> message ROM, followed by a registered byte selector.
+always @(*)begin
+reply_buffer=0;case(reply_kind)
+5'd0:reply_buffer={"ERR NOTREADY",8'd13,8'd10};
+5'd1:reply_buffer={"ERR EMERGENCY",8'd13,8'd10};
+5'd2:reply_buffer={"ERR ADJUST",8'd13,8'd10};
+5'd3:reply_buffer={"ERR BUSY",8'd13,8'd10};
+5'd4:reply_buffer={"ERR NOIMAGE",8'd13,8'd10};
+5'd5:reply_buffer={"ERR LINE",8'd13,8'd10};
+5'd6:reply_buffer={"PONG",8'd13,8'd10};
+5'd7:reply_buffer={"OK NEXT",8'd13,8'd10};
+5'd8:reply_buffer={"ERR RANGE",8'd13,8'd10};
+5'd9:reply_buffer={"OK SHOW",8'd13,8'd10};
+5'd10:reply_buffer={"OK AUTO",8'd13,8'd10};
+5'd11:reply_buffer={"OK EMERGENCY",8'd13,8'd10};
+5'd12:reply_buffer={"OK BRIGHTNESS",8'd13,8'd10};
+5'd13:reply_buffer={"OK CONTRAST",8'd13,8'd10};
+5'd14:reply_buffer={"OK ADJUST",8'd13,8'd10};
+5'd15:reply_buffer={"OK SELECT",8'd13,8'd10};
+5'd16:reply_buffer={"OK OVERLAY",8'd13,8'd10};
+5'd17:reply_buffer={"OK LOCAL",8'd13,8'd10};
+5'd18:reply_buffer={"OK RESET",8'd13,8'd10};
+5'd19:reply_buffer={"OK ALERT",8'd13,8'd10};
+5'd27:reply_buffer={"OK CLEAR",8'd13,8'd10};
+5'd20:reply_buffer={"OK TBEGIN",8'd13,8'd10};
+5'd21:reply_buffer={"OK TDEFAULT",8'd13,8'd10};
+5'd22:reply_buffer={"ERR TEXT",8'd13,8'd10};
+5'd23:reply_buffer={"OK TCHAR",8'd13,8'd10};
+5'd24:reply_buffer={"OK TCOMMIT",8'd13,8'd10};
+5'd25:reply_buffer={"ERR CMD",8'd13,8'd10};
+5'd26:begin if(EXTENDED_STATUS)reply_buffer={"STATUS D=",hex_ascii(status_debug[15:12]),hex_ascii(status_debug[11:8]),
+ hex_ascii(status_debug[7:4]),hex_ascii(status_debug[3:0])," S=",hex_ascii(status_state),
+ " P=",hex_ascii(status_settings[7:4]),hex_ascii(status_settings[3:0]),
+ " A=",hex_ascii({3'b0,status_auto})," O=",hex_ascii({3'b0,status_overlay}),
+ " R=",hex_ascii({1'b0,status_ownership}),8'd13,8'd10};
+ else reply_buffer={"STATUS D=",hex_ascii(status_debug[15:12]),hex_ascii(status_debug[11:8]),
+ hex_ascii(status_debug[7:4]),hex_ascii(status_debug[3:0])," S=",hex_ascii(status_state),
+ " P=",hex_ascii(status_settings[7:4]),hex_ascii(status_settings[3:0]),8'd13,8'd10};
+ if(EXTENDED_STATUS&&GRADED_ALERT_ENABLE)reply_buffer={"STATUS D=",hex_ascii(status_debug[15:12]),hex_ascii(status_debug[11:8]),
+ hex_ascii(status_debug[7:4]),hex_ascii(status_debug[3:0])," S=",hex_ascii(status_state),
+ " P=",hex_ascii(status_settings[7:4]),hex_ascii(status_settings[3:0]),
+ " A=",hex_ascii({3'b0,status_auto})," O=",hex_ascii({3'b0,status_overlay}),
+ " R=",hex_ascii({1'b0,status_ownership})," E=",hex_ascii({2'b0,status_effective}),
+ " B=",hex_ascii({2'b0,status_local})," M=",hex_ascii({2'b0,status_remote}),8'd13,8'd10};end
+default:reply_buffer=0;endcase end
+always @(posedge clk or posedge rst)begin
+ if(rst)begin byte_index<=0;byte_candidate<=0;end
+ else begin byte_index<=remaining-1'b1;byte_candidate<=reply_buffer[{byte_index,3'b000}+:8];end
+end
 task reply;
- input[511:0] text;input[6:0] length;
- begin reply_buffer<=text;remaining<=length;end
+ input[4:0] kind;input[6:0] length;
+ begin reply_kind<=kind;remaining<=length;reply_warmup<=4;end
 endtask
 task emit;
  input[3:0] code;input[2:0] value;
@@ -100,28 +182,31 @@ task block_reply;
  input[2:0] reason;
  begin
   case(reason)
-   1:reply({"ERR NOTREADY",8'd13,8'd10},14);
-   2:reply({"ERR EMERGENCY",8'd13,8'd10},15);
-   3:reply({"ERR ADJUST",8'd13,8'd10},12);
-   4:reply({"ERR BUSY",8'd13,8'd10},10);
-   default:reply({"ERR NOIMAGE",8'd13,8'd10},13);
+   1:reply(5'd0,7'd14);
+   2:reply(5'd1,7'd15);
+   3:reply(5'd2,7'd12);
+   4:reply(5'd3,7'd10);
+   default:reply(5'd4,7'd13);
   endcase
  end
 endtask
 always @(posedge clk or posedge rst) begin
  if(rst) begin
   line_buffer<=0;line_length<=0;line_error<=0;busy_reply_pending<=0;
-  reply_buffer<=0;remaining<=0;tx_data<=0;tx_start<=0;next_pulse<=0;
+  reply_kind<=0;reply_warmup<=0;remaining<=0;
+  status_debug<=0;status_state<=0;status_settings<=0;status_auto<=0;status_overlay<=0;status_ownership<=0;tx_data<=0;tx_start<=0;next_pulse<=0;
+  status_effective<=0;status_local<=0;status_remote<=0;
   command_valid<=0;command_code<=0;command_value<=0;text_glyph<=0;reset_pending<=0;soft_reset<=0;
   overlay_override<=0;overlay_value<=1;adjust_override<=0;adjust_value<=0;
   select_override<=0;select_value<=0;
  end else begin
   tx_start<=0;next_pulse<=0;command_valid<=0;soft_reset<=0;
-  if(remaining!=0 && tx_ready && !tx_start)begin
-   tx_data<=reply_buffer[(remaining-1'b1)*8+:8];tx_start<=1;remaining<=remaining-1'b1;
+  if(reply_warmup!=0)reply_warmup<=reply_warmup-1'b1;
+  if(remaining!=0 && reply_warmup==0 && tx_ready && !tx_start)begin
+   tx_data<=byte_candidate;tx_start<=1;remaining<=remaining-1'b1;
   end
   if(remaining==0 && tx_ready && !tx_start && busy_reply_pending && !reset_pending)begin
-   reply({"ERR BUSY",8'd13,8'd10},10);busy_reply_pending<=0;
+   reply(5'd3,7'd10);busy_reply_pending<=0;
   end
   // 先把确认信息完整发送，再复位整机，避免截断应答。
   if(remaining==0 && tx_ready && !tx_start && reset_pending)begin
@@ -131,66 +216,85 @@ always @(posedge clk or posedge rst) begin
   else if(rx_valid)begin
    if(rx_data==13 || rx_data==10)begin
     if(line_length!=0 || line_error)begin
-     if(reply_busy)busy_reply_pending<=1;
-     else if(line_error)reply({"ERR LINE",8'd13,8'd10},10);
-     else if(decoded[0])reply({"PONG",8'd13,8'd10},6);
-     else if(decoded[1])begin
+     if(reply_busy_d)busy_reply_pending<=1;
+     else if(line_error)reply(5'd5,7'd10);
+     else case(operation)
+     0:reply(5'd6,7'd6);
+     1:begin
       if(next_block_reason!=0)block_reply(next_block_reason);
-      else begin next_pulse<=1;reply({"OK NEXT",8'd13,8'd10},9);end
-     end else if(decoded[2])begin
-      if(argument<"1" || argument>"3")reply({"ERR RANGE",8'd13,8'd10},11);
+      else begin next_pulse<=1;reply(5'd7,7'd9);end
+     end
+     2:begin
+      if(argument<"1" || argument>"3")reply(5'd8,7'd11);
       else if(next_block_reason!=0)block_reply(next_block_reason);
       else if((argument-8'd48)>image_count)block_reply(5);
-      else begin emit(2,argument-8'd49);reply({"OK SHOW",8'd13,8'd10},9);end
-     end else if(decoded[3] || decoded[4])begin
+      else begin emit(2,argument-8'd49);reply(5'd9,7'd9);end
+     end
+     3,4:begin
       if(!ready_for_control)block_reply(1);
       else if(debug_status[0])block_reply(2);
-      else if(decoded[3] && image_count<2)block_reply(5);
-      else begin emit(3,decoded[3]);reply({"OK AUTO",8'd13,8'd10},9);end
-     end else if(decoded[5] || decoded[6])begin
+      else if(operation==3 && image_count<2)block_reply(5);
+      else begin emit(3,operation==3);reply(5'd10,7'd9);end
+     end
+     5,6:begin
       if(!ready_for_control)block_reply(1);
-      else if(decoded[5] && image_count<4)block_reply(5);
-      else begin emit(4,decoded[5]);reply({"OK EMERGENCY",8'd13,8'd10},14);end
-     end else if((decoded[7]) ||
-                 (decoded[8]))begin
+      else if(operation==5 && image_count<4)block_reply(5);
+      else begin emit(4,operation==5);reply(5'd11,7'd14);end
+     end
+     7,8:begin
       if(debug_status[0])block_reply(2);
       else if(!((argument>="0" && argument<="4") || argument=="+" || argument=="-"))
-       reply({"ERR RANGE",8'd13,8'd10},11);
-      else if(decoded[7])begin
-       emit(5,level_value(picture_settings[5:3],argument));reply({"OK BRIGHTNESS",8'd13,8'd10},15);
-      end else begin emit(6,level_value(picture_settings[2:0],argument));reply({"OK CONTRAST",8'd13,8'd10},13);end
-     end else if(decoded[9] || decoded[10])begin
+       reply(5'd8,7'd11);
+      else if(operation==7)begin
+       emit(5,level_value(picture_settings[5:3],argument));reply(5'd12,7'd15);
+      end else begin emit(6,level_value(picture_settings[2:0],argument));reply(5'd13,7'd13);end
+     end
+     9,10:begin
       if(debug_status[0])block_reply(2);
-      else begin adjust_override<=1;adjust_value<=decoded[9];reply({"OK ADJUST",8'd13,8'd10},11);end
-     end else if(decoded[11] || decoded[12])begin
+      else begin adjust_override<=1;adjust_value<=operation==9;reply(5'd14,7'd11);end
+     end
+     11,12:begin
       if(debug_status[0])block_reply(2);
-      else begin select_override<=1;select_value<=decoded[12];reply({"OK SELECT",8'd13,8'd10},11);end
-     end else if(decoded[13] || decoded[14])begin
-      overlay_override<=1;overlay_value<=decoded[13];reply({"OK OVERLAY",8'd13,8'd10},12);
-     end else if(decoded[15])begin
-      overlay_override<=0;adjust_override<=0;select_override<=0;reply({"OK LOCAL",8'd13,8'd10},10);
-     end else if(decoded[16])begin
-      reset_pending<=1;reply({"OK RESET",8'd13,8'd10},10);
-     end else if(decoded[18]||decoded[19]||decoded[20]||decoded[21])begin
-      if(!text_ready) block_reply(4);
-      else if(decoded[18])begin emit(7,0);reply({"OK TBEGIN",8'd13,8'd10},11);end
-      else if(decoded[21])begin emit(10,0);reply({"OK TDEFAULT",8'd13,8'd10},13);end
-      else if(!text_open)reply({"ERR TEXT",8'd13,8'd10},10);
-      else if(decoded[19])begin
-       if(!glyph_argument_ok||glyph_argument>=598||text_length>=64)reply({"ERR RANGE",8'd13,8'd10},11);
-       else begin text_glyph<=glyph_argument;emit(8,0);reply({"OK TCHAR",8'd13,8'd10},10);end
-      end else if(text_length==0)reply({"ERR RANGE",8'd13,8'd10},11);
-      else begin emit(9,0);reply({"OK TCOMMIT",8'd13,8'd10},12);end
-     end else if(decoded[17])begin
-      if(EXTENDED_STATUS)reply({"STATUS D=",hex_ascii(debug_status[15:12]),hex_ascii(debug_status[11:8]),
-       hex_ascii(debug_status[7:4]),hex_ascii(debug_status[3:0])," S=",hex_ascii(state_code),
-       " P=",hex_ascii(picture_settings[7:4]),hex_ascii(picture_settings[3:0]),
-       " A=",hex_ascii({3'b0,auto_status})," O=",hex_ascii({3'b0,overlay_status}),
-       " R=",hex_ascii({1'b0,overlay_override,adjust_override,select_override}),8'd13,8'd10},36);
-      else reply({"STATUS D=",hex_ascii(debug_status[15:12]),hex_ascii(debug_status[11:8]),
-       hex_ascii(debug_status[7:4]),hex_ascii(debug_status[3:0])," S=",hex_ascii(state_code),
-       " P=",hex_ascii(picture_settings[7:4]),hex_ascii(picture_settings[3:0]),8'd13,8'd10},24);
-     end else reply({"ERR CMD",8'd13,8'd10},9);
+      else begin select_override<=1;select_value<=operation==12;reply(5'd15,7'd11);end
+     end
+     13,14:begin
+      overlay_override<=1;overlay_value<=operation==13;reply(5'd16,7'd12);
+     end
+     15:begin
+      overlay_override<=0;adjust_override<=0;select_override<=0;reply(5'd17,7'd10);
+     end
+     16:begin
+      reset_pending<=1;reply(5'd18,7'd10);
+     end
+     22:begin
+      if(!ready_for_control)block_reply(1);
+      else if(argument<"1"||argument>"3")reply(5'd8,7'd11);
+      else if(argument>"1"&&image_count<4)block_reply(5);
+      else begin emit(13,argument-8'd48);reply(5'd19,7'd10);end
+     end
+     23:begin
+      emit(13,0);reply(5'd27,7'd10);
+     end
+     18,19,20,21:begin
+      if(!text_ready_d) block_reply(4);
+      else if(operation==18)begin emit(7,0);reply(5'd20,7'd11);end
+      else if(operation==21)begin emit(10,0);reply(5'd21,7'd13);end
+      else if(!text_open_d)reply(5'd22,7'd10);
+      else if(operation==19)begin
+       if(!glyph_argument_ok||glyph_argument>=606||text_full_d)reply(5'd8,7'd11);
+       else begin text_glyph<=glyph_argument;emit(8,0);reply(5'd23,7'd10);end
+      end else if(text_empty_d)reply(5'd8,7'd11);
+      else begin emit(9,0);reply(5'd24,7'd12);end
+     end
+     17:begin
+      status_debug<=debug_status;status_state<=state_code;status_settings<=picture_settings;
+      status_auto<=auto_status;status_overlay<=overlay_status;
+      status_ownership<={overlay_override,adjust_override,select_override};
+      status_effective<=effective_alert;status_local<=local_alert;status_remote<=remote_alert;
+      reply(5'd26,(EXTENDED_STATUS&&GRADED_ALERT_ENABLE)?7'd48:EXTENDED_STATUS?7'd36:7'd24);
+     end
+     default:reply(5'd25,7'd9);
+     endcase
     end
     line_buffer<=0;line_length<=0;line_error<=0;
    end else if(!line_error)begin
@@ -310,4 +414,5 @@ always @(posedge clk or posedge rst) begin
     else begin ticks<=DIV-1;bit_index<=bit_index+1'b1;end
 end
 endmodule
+
 

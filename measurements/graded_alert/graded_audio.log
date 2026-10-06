@@ -1,0 +1,7 @@
+# vsim -do {run -all; quit -f} -l C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/graded_audio.log -lib C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work -c tb_graded_audio 
+# Loading C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work.tb_graded_audio
+# Loading C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work.hdmi_audio_tone_i2s_64fs
+# run -all 
+# GRADED AUDIO: ALL CHECKS PASSED on=20 off=80
+# ** Note: $finish    : tb/tb_graded_audio.v(19)
+#    Time: 437856 ns  Iteration: 0  Instance: /tb_graded_audio

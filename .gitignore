@@ -22,3 +22,6 @@ src/td_project/*.qor
 # Keep verification transcripts with their documented evidence.
 !measurements/remote_text/*.log
 !measurements/remote_controls/*.log
+
+sim/*.ppm
+!measurements/graded_alert/*.log

@@ -253,6 +253,14 @@
                     <Attr Name="CompileOrder" Val="35"/>
                 </FileInfo>
             </File>
+            <File Path="../user_source/hdl_source/graded_alert_ctrl.v">
+                <FileInfo>
+                    <Attr Name="UsedInSyn" Val="true"/>
+                    <Attr Name="UsedInP&R" Val="true"/>
+                    <Attr Name="BelongTo" Val="design_1"/>
+                    <Attr Name="CompileOrder" Val="36"/>
+                </FileInfo>
+            </File>
         </Verilog>
         <ADC_FILE>
             <File Path="../user_source/constraints_source/pin.adc">

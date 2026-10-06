@@ -1,0 +1,16 @@
+{
+  "reminder": "一级提醒：请关注校园通知",
+  "warning_title": "二级警戒",
+  "critical_title": "三级紧急",
+  "warning_action1": "请暂停当前活动",
+  "warning_action2": "听从现场工作人员指引",
+  "warning_action3": "注意通行安全",
+  "critical_action": "请按疏散指引有序离开",
+  "warning_ticker": "二级警戒  请暂停当前活动，听从现场工作人员指引  ",
+  "critical_ticker": "三级紧急  请保持冷静，按疏散指引有序离开，禁止乘坐电梯  ",
+  "select0": "待确认：解除本地预警",
+  "select1": "待确认：一级提醒",
+  "select2": "待确认：二级警戒",
+  "select3": "待确认：三级紧急",
+  "help": "KEY2选择  KEY3确认"
+}

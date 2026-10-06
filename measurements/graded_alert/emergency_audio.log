@@ -1,0 +1,19 @@
+# vsim -do {run -all; quit -f} -l C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/emergency_audio.log -lib C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work -c tb_emergency_audio 
+# Loading C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work.tb_emergency_audio
+# Loading C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work.hdmi_audio_tone_i2s_64fs
+# Loading C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work.I2S_receiver
+# ** Warning: (vsim-3017) tb/tb_emergency_audio.v(12): [TFMPC] - Too few port connections. Expected 7, found 6.
+# 
+#         Region: /tb_emergency_audio/tone
+# ** Warning: (vsim-3722) tb/tb_emergency_audio.v(12): [TFMPC] - Missing connection for port 'I_alert_level'.
+# 
+# run -all 
+# PASS: silent mode retains audio valid cadence
+# PASS: emergency produces received stereo audio
+# PASS: tone contains both positive and negative samples
+# PASS: exit keeps HDMI audio sample cadence
+# PASS: second emergency entry restarts audio
+# PASS: normal mode, exit and reset are silent
+# AUDIO RESULT: ALL CHECKS PASSED; samples=431 nonzero=285
+# ** Note: $finish    : tb/tb_emergency_audio.v(62)
+#    Time: 8848960 ns  Iteration: 1  Instance: /tb_emergency_audio

@@ -1,0 +1,28 @@
+# vsim -do {run -all; quit -f} -l C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/graded_alert_ctrl.log -lib C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work -c tb_graded_alert_ctrl 
+# Loading C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work.tb_graded_alert_ctrl
+# Loading C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work.graded_alert_ctrl
+# Loading C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work.alert_key_filter
+# run -all 
+# PASS: selection does not publish
+# PASS: debounce ignores bounce
+# PASS: confirm local reminder preserves normal playback
+# PASS: active local alert offers clear first
+# PASS: cycle to warning
+# PASS: confirm warning requests full emergency backend
+# PASS: remote higher level wins
+# PASS: remote clear cannot remove local warning
+# PASS: long press goes directly to critical
+# PASS: long release suppressed
+# PASS: lower remote alert cannot downgrade local critical
+# PASS: clear local preserves remote reminder
+# PASS: legacy emergency ON maps to remote critical
+# PASS: legacy emergency OFF clears remote only
+# PASS: selection timeout cancels without publish
+# PASS: not-ready local action ignored
+# PASS: missing emergency image blocks warning confirmation
+# PASS: warning confirmation after availability restored
+# PASS: selection key stays masked until release
+# PASS: released key is high
+# GRADED ALERT CONTROL: ALL CHECKS PASSED
+# ** Note: $finish    : tb/tb_graded_alert_ctrl.v(45)
+#    Time: 10170 ns  Iteration: 1  Instance: /tb_graded_alert_ctrl

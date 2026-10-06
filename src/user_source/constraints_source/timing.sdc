@@ -113,7 +113,7 @@ set_false_path -from [get_ports {uart_rx}] -to [get_regs {u_uart_console/receive
 
 # Software reset assertion is asynchronous. Only the reset-release synchronizers
 # handle release; exempt only software-request paths ending at asynchronous reset pins.
-set_false_path -from [get_pins {serial_reset_hold_reg*.q*}] -to [get_pins {*.sr}]
+set_false_path -from [get_regs {serial_reset_hold*}] -to [get_pins {*.sr}]
 
 
 
@@ -123,3 +123,12 @@ set_false_path -from [get_pins {serial_reset_hold_reg*.q*}] -to [get_pins {*.sr}
 set_false_path -to [get_regs {u_remote_text/ack_sync0}]
 set_false_path -to [get_regs {u_remote_text/request_sync0}]
 set_false_path -from [get_regs {u_remote_text/requested_bank u_remote_text/requested_active u_remote_text/requested_length[*]}] -to [get_regs {u_remote_text/active_bank u_remote_text/active u_remote_text/active_length[*]}]
+
+
+# Graded alert asynchronous first-stage synchronizers.
+set_false_path -from [get_ports {key_mode}] -to [get_regs {u_graded_alert/fm/sync0}]
+set_false_path -from [get_ports {key1}] -to [get_regs {u_graded_alert/fn/sync0}]
+set_false_path -to [get_regs {u_campus_osd/alert_sync0[*]}]
+set_false_path -to [get_regs {u_campus_osd/candidate_sync0[*]}]
+set_false_path -to [get_regs {u_campus_osd/select_sync0}]
+set_false_path -to [get_regs {u_hdmi_audio_tone_i2s_64fs/level_sync0[*]}]

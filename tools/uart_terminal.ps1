@@ -45,20 +45,22 @@ function Send-Text([string]$Text) {
     }
 }
 function Show-Status([string]$Response) {
-    if ($Response -match '^STATUS D=([0-9A-F]{4}) S=([0-9A-F]) P=([0-9A-F]{2})(?: A=([01]) O=([01]) R=([0-7]))?$') {
+    if ($Response -match '^STATUS D=([0-9A-F]{4}) S=([0-9A-F]) P=([0-9A-F]{2})(?: A=([01]) O=([01]) R=([0-7]))?(?: E=([0-3]) B=([0-3]) M=([0-3]))?$') {
         $debugWord = [Convert]::ToInt32($Matches[1], 16)
         $stateValue = [Convert]::ToInt32($Matches[2], 16)
         $settingsValue = [Convert]::ToInt32($Matches[3], 16)
         $autoValue = $Matches[4]
         $overlayValue = $Matches[5]
         $ownershipValue = $Matches[6]
+        $alertValue=$Matches[7];$boardAlert=$Matches[8];$remoteAlert=$Matches[9]
         Write-Host ('Images={0}; image index={1} (zero-based); emergency={2}; loading={3}; scan done={4}' -f (($debugWord -shr 12) -band 7),(($debugWord -shr 8) -band 3),($debugWord -band 1),(($debugWord -shr 1) -band 1),(($debugWord -shr 3) -band 1))
         Write-Host ('Adjustment={0}; select contrast={1}; brightness={2}/4; contrast={3}/4; state={4}' -f (($settingsValue -shr 7) -band 1),(($settingsValue -shr 6) -band 1),(($settingsValue -shr 3) -band 7),($settingsValue -band 7),$stateValue)
         if ($null -ne $autoValue) { Write-Host "Auto=$autoValue; overlay=$overlayValue; remote ownership mask=$ownershipValue (overlay=4, adjustment=2, selector=1)" }
+        if ($null -ne $alertValue) { Write-Host "Alert effective=$alertValue; board=$boardAlert; remote=$remoteAlert" }
     }
 }
 function Show-Help {
-    Write-Host 'PING | STATUS | NEXT | SHOW 1 / SHOW 2 / SHOW 3'
+    Write-Host 'PING | STATUS | NEXT | SHOW 1 / SHOW 2 / SHOW 3 | ALERT 1 / 2 / 3 / CLEAR'
     Write-Host 'AUTO ON / OFF | EMERGENCY ON / OFF'
     Write-Host 'BRIGHTNESS 0..4 / + / - | CONTRAST 0..4 / + / -'
     Write-Host 'ADJUST ON / OFF | SELECT BRIGHTNESS / CONTRAST'
@@ -81,7 +83,7 @@ try {
         if ($command -eq 'EXIT') { break }
         if ($command -eq '') { continue }
         if ($command -eq 'HELP') { Show-Help; continue }
-        if ($command -notmatch '^(PING|STATUS|NEXT|LOCAL|RESET|TDEFAULT|SHOW [1-3]|(AUTO|EMERGENCY|ADJUST|OVERLAY) (ON|OFF)|SELECT (BRIGHTNESS|CONTRAST)|(BRIGHTNESS|CONTRAST) ([0-4]|\+|-))$') {
+        if ($command -notmatch '^(PING|STATUS|NEXT|LOCAL|RESET|TDEFAULT|ALERT ([1-3]|CLEAR)|SHOW [1-3]|(AUTO|EMERGENCY|ADJUST|OVERLAY) (ON|OFF)|SELECT (BRIGHTNESS|CONTRAST)|(BRIGHTNESS|CONTRAST) ([0-4]|\+|-))$') {
             Write-Host 'Unknown command. Type HELP for the command list.'
             continue
         }
@@ -102,4 +104,6 @@ try {
     if ($serial.IsOpen) { $serial.Close() }
     $serial.Dispose()
 }
+
+
 

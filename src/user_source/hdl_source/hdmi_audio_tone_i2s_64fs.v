@@ -5,6 +5,9 @@
 // 输出：24位有符号PCM；静音仍保持音频时钟和零样本发送。
 
 module hdmi_audio_tone_i2s_64fs #(
+    parameter integer GRADED_ENABLE=0,
+    parameter integer WARNING_PERIOD_FRAMES=48000,
+    parameter integer WARNING_ON_FRAMES=9600,
     parameter [31:0] PHASE_INC = 32'd39370534,   // 兼容旧顶层，实际本版内部不用它
     parameter signed [23:0] AMP = 24'sd2000000,
     parameter integer NOTE_HOLD_FRAMES = 12000   // 交替提示音，每个音约0.25秒
@@ -12,6 +15,7 @@ module hdmi_audio_tone_i2s_64fs #(
     input  wire I_mclk,      // 实际12.295082MHz；完整立体声帧需256个主时钟周期
     input  wire I_rst,
     input  wire I_enable,    // emergency mode; synchronized into audio clock below
+    input wire [1:0] I_alert_level,
     output reg  O_i2s_BCLK,
     output reg  O_i2s_LRCK,
     output reg  O_i2s_DOUT
@@ -33,15 +37,23 @@ reg signed [23:0] S_sample_next;
 reg  [2:0]  S_note_idx;
 reg [15:0]  S_note_frame_cnt;
 
-wire [31:0] W_note_inc = note_inc_lut(S_note_idx);
 reg enable_sync0, enable_sync1;
+reg[1:0]level_sync0,level_sync1;
+reg[15:0]warning_count;
+wire audible=enable_sync1 && (!GRADED_ENABLE || level_sync1>=2);
+wire warning_mode=GRADED_ENABLE && level_sync1==2;
+wire emit_sample=audible && (!warning_mode || warning_count<WARNING_ON_FRAMES);
+wire [31:0] W_note_inc = warning_mode?32'd78741067:note_inc_lut(S_note_idx);
+
 always @(posedge I_mclk or posedge I_rst) begin
     if (I_rst) begin
         enable_sync0 <= 1'b0;
         enable_sync1 <= 1'b0;
+        level_sync0<=0;level_sync1<=0;
     end else begin
         enable_sync0 <= I_enable;
         enable_sync1 <= enable_sync0;
+        level_sync0<=I_alert_level;level_sync1<=level_sync0;
     end
 end
 
@@ -57,6 +69,7 @@ always @(posedge I_mclk or posedge I_rst) begin
         S_sample_next   <= 24'sd0;
         S_note_idx      <= 3'd0;
         S_note_frame_cnt<= 16'd0;
+        warning_count<=0;
     end
     else begin
         // 保持与I2S接收端兼容的发送帧格式，每声道64个BCLK周期
@@ -72,13 +85,13 @@ always @(posedge I_mclk or posedge I_rst) begin
                 if (O_i2s_LRCK == 1'b0) begin
                     // 左声道发完，右声道复用同一个样本
                     O_i2s_LRCK  <= 1'b1;
-                    S_shift_reg <= enable_sync1 ? {S_sample_word[23:0], 40'd0} : 64'd0;
+                    S_shift_reg <= audible ? {S_sample_word[23:0], 40'd0} : 64'd0;
                 end
                 else begin
                     // 右声道发完，进入下一帧样本
                     O_i2s_LRCK  <= 1'b0;
 
-                    if (!enable_sync1) begin
+                    if (!audible) begin
                         // Continue transmitting zero samples; clocks and HDMI ACR remain running.
                         S_phase_acc <= 32'd0;
                         S_sample_next <= 24'sd0;
@@ -86,15 +99,19 @@ always @(posedge I_mclk or posedge I_rst) begin
                         S_shift_reg <= 64'd0;
                         S_note_idx <= 3'd0;
                         S_note_frame_cnt <= 16'd0;
+                        warning_count<=0;
                     end else begin
                     S_phase_acc <= S_phase_acc + W_note_inc;
-                    if (S_phase_acc[31])
+                    if(!emit_sample)S_sample_next<=0;
+                    else if (S_phase_acc[31])
                         S_sample_next <= AMP;
                     else
                         S_sample_next <= -AMP;
 
                     S_sample_word <= S_sample_next;
                     S_shift_reg   <= {S_sample_next[23:0], 40'd0};
+                    if(warning_mode)warning_count<=(warning_count==WARNING_PERIOD_FRAMES-1)?0:warning_count+1'b1;
+                    else warning_count<=0;
 
                     if (S_note_frame_cnt == NOTE_HOLD_FRAMES - 1) begin
                         S_note_frame_cnt <= 16'd0;
@@ -117,3 +134,4 @@ always @(posedge I_mclk or posedge I_rst) begin
 end
 
 endmodule
+
