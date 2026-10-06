@@ -1,0 +1,182 @@
+# vsim -do {run -all; quit -f} -l C:/Users/Fish/Desktop/111/anshibo_event_project/sim/event_packet.log -lib C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work -c tb_event_packet 
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.tb_event_packet
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.event_packet_buffer
+# ** Warning: (vsim-3017) tb/tb_event_packet.v(19): [TFMPC] - Too few port connections. Expected 44, found 37.
+# 
+#         Region: /tb_event_packet/dut
+# ** Warning: (vsim-3722) tb/tb_event_packet.v(19): [TFMPC] - Missing connection for port 'active_area_length'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_packet.v(19): [TFMPC] - Missing connection for port 'active_body_length'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_packet.v(19): [TFMPC] - Missing connection for port 'pending_id'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_packet.v(19): [TFMPC] - Missing connection for port 'pending_generation'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_packet.v(19): [TFMPC] - Missing connection for port 'pending_level'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_packet.v(19): [TFMPC] - Missing connection for port 'pending_area_length'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_packet.v(19): [TFMPC] - Missing connection for port 'pending_body_length'.
+# 
+# run -all 
+# PASS event command 1 result 0
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 3 result 9
+# PASS event command 3 result 2
+# PASS event command 1 result 6
+# PASS event command 1 result 0
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 3 result 3
+# PASS event command 1 result 0
+# PASS event command 2 result 1
+# PASS event command 3 result 8
+# PASS event command 4 result 4
+# PASS event command 1 result 0
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 3 result 9
+# PASS event command 4 result 4
+# PASS event command 1 result 0
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 3 result 9
+# PASS event command 4 result 4
+# PASS event command 1 result 14
+# PASS event command 1 result 12
+# PASS event command 1 result 11
+# PASS event command 1 result 0
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 3 result 10
+# PASS event command 4 result 4
+# PASS event command 1 result 0
+# PASS event command 2 result 11
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 8
+# PASS event command 3 result 2
+# PASS event command 5 result 10
+# PASS event command 5 result 5
+# PASS event command 5 result 13
+# PASS event command 1 result 0
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 3 result 2
+# PASS event command 1 result 0
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 3 result 2
+# PASS event command 1 result 0
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 3 result 2
+# PASS event command 1 result 0
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 2 result 1
+# PASS event command 3 result 10
+# EVENT PACKET: ALL CHECKS PASSED
+# ** Note: $finish    : tb/tb_event_packet.v(66)
+#    Time: 7890 ns  Iteration: 1  Instance: /tb_event_packet

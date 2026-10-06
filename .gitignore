@@ -25,3 +25,5 @@ src/td_project/*.qor
 
 sim/*.ppm
 !measurements/graded_alert/*.log
+
+!measurements/event_publish/*.log

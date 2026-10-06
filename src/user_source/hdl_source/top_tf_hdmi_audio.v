@@ -87,6 +87,33 @@ wire [3:0] command_code;
 wire [2:0] command_value;
 wire[1:0]local_alert_level,remote_alert_level,effective_alert_level,alert_candidate,alert_audio_level;
 wire alert_selecting,alert_backend_key,alert_major_valid,alert_major_value;
+wire event_cmd_valid,event_busy,event_result_valid,event_apply_valid,event_active_valid;
+wire[2:0]event_cmd,event_state;wire[3:0]event_result;
+wire[15:0]event_id,event_crc,event_active_id,event_active_crc,event_pending_id,event_shown_id;
+wire[15:0]event_pending_generation,event_shown_generation;
+wire[1:0]event_level,event_apply_level,event_active_level,event_pending_level,event_shown_level;
+wire[4:0]event_area,event_active_area,event_pending_area;
+wire[6:0]event_body,event_active_body,event_pending_body,event_read_index;
+wire[9:0]event_glyph,event_data;
+wire event_pending,event_pending_bank,event_install,event_read_bank,event_shown_remote;
+wire[3:0]alert_control_code=event_apply_valid?4'd13:command_code;
+wire[2:0]alert_control_value=event_apply_valid?{1'b0,event_apply_level}:command_value;
+wire alert_control_valid=event_apply_valid||command_valid;
+event_packet_buffer u_event_packet(
+ .clk(sd_card_clk),.rst(rst_sd),.cmd_valid(event_cmd_valid),.cmd(event_cmd),
+ .event_id(event_id),.check_crc(event_crc),.level(event_level),.area_length(event_area),.body_length(event_body),.glyph(event_glyph),
+ .ready(uart_next_block_reason!=1),.major_available(sd_debug_status[14:12]>=4),
+ .legacy_change(command_valid&&(command_code==4||command_code==13)),.local_level(local_alert_level),
+ .result_valid(event_result_valid),.result(event_result),.apply_valid(event_apply_valid),.apply_level(event_apply_level),
+ .active_valid(event_active_valid),.active_id(event_active_id),.active_crc(event_active_crc),.active_level(event_active_level),
+ .active_area_length(event_active_area),.active_body_length(event_active_body),.busy(event_busy),.event_state(event_state),
+ .video_clk(video_clk),.video_rst(rst_video),.install(event_install),
+ .shown_remote(event_shown_remote),.shown_id(event_shown_id),.shown_level(event_shown_level),
+ .shown_generation(event_shown_generation),
+ .video_pending(event_pending),.pending_bank(event_pending_bank),.pending_id(event_pending_id),.pending_level(event_pending_level),
+ .pending_generation(event_pending_generation),
+ .pending_area_length(event_pending_area),.pending_body_length(event_pending_body),
+ .read_bank(event_read_bank),.read_index(event_read_index),.read_glyph(event_data));
 wire alert_picture_ready,alert_restore_ready;
 wire sd_command_valid=alert_major_valid || (command_valid&&command_code!=4&&command_code!=13);
 wire[3:0]sd_command_code=alert_major_valid?4'd4:command_code;
@@ -94,7 +121,7 @@ wire[2:0]sd_command_value=alert_major_valid?{2'b0,alert_major_value}:command_val
 graded_alert_ctrl u_graded_alert(
  .clk(sd_card_clk),.rst(rst_sd),.key_mode(key_mode),.key_next(key1),
  .ready(uart_next_block_reason!=1),.major_available(sd_debug_status[14:12]>=4),
- .command_valid(command_valid),.command_code(command_code),.command_value(command_value),
+ .command_valid(alert_control_valid),.command_code(alert_control_code),.command_value(alert_control_value),
  .backend_major(emergency_mode),.local_level(local_alert_level),.remote_level(remote_alert_level),
  .effective_level(effective_alert_level),.selecting(alert_selecting),.candidate(alert_candidate),
  .backend_next_key(alert_backend_key),.major_command_valid(alert_major_valid),.major_command_value(alert_major_value));
@@ -120,7 +147,7 @@ always @(posedge sd_card_clk or posedge physical_reset) begin
     else if(serial_reset_hold!=0) serial_reset_hold<=serial_reset_hold-1'b1;
 end
 // 与TF控制同100MHz域，无需跨域传递命令脉冲。
-uart_console #(.CLK_FREQ_HZ(100_000_000),.BAUD(115200),.EXTENDED_STATUS(1),.GRADED_ALERT_ENABLE(1)) u_uart_console(
+uart_console #(.CLK_FREQ_HZ(100_000_000),.BAUD(115200),.EXTENDED_STATUS(1),.GRADED_ALERT_ENABLE(1),.EVENT_ENABLE(1)) u_uart_console(
     .clk(sd_card_clk),.rst(rst_sd),.rx(uart_rx),.tx(uart_tx),
     .next_block_reason(uart_next_block_reason),.debug_status(sd_debug_status),
     .state_code(state_code),.picture_settings(picture_settings),.next_pulse(uart_next),
@@ -128,6 +155,11 @@ uart_console #(.CLK_FREQ_HZ(100_000_000),.BAUD(115200),.EXTENDED_STATUS(1),.GRAD
     .auto_status(auto_play_active),.overlay_status(effective_overlay),.soft_reset(uart_reset),
     .text_ready(text_ready),.text_open(text_open),.text_length(text_length),.text_glyph(text_glyph),
     .effective_alert(effective_alert_level),.local_alert(local_alert_level),.remote_alert(remote_alert_level),
+    .event_busy(event_busy),.event_result_valid(event_result_valid),.event_result(event_result),
+    .event_active_valid(event_active_valid),.event_active_id(event_active_id),.event_active_crc(event_active_crc),
+    .event_active_level(event_active_level),.event_state(event_state),.event_active_area(event_active_area),.event_active_body(event_active_body),
+    .event_cmd_valid(event_cmd_valid),.event_cmd(event_cmd),.event_id(event_id),.event_crc(event_crc),.event_level(event_level),
+    .event_area(event_area),.event_body(event_body),.event_glyph(event_glyph),
     .overlay_override(overlay_override),.overlay_value(overlay_value),
     .adjust_override(adjust_override),.adjust_value(adjust_value),
     .select_override(select_override),.select_value(select_value));
@@ -460,7 +492,7 @@ audio_arc_calculate #(
 );
 
 // ===================== RGB/DE 转 AXIS 视频 =====================
-campus_osd #(.DYNAMIC_TEXT_ENABLE(1),.GRADED_ALERT_ENABLE(1)) u_campus_osd(
+campus_osd #(.DYNAMIC_TEXT_ENABLE(1),.GRADED_ALERT_ENABLE(1),.EVENT_ENABLE(1)) u_campus_osd(
     .clk(video_clk), .rst(rst_video), .in_vs(vs), .in_de(de),
     .in_rgb(vout_data), .emergency_async(emergency_mode),
     .transition_pending_async(transition_pending), .transition_black_ready(transition_black_ready),
@@ -468,6 +500,13 @@ campus_osd #(.DYNAMIC_TEXT_ENABLE(1),.GRADED_ALERT_ENABLE(1)) u_campus_osd(
     .dynamic_text_active(text_active),.dynamic_text_changed(text_changed),
     .alert_level_async(effective_alert_level),.alert_select_async(alert_selecting),.alert_candidate_async(alert_candidate),
     .alert_picture_ready(alert_picture_ready),.alert_restore_ready(alert_restore_ready),
+    .event_valid_async(event_active_valid),.event_remote_wins_async(remote_alert_level>local_alert_level),
+    .event_pending(event_pending),.event_pending_bank(event_pending_bank),.event_pending_id(event_pending_id),
+    .event_pending_generation(event_pending_generation),
+    .event_pending_level(event_pending_level),.event_pending_area(event_pending_area),.event_pending_body(event_pending_body),
+    .event_data(event_data),.event_install(event_install),.event_read_bank(event_read_bank),.event_read_index(event_read_index),
+    .event_shown_remote(event_shown_remote),.event_shown_id(event_shown_id),.event_shown_level(event_shown_level),
+    .event_shown_generation(event_shown_generation),
     .alert_audio_level(alert_audio_level),
     .dynamic_text_glyph(text_read_glyph),.dynamic_text_index(text_read_index),
     .dynamic_frame_start(text_frame_start),

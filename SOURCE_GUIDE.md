@@ -24,3 +24,5 @@ VS Code打开本包，TD打开src/td_project/anshibo.al。主要RTL位于src/use
 串口扩展：uart_console.v负责接收与发送，SD/sd_card_bmp.v负责切图仲裁；tools/launch_uart.cmd启动电脑控制工具，协议见UART_CONTROL.md。
 
 分级阶段：graded_alert_ctrl.v管理本地按键、等级记录与后台仲裁；top_tf_hdmi_audio.v将高等级映射到原有应急缓存控制。video_rgb_to_axis_640x480.v复用动态字库显示分级模板，hdmi_audio_tone_i2s_64fs.v按等级选择间歇或持续提示。tools/build_alert_overlay.py为当前模板生成工具；不要运行旧generate_osd.py覆盖扩展画面逻辑。
+
+事件阶段：event_packet_buffer.v负责元数据、字形、CRC及双银行事务；event_view_control负责帧安装与显示代次；event_protocol.ps1是电脑端序列化和发布向导。当前仅使用tools/build_event_layout.py统一生成警戒与事件布局，不单独运行旧generate_osd.py或build_alert_overlay.py覆盖扩展模块。

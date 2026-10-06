@@ -78,6 +78,7 @@ module campus_osd #(
     parameter integer WAVE_ENABLE=1,
     parameter integer DYNAMIC_TEXT_ENABLE=0,
     parameter integer GRADED_ALERT_ENABLE=0,
+    parameter integer EVENT_ENABLE=0,
     parameter integer SUBTITLE_DEBOUNCE_CYCLES=CLK_FREQ_HZ/50
 )(
     input clk, rst, in_vs, in_de, emergency_async,
@@ -87,6 +88,13 @@ module campus_osd #(
     input dynamic_text_active,dynamic_text_changed,
     input [1:0] alert_level_async,alert_candidate_async,
     input alert_select_async,alert_picture_ready,alert_restore_ready,
+    input event_valid_async,event_remote_wins_async,event_pending,event_pending_bank,
+    input[15:0]event_pending_id,event_pending_generation,input[1:0]event_pending_level,
+    input[4:0]event_pending_area,input[6:0]event_pending_body,
+    input[9:0]event_data,
+    output event_install,event_read_bank,event_shown_remote,
+    output[6:0]event_read_index,output[15:0]event_shown_id,event_shown_generation,
+    output[1:0]event_shown_level,
     output reg[1:0]alert_audio_level,
     input [9:0] dynamic_text_glyph,
     output [5:0] dynamic_text_index,
@@ -115,6 +123,26 @@ wire frame_start= in_vs && !vs_prev;
 assign dynamic_frame_start=frame_start;
 reg[1:0]alert_sync0,alert_sync1,candidate_sync0,candidate_sync1,frame_alert,frame_candidate;
 reg select_sync0,select_sync1,frame_select,alert_first_pixel;
+reg event_valid_sync0,event_valid_sync1,event_source_sync0,event_source_sync1;
+wire event_advance,event_frame_remote;
+wire[4:0]event_area_length;wire[6:0]event_body_length;
+event_view_control u_event_view(.clk(clk),.rst(rst),.frame_start(frame_start),
+ .first_pixel(in_de&&alert_first_pixel),.requested_level(alert_sync1),.current_level(frame_alert),
+ .requested_remote(event_source_sync1),.packet_valid(event_valid_sync1),
+ .major_ready(alert_picture_ready),.restore_ready(alert_restore_ready),
+ .pending(EVENT_ENABLE&&event_pending),.pending_bank(event_pending_bank),.pending_id(event_pending_id),
+ .pending_generation(event_pending_generation),
+ .pending_level(event_pending_level),.pending_area(event_pending_area),.pending_body(event_pending_body),
+ .install(event_install),.advance_allowed(event_advance),.frame_remote(event_frame_remote),
+ .read_bank(event_read_bank),.area_length(event_area_length),.body_length(event_body_length),
+ .shown_remote(event_shown_remote),.shown_id(event_shown_id),.shown_level(event_shown_level),.shown_generation(event_shown_generation));
+always @(posedge clk or posedge rst)begin
+ if(rst)begin event_valid_sync0<=0;event_valid_sync1<=0;event_source_sync0<=0;event_source_sync1<=0;end
+ else begin
+  event_valid_sync0<=EVENT_ENABLE&&event_valid_async;event_valid_sync1<=event_valid_sync0;
+  event_source_sync0<=EVENT_ENABLE&&event_remote_wins_async;event_source_sync1<=event_source_sync0;
+ end
+end
 always @(posedge clk or posedge rst)begin
  if(rst)begin
   alert_sync0<=0;alert_sync1<=0;candidate_sync0<=0;candidate_sync1<=0;
@@ -126,6 +154,7 @@ always @(posedge clk or posedge rst)begin
   select_sync0<=alert_select_async;select_sync1<=select_sync0;
   if(frame_start)begin
    if(!GRADED_ALERT_ENABLE)frame_alert<=0;
+   else if(EVENT_ENABLE)begin if(event_advance)frame_alert<=alert_sync1;end
    else if(alert_sync1>=2)begin if(alert_picture_ready)frame_alert<=alert_sync1;end
    else if(frame_alert<2||alert_restore_ready)frame_alert<=alert_sync1;
    frame_candidate<=candidate_sync1;frame_select<=GRADED_ALERT_ENABLE&&select_sync1;
@@ -141,6 +170,21 @@ wire[23:0]alert_background,alert_ink;
 alert_overlay_layout u_alert_layout(.x(x),.y(y),.scroll(scroll),.level(frame_alert),
  .candidate(frame_candidate),.selecting(frame_select),.band(alert_band),.text(alert_text),
  .glyph(alert_glyph),.row(alert_row),.col(alert_col),.background(alert_background),.ink(alert_ink));
+wire event_band_raw,event_text;
+wire[9:0]event_glyph;wire[3:0]event_row,event_col;
+wire[23:0]event_background,event_ink;
+event_text_layout u_event_layout(.x(x),.y(y),.scroll(scroll),.level(frame_alert),
+ .area_length(event_area_length),.body_length(event_body_length),.data(event_data),
+ .read_index(event_read_index),.band(event_band_raw),.text(event_text),.glyph(event_glyph),
+ .row(event_row),.col(event_col),.background(event_background),.ink(event_ink));
+wire event_band=EVENT_ENABLE&&event_frame_remote&&event_band_raw&&!(frame_select&&y>=368&&y<416);
+wire overlay_band=(GRADED_ALERT_ENABLE&&alert_band)||event_band;
+wire overlay_text=event_band?event_text:alert_text;
+wire[9:0]overlay_glyph=event_band?event_glyph:alert_glyph;
+wire[3:0]overlay_row=event_band?event_row:alert_row;
+wire[3:0]overlay_col=event_band?event_col:alert_col;
+wire[23:0]overlay_background=event_band?event_background:alert_background;
+wire[23:0]overlay_ink=event_band?event_ink:alert_ink;
 always @(posedge clk or posedge rst) begin
     if(rst) begin
         subtitle_sync0<=1'b1; subtitle_sync1<=1'b1;
@@ -182,6 +226,7 @@ always @(posedge clk or posedge rst) begin
             if(de_prev && !in_de) y<=y+10'd1;
         end
         if(DYNAMIC_TEXT_ENABLE && dynamic_text_changed) scroll<=0;
+        if(EVENT_ENABLE&&(event_install || (frame_start&&event_advance&&event_source_sync1&&event_valid_sync1&&!event_frame_remote)))scroll<=0;
         if(second_counter==CLK_FREQ_HZ-1) begin
             second_counter<=0;
             if(s1!=9) s1<=s1+1'b1;
@@ -10144,20 +10189,20 @@ dynamic_font_rom[9692]=16'h1020;
 dynamic_font_rom[9693]=16'h7020;
 dynamic_font_rom[9694]=16'h0060;
 dynamic_font_rom[9695]=16'h0000;
-dynamic_font_rom[9696]=16'h0000;
-dynamic_font_rom[9697]=16'h0000;
-dynamic_font_rom[9698]=16'h0000;
-dynamic_font_rom[9699]=16'h0000;
-dynamic_font_rom[9700]=16'h0000;
-dynamic_font_rom[9701]=16'h0000;
-dynamic_font_rom[9702]=16'h0000;
-dynamic_font_rom[9703]=16'h0000;
-dynamic_font_rom[9704]=16'h0000;
-dynamic_font_rom[9705]=16'h0000;
-dynamic_font_rom[9706]=16'h0000;
-dynamic_font_rom[9707]=16'h0000;
-dynamic_font_rom[9708]=16'h0000;
-dynamic_font_rom[9709]=16'h0000;
+dynamic_font_rom[9696]=16'h3028;
+dynamic_font_rom[9697]=16'h3024;
+dynamic_font_rom[9698]=16'h3020;
+dynamic_font_rom[9699]=16'h37FE;
+dynamic_font_rom[9700]=16'h3020;
+dynamic_font_rom[9701]=16'h7BE4;
+dynamic_font_rom[9702]=16'h32E4;
+dynamic_font_rom[9703]=16'h32F4;
+dynamic_font_rom[9704]=16'h32D8;
+dynamic_font_rom[9705]=16'h33D8;
+dynamic_font_rom[9706]=16'h3818;
+dynamic_font_rom[9707]=16'h70DA;
+dynamic_font_rom[9708]=16'h473A;
+dynamic_font_rom[9709]=16'h0466;
 dynamic_font_rom[9710]=16'h0000;
 dynamic_font_rom[9711]=16'h0000;
 dynamic_font_rom[9712]=16'h0000;
@@ -17964,11 +18009,11 @@ always @(posedge clk or posedge rst) begin
         wave_band_d<=0;wave_border_d<=0;wave_grid_d<=0;wave_join_d<=0;wave_pixel_y<=0;
         alert_band_d<=0;alert_background_d<=0;alert_ink_d<=0;
     end else begin
-        column_d<=(GRADED_ALERT_ENABLE&&alert_band)?alert_col:glyph_col;
+        column_d<=overlay_band?overlay_col:glyph_col;
         band_d<=frame_subtitle && (header_band || parameter_band || ticker_band);
-        text_d<=(GRADED_ALERT_ENABLE&&alert_band)?alert_text:
+        text_d<=overlay_band?overlay_text:
          frame_subtitle && (header_text || parameter_text || ticker_text || wave_label_text); mode_d<=frame_mode;
-        alert_band_d<=GRADED_ALERT_ENABLE&&alert_band;alert_background_d<=alert_background;alert_ink_d<=alert_ink;
+        alert_band_d<=overlay_band;alert_background_d<=overlay_background;alert_ink_d<=overlay_ink;
         de_d<=in_de; vs_d<=in_vs; rgb_d<=corrected_rgb;
         wave_band_d<=frame_subtitle && wave_band;wave_border_d<=frame_subtitle && wave_border;wave_grid_d<=frame_subtitle && wave_grid;
         wave_join_d<=(wave_x[1:0]==0);wave_pixel_y<=y;
@@ -17980,8 +18025,8 @@ reg [15:0] dynamic_bits,static_bits;
 reg dynamic_d;
 always @(posedge clk)begin
  static_bits<=glyph_rom[{glyph_id,glyph_row}];
- dynamic_bits<=dynamic_font_rom[(GRADED_ALERT_ENABLE&&alert_band)?{alert_glyph,alert_row}:{dynamic_text_glyph,glyph_row}];
- dynamic_d<=use_dynamic || (GRADED_ALERT_ENABLE&&alert_band);
+ dynamic_bits<=dynamic_font_rom[overlay_band?{overlay_glyph,overlay_row}:{dynamic_text_glyph,glyph_row}];
+ dynamic_d<=use_dynamic || overlay_band;
 end
 always @(*)glyph_bits=dynamic_d?dynamic_bits:static_bits;
 wire ink=text_d && glyph_bits[15-column_d];
@@ -18086,6 +18131,7 @@ always @(posedge clk or posedge rst) begin
     end
 end
 endmodule
+
 
 // ALERT_OVERLAY_BEGIN
 module alert_overlay_layout(input [9:0]x,y,scroll,input[1:0]level,candidate,
@@ -18276,6 +18322,11 @@ function[9:0]help;input[5:0]i;begin case(i)
 12:help=10'd454;
 13:help=10'd455;
 default:help=0;endcase end endfunction
+function[9:0]area_prefix;input[5:0]i;begin case(i)
+0:area_prefix=10'd460;
+1:area_prefix=10'd606;
+2:area_prefix=10'd585;
+default:area_prefix=0;endcase end endfunction
 wire[9:0]tx=x+scroll;
 always @(*)begin
 band=0;text=0;glyph=0;row=0;col=0;background=24'hFFC040;ink=24'h182838;
@@ -18297,4 +18348,50 @@ if(selecting&&y>=368&&y<416)begin band=1;background=24'h133C68;ink=24'hFFFFFF;te
 if(x>=16&&y>=376&&y<392)begin text=1;row=y-376;col=(x-16)&15;case(candidate)
 0:glyph=select0((x-16)>>4);1:glyph=select1((x-16)>>4);2:glyph=select2((x-16)>>4);3:glyph=select3((x-16)>>4);endcase end
 if(x>=16&&y>=396&&y<412)begin text=1;row=y-396;col=(x-16)&15;glyph=help((x-16)>>4);end end
+end endmodule
+
+// EVENT_LAYOUT_BEGIN
+module event_text_layout(input[9:0]x,y,scroll,input[1:0]level,
+input[4:0]area_length,input[6:0]body_length,input[9:0]data,
+output reg[6:0]read_index,output reg band,text,output reg[9:0]glyph,
+output reg[3:0]row,col,output reg[23:0]background,ink);
+function[9:0]area_prefix;input[5:0]i;begin case(i)
+0:area_prefix=10'd460;
+1:area_prefix=10'd606;
+2:area_prefix=10'd585;
+default:area_prefix=0;endcase end endfunction
+function[9:0]reminder_prefix;input[5:0]i;begin case(i)
+0:reminder_prefix=10'd227;
+1:reminder_prefix=10'd598;
+2:reminder_prefix=10'd414;
+3:reminder_prefix=10'd415;
+4:reminder_prefix=10'd585;
+default:reminder_prefix=0;endcase end endfunction
+wire[9:0]body_x=x+scroll;
+wire[9:0]reminder_x=x-112+scroll;
+reg[6:0]position;always @(*)begin
+band=0;text=0;glyph=0;row=0;col=0;read_index=0;position=0;background=24'h182838;ink=24'hFFFFFF;
+if(level==1&&y>=392&&y<416)begin band=1;
+if(y>=396&&y<412&&x>=16&&x<64)begin text=1;row=y-396;col=(x-16)&15;glyph=area_prefix((x-16)>>4);end
+if(y>=396&&y<412&&x>=64&&x<320)begin text=1;row=y-396;col=(x-64)&15;read_index=(x-64)>>4;glyph=(read_index<area_length)?data:0;end end
+if(level==1&&y>=416&&y<440)begin band=1;background=24'hFFC040;ink=24'h182838;
+if(y>=420&&y<436&&x>=16&&x<96)begin text=1;row=y-420;col=(x-16)&15;glyph=reminder_prefix((x-16)>>4);end
+if(y>=420&&y<436&&x>=112&&x<624)begin text=1;row=y-420;col=reminder_x[3:0];position=reminder_x[9:4];read_index=16+position;glyph=(position<body_length)?data:0;end end
+if(level==2&&y>=160&&y<320)begin band=1;
+if(y>=180&&y<196&&x>=96&&x<144)begin text=1;row=y-180;col=(x-96)&15;glyph=area_prefix((x-96)>>4);end
+if(y>=180&&y<196&&x>=144&&x<400)begin text=1;row=y-180;col=(x-144)&15;read_index=(x-144)>>4;glyph=(read_index<area_length)?data:0;end
+if(y>=224&&y<240&&x>=96&&x<352)begin
+text=1;row=y-224;col=(x-96)&15;position=0+((x-96)>>4);read_index=16+position;glyph=(position<body_length)?data:0;end
+if(y>=248&&y<264&&x>=96&&x<352)begin
+text=1;row=y-248;col=(x-96)&15;position=16+((x-96)>>4);read_index=16+position;glyph=(position<body_length)?data:0;end
+if(y>=272&&y<288&&x>=96&&x<352)begin
+text=1;row=y-272;col=(x-96)&15;position=32+((x-96)>>4);read_index=16+position;glyph=(position<body_length)?data:0;end
+if(y>=296&&y<312&&x>=96&&x<352)begin
+text=1;row=y-296;col=(x-96)&15;position=48+((x-96)>>4);read_index=16+position;glyph=(position<body_length)?data:0;end
+end
+if(level==3&&y>=156&&y<188)begin band=1;
+if(y>=164&&y<180&&x>=16&&x<64)begin text=1;row=y-164;col=(x-16)&15;glyph=area_prefix((x-16)>>4);end
+if(y>=164&&y<180&&x>=64&&x<320)begin text=1;row=y-164;col=(x-64)&15;read_index=(x-64)>>4;glyph=(read_index<area_length)?data:0;end end
+if(level==3&&y>=440&&y<472)begin band=1;background=24'hBA2028;
+if(y>=448&&y<464)begin text=1;row=y-448;col=body_x[3:0];position=body_x[9:4];read_index=16+position;glyph=(position<body_length)?data:0;end end
 end endmodule

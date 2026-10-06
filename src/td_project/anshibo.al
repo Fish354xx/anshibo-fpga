@@ -2,7 +2,7 @@
 <Project Version="3" Minor="2" Path=".">
     <Project_Created_Time></Project_Created_Time>
     <TD_Version>6.2.168116</TD_Version>
-    <UCode>01110001</UCode>
+    <UCode>00110111</UCode>
     <Name>anshibo</Name>
     <HardWare>
         <Family>EG4</Family>
@@ -259,6 +259,14 @@
                     <Attr Name="UsedInP&R" Val="true"/>
                     <Attr Name="BelongTo" Val="design_1"/>
                     <Attr Name="CompileOrder" Val="36"/>
+                </FileInfo>
+            </File>
+            <File Path="../user_source/hdl_source/event_packet_buffer.v">
+                <FileInfo>
+                    <Attr Name="UsedInSyn" Val="true"/>
+                    <Attr Name="UsedInP&R" Val="true"/>
+                    <Attr Name="BelongTo" Val="design_1"/>
+                    <Attr Name="CompileOrder" Val="37"/>
                 </FileInfo>
             </File>
         </Verilog>

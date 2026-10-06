@@ -16,6 +16,7 @@ $serial.RtsEnable = $false
 $fontMap = New-Object 'System.Collections.Generic.Dictionary[string,int]' ([System.StringComparer]::Ordinal)
 $fontData = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'text_font.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 foreach ($entry in $fontData) { $fontMap.Add($entry.character,[int]$entry.id) }
+. (Join-Path $PSScriptRoot 'event_protocol.ps1')
 function Send-Request([string]$Command) {
     $serial.WriteLine($Command)
     return $serial.ReadLine().TrimEnd("`r")
@@ -67,6 +68,8 @@ function Show-Help {
     Write-Host 'OVERLAY ON / OFF | LOCAL | RESET | HELP | EXIT'
     Write-Host 'OVERLAY controls text and waveform together. LOCAL restores physical switch control.'
     Write-Host 'TEXT <content> updates scrolling subtitle (1..64 characters); TEXT DEFAULT restores built-in text.'
+    Write-Host 'PUBLISH opens event entry: ID, level, area and emergency message.'
+    Write-Host 'ESTATUS queries acceptance/display status. CLEAR [decimal ID] clears a remote event.'
 }
 try {
     $serial.Open()
@@ -77,6 +80,27 @@ try {
         $command = Read-Host 'Anshibo'
         if ($null -eq $command) { break }
         $command = $command.Trim()
+        if ($command -eq 'PUBLISH') {
+            try { Publish-EventWizard } catch { Write-Host $_.Exception.Message }
+            continue
+        }
+        if ($command -eq 'ESTATUS') {
+            try { Show-EventStatus (Read-EventStatus) } catch { Write-Host $_.Exception.Message }
+            continue
+        }
+        if ($command -match '^CLEAR(?:\s+(\d{1,5}))?$') {
+            try {
+                $targetId=$Matches[1]
+                if ([string]::IsNullOrWhiteSpace($targetId)) {
+                    $status=Read-EventStatus
+                    if ($status.State -eq 0) { Write-Host 'No active remote event.'; continue }
+                    $targetId=$status.Id
+                }
+                if ([int]$targetId -lt 1 -or [int]$targetId -gt 65535) { throw 'Invalid decimal event ID.' }
+                Clear-Event ([int]$targetId)
+            } catch { Write-Host $_.Exception.Message }
+            continue
+        }
         if ($command -match '^TEXT\s+DEFAULT$') { $command = 'TDEFAULT' }
         elseif ($command -match '^TEXT\s+(.+)$') { Send-Text $Matches[1]; continue }
         $command = $command.ToUpperInvariant()
@@ -104,6 +128,7 @@ try {
     if ($serial.IsOpen) { $serial.Close() }
     $serial.Dispose()
 }
+
 
 
 

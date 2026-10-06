@@ -5,7 +5,8 @@ module uart_console #(
     parameter integer CLK_FREQ_HZ=100000000,
     parameter integer BAUD=115200,
     parameter integer EXTENDED_STATUS=0,
-    parameter integer GRADED_ALERT_ENABLE=0
+    parameter integer GRADED_ALERT_ENABLE=0,
+    parameter integer EVENT_ENABLE=0
 )(
     input clk,rst,rx,output tx,
     input [2:0] next_block_reason,
@@ -15,6 +16,14 @@ module uart_console #(
     input auto_status,overlay_status,text_ready,text_open,
     input [6:0] text_length,
     input [1:0] effective_alert,local_alert,remote_alert,
+    input event_busy,event_result_valid,input[3:0]event_result,
+    input event_active_valid,input[15:0]event_active_id,event_active_crc,
+    input[1:0]event_active_level,input[2:0]event_state,
+    input[4:0]event_active_area,input[6:0]event_active_body,
+    output reg event_cmd_valid,output reg[2:0]event_cmd,
+    output reg[15:0]event_id,event_crc,
+    output reg[1:0]event_level,output reg[4:0]event_area,
+    output reg[6:0]event_body,output reg[9:0]event_glyph,
     output reg next_pulse,command_valid,
     output reg [3:0] command_code,
     output reg [2:0] command_value,
@@ -32,10 +41,19 @@ reg [255:0] line_buffer;
 reg [5:0] line_length;
 reg line_error,busy_reply_pending,reset_pending;
 reg [511:0] reply_buffer;
-reg [4:0] reply_kind;
+reg [5:0] reply_kind;
+reg event_wait;
+reg[15:0]event_snapshot_id,event_snapshot_crc;
+reg[1:0]event_snapshot_level;
+reg[2:0]event_snapshot_state;
+reg[4:0]event_snapshot_area;
+reg[6:0]event_snapshot_body;
+reg event_snapshot_pending;
 reg [2:0] reply_warmup;
 reg [5:0] byte_index;
 reg [7:0] byte_candidate;
+reg[63:0]byte_group;
+reg[2:0]byte_lane;
 reg [15:0] status_debug;
 reg [3:0] status_state;
 reg [7:0] status_settings;
@@ -44,7 +62,7 @@ reg [2:0] status_ownership;
 reg [1:0] status_effective,status_local,status_remote;
 reg [6:0] remaining;
 wire [7:0] uppercase=(rx_data>="a" && rx_data<="z") ? rx_data-8'd32 : rx_data;
-wire reply_busy=(remaining!=0)||!tx_ready||tx_start||busy_reply_pending||reset_pending;
+wire reply_busy=(remaining!=0)||!tx_ready||tx_start||busy_reply_pending||reset_pending||event_wait;
 // UART字节间隔远大于一个系统周期，先寄存宽组合判断，缩短解析路径。
 reg reply_busy_d,text_ready_d,text_open_d,text_full_d,text_empty_d;
 always @(posedge clk or posedge rst)begin
@@ -58,14 +76,14 @@ wire ready_for_control=(next_block_reason!=1);
 wire [2:0] image_count=debug_status[14:12];
 wire [7:0] argument=line_buffer[7:0];
 // 命令匹配提前寄存，拆开长比较与应答选择，满足100MHz时序。
-reg [23:0] decoded;
-reg [4:0] operation;
+reg [29:0] decoded;
+reg [5:0] operation;
 integer op_index;
 always @(posedge clk or posedge rst)begin
- if(rst)operation<=31;
+ if(rst)operation<=63;
  else begin
-  operation<=31;
-  for(op_index=0;op_index<24;op_index=op_index+1)
+  operation<=63;
+  for(op_index=0;op_index<30;op_index=op_index+1)
    if(decoded[op_index])operation<=op_index;
  end
 end
@@ -96,12 +114,51 @@ always @(posedge clk or posedge rst) begin
   decoded[21]<=(line_buffer=="TDEFAULT");
   decoded[22]<=(GRADED_ALERT_ENABLE && line_length==7 && (line_buffer>>8)=="ALERT ");
   decoded[23]<=(GRADED_ALERT_ENABLE && line_buffer=="ALERT CLEAR");
+  decoded[24]<=(EVENT_ENABLE && line_length==19 && (line_buffer>>96)=="EBEGIN ");
+  decoded[25]<=(EVENT_ENABLE && line_length==9 && (line_buffer>>24)=="ECHAR ");
+  decoded[26]<=(EVENT_ENABLE && line_length==12 && (line_buffer>>32)=="ECOMMIT ");
+  decoded[27]<=(EVENT_ENABLE && line_buffer=="EABORT");
+  decoded[28]<=(EVENT_ENABLE && line_length==11 && (line_buffer>>32)=="ECLEAR ");
+  decoded[29]<=(EVENT_ENABLE && line_buffer=="ESTATUS");
  end
 end
 
 function [7:0] hex_ascii;
  input[3:0] v;begin hex_ascii=(v<10)?8'd48+v:8'd55+v;end
 endfunction
+function[15:0]parse_hex4;input[31:0]chars;
+ begin parse_hex4={from_hex(chars[31:24]),from_hex(chars[23:16]),from_hex(chars[15:8]),from_hex(chars[7:0])};end
+endfunction
+function valid_hex4;input[31:0]chars;
+ begin valid_hex4=hex_valid(chars[31:24])&&hex_valid(chars[23:16])&&hex_valid(chars[15:8])&&hex_valid(chars[7:0]);end
+endfunction
+wire event_header_valid=valid_hex4(line_buffer[95:64])&&line_buffer[63:56]==" "&&
+ line_buffer[55:48]>="1"&&line_buffer[55:48]<="3"&&line_buffer[47:40]==" "&&
+ hex_valid(line_buffer[39:32])&&hex_valid(line_buffer[31:24])&&line_buffer[23:16]==" "&&
+ hex_valid(line_buffer[15:8])&&hex_valid(line_buffer[7:0]);
+wire glyph_argument_ok=(line_buffer[23:16]>="0"&&line_buffer[23:16]<="3") &&
+ hex_valid(line_buffer[15:8]) && hex_valid(line_buffer[7:0]);
+wire [9:0] glyph_argument={line_buffer[17:16],from_hex(line_buffer[15:8]),from_hex(line_buffer[7:0])};
+reg header_valid_d,header_counts_d,tail_hex_d,event_glyph_ok_d;
+reg[15:0]header_id_d,tail_value_d;
+reg[1:0]header_level_d;
+reg[4:0]header_area_d;
+reg[6:0]header_body_d;
+reg[9:0]event_glyph_d;
+always @(posedge clk or posedge rst)begin
+ if(rst)begin
+  header_valid_d<=0;header_counts_d<=0;tail_hex_d<=0;event_glyph_ok_d<=0;
+  header_id_d<=0;tail_value_d<=0;header_level_d<=0;header_area_d<=0;header_body_d<=0;event_glyph_d<=0;
+ end else begin
+  header_valid_d<=event_header_valid;
+  header_counts_d<=parse_hex4({16'h3030,line_buffer[39:24]})<=16 && parse_hex4({16'h3030,line_buffer[15:0]})<=64;
+  header_id_d<=parse_hex4(line_buffer[95:64]);header_level_d<=line_buffer[49:48];
+  header_area_d<={from_hex(line_buffer[39:32]),from_hex(line_buffer[31:24])};
+  header_body_d<={from_hex(line_buffer[15:8]),from_hex(line_buffer[7:0])};
+  tail_hex_d<=valid_hex4(line_buffer[31:0]);tail_value_d<=parse_hex4(line_buffer[31:0]);
+  event_glyph_ok_d<=glyph_argument_ok;event_glyph_d<=glyph_argument;
+ end
+end
 function [3:0] from_hex;
  input[7:0] c;
  begin from_hex=(c>="0"&&c<="9")?c-8'd48:c-8'd55;end
@@ -110,9 +167,6 @@ function hex_valid;
  input[7:0] c;
  begin hex_valid=(c>="0"&&c<="9")||(c>="A"&&c<="F");end
 endfunction
-wire glyph_argument_ok=(line_buffer[23:16]>="0"&&line_buffer[23:16]<="3") &&
- hex_valid(line_buffer[15:8]) && hex_valid(line_buffer[7:0]);
-wire [9:0] glyph_argument={line_buffer[17:16],from_hex(line_buffer[15:8]),from_hex(line_buffer[7:0])};
 function [2:0] level_value;
  input[2:0] old_level;input[7:0] arg;
  begin
@@ -165,14 +219,42 @@ reply_buffer=0;case(reply_kind)
  " A=",hex_ascii({3'b0,status_auto})," O=",hex_ascii({3'b0,status_overlay}),
  " R=",hex_ascii({1'b0,status_ownership})," E=",hex_ascii({2'b0,status_effective}),
  " B=",hex_ascii({2'b0,status_local})," M=",hex_ascii({2'b0,status_remote}),8'd13,8'd10};end
+6'd28:reply_buffer={"EVENT I=",hex_ascii(event_snapshot_id[15:12]),hex_ascii(event_snapshot_id[11:8]),hex_ascii(event_snapshot_id[7:4]),hex_ascii(event_snapshot_id[3:0]),
+ " L=",hex_ascii({2'b0,event_snapshot_level})," S=",hex_ascii({1'b0,event_snapshot_state}),
+ " C=",hex_ascii(event_snapshot_crc[15:12]),hex_ascii(event_snapshot_crc[11:8]),hex_ascii(event_snapshot_crc[7:4]),hex_ascii(event_snapshot_crc[3:0]),
+ " A=",hex_ascii({3'b0,event_snapshot_area[4]}),hex_ascii(event_snapshot_area[3:0]),
+ " T=",hex_ascii({1'b0,event_snapshot_body[6:4]}),hex_ascii(event_snapshot_body[3:0]),
+ " P=",hex_ascii({3'b0,event_snapshot_pending}),8'd13,8'd10};
+6'd32:reply_buffer={"OK EBEGIN",8'd13,8'd10};
+6'd33:reply_buffer={"OK ECHAR",8'd13,8'd10};
+6'd34:reply_buffer={"OK ACCEPT",8'd13,8'd10};
+6'd35:reply_buffer={"OK DUP",8'd13,8'd10};
+6'd36:reply_buffer={"OK ABORT",8'd13,8'd10};
+6'd37:reply_buffer={"OK ECLEAR",8'd13,8'd10};
+6'd38:reply_buffer={"ERR EVENTBUSY",8'd13,8'd10};
+6'd39:reply_buffer={"ERR EVENT",8'd13,8'd10};
+6'd40:reply_buffer={"ERR LENGTH",8'd13,8'd10};
+6'd41:reply_buffer={"ERR CRC",8'd13,8'd10};
+6'd42:reply_buffer={"ERR ID",8'd13,8'd10};
+6'd43:reply_buffer={"ERR RANGE",8'd13,8'd10};
+6'd44:reply_buffer={"ERR NOTREADY",8'd13,8'd10};
+6'd45:reply_buffer={"ERR NOEVENT",8'd13,8'd10};
+6'd46:reply_buffer={"ERR NOIMAGE",8'd13,8'd10};
 default:reply_buffer=0;endcase end
 always @(posedge clk or posedge rst)begin
- if(rst)begin byte_index<=0;byte_candidate<=0;end
- else begin byte_index<=remaining-1'b1;byte_candidate<=reply_buffer[{byte_index,3'b000}+:8];end
+ if(rst)begin byte_index<=0;byte_candidate<=0;byte_group<=0;byte_lane<=0;end
+ else begin
+  byte_index<=remaining-1'b1;
+  byte_group<=reply_buffer[{byte_index[5:3],6'b000000}+:64];byte_lane<=byte_index[2:0];
+  byte_candidate<=byte_group[{byte_lane,3'b000}+:8];
+ end
 end
 task reply;
- input[4:0] kind;input[6:0] length;
- begin reply_kind<=kind;remaining<=length;reply_warmup<=4;end
+ input[5:0] kind;input[6:0] length;
+ begin reply_kind<=kind;remaining<=length;reply_warmup<=6;end
+endtask
+task send_event;input[2:0]code;
+ begin event_cmd_valid<=1;event_cmd<=code;event_wait<=1;end
 endtask
 task emit;
  input[3:0] code;input[2:0] value;
@@ -196,11 +278,24 @@ always @(posedge clk or posedge rst) begin
   reply_kind<=0;reply_warmup<=0;remaining<=0;
   status_debug<=0;status_state<=0;status_settings<=0;status_auto<=0;status_overlay<=0;status_ownership<=0;tx_data<=0;tx_start<=0;next_pulse<=0;
   status_effective<=0;status_local<=0;status_remote<=0;
+  event_wait<=0;event_cmd_valid<=0;event_cmd<=0;event_id<=0;event_crc<=0;
+  event_level<=0;event_area<=0;event_body<=0;event_glyph<=0;
+  event_snapshot_id<=0;event_snapshot_crc<=0;event_snapshot_level<=0;event_snapshot_state<=0;
+  event_snapshot_area<=0;event_snapshot_body<=0;event_snapshot_pending<=0;
   command_valid<=0;command_code<=0;command_value<=0;text_glyph<=0;reset_pending<=0;soft_reset<=0;
   overlay_override<=0;overlay_value<=1;adjust_override<=0;adjust_value<=0;
   select_override<=0;select_value<=0;
  end else begin
-  tx_start<=0;next_pulse<=0;command_valid<=0;soft_reset<=0;
+  tx_start<=0;next_pulse<=0;command_valid<=0;soft_reset<=0;event_cmd_valid<=0;
+  if(event_wait&&event_result_valid)begin
+   event_wait<=0;
+   case(event_result)
+    0:reply(32,11);1:reply(33,10);2:reply(34,11);3:reply(35,8);
+    4:reply(36,10);5:reply(37,11);6:reply(38,15);7:reply(39,11);
+    8:reply(40,12);9:reply(41,9);10:reply(42,8);11:reply(43,11);
+    12:reply(44,14);13:reply(45,13);14:reply(46,13);default:reply(39,11);
+   endcase
+  end
   if(reply_warmup!=0)reply_warmup<=reply_warmup-1'b1;
   if(remaining!=0 && reply_warmup==0 && tx_ready && !tx_start)begin
    tx_data<=byte_candidate;tx_start<=1;remaining<=remaining-1'b1;
@@ -237,7 +332,8 @@ always @(posedge clk or posedge rst) begin
       else begin emit(3,operation==3);reply(5'd10,7'd9);end
      end
      5,6:begin
-      if(!ready_for_control)block_reply(1);
+      if(EVENT_ENABLE&&event_busy)reply(38,15);
+      else if(!ready_for_control)block_reply(1);
       else if(operation==5 && image_count<4)block_reply(5);
       else begin emit(4,operation==5);reply(5'd11,7'd14);end
      end
@@ -267,13 +363,41 @@ always @(posedge clk or posedge rst) begin
       reset_pending<=1;reply(5'd18,7'd10);
      end
      22:begin
-      if(!ready_for_control)block_reply(1);
+      if(EVENT_ENABLE&&event_busy)reply(38,15);
+      else if(!ready_for_control)block_reply(1);
       else if(argument<"1"||argument>"3")reply(5'd8,7'd11);
       else if(argument>"1"&&image_count<4)block_reply(5);
       else begin emit(13,argument-8'd48);reply(5'd19,7'd10);end
      end
      23:begin
-      emit(13,0);reply(5'd27,7'd10);
+      if(EVENT_ENABLE&&event_busy)reply(38,15);
+      else begin emit(13,0);reply(5'd27,7'd10);end
+     end
+     24:begin
+      if(!header_valid_d||!header_counts_d)reply(43,11);
+      else begin
+       event_id<=header_id_d;event_level<=header_level_d;
+       event_area<=header_area_d;event_body<=header_body_d;send_event(1);
+      end
+     end
+     25:begin
+      if(!event_glyph_ok_d)reply(43,11);
+      else begin event_glyph<=event_glyph_d;send_event(2);end
+     end
+     26:begin
+      if(!tail_hex_d)reply(43,11);
+      else begin event_crc<=tail_value_d;send_event(3);end
+     end
+     27:send_event(4);
+     28:begin
+      if(!tail_hex_d)reply(43,11);
+      else begin event_id<=tail_value_d;send_event(5);end
+     end
+     29:begin
+      event_snapshot_id<=event_active_id;event_snapshot_crc<=event_active_crc;
+      event_snapshot_level<=event_active_level;event_snapshot_state<=event_state;
+      event_snapshot_area<=event_active_area;event_snapshot_body<=event_active_body;
+      event_snapshot_pending<=event_busy;reply(28,43);
      end
      18,19,20,21:begin
       if(!text_ready_d) block_reply(4);
@@ -281,7 +405,7 @@ always @(posedge clk or posedge rst) begin
       else if(operation==21)begin emit(10,0);reply(5'd21,7'd13);end
       else if(!text_open_d)reply(5'd22,7'd10);
       else if(operation==19)begin
-       if(!glyph_argument_ok||glyph_argument>=606||text_full_d)reply(5'd8,7'd11);
+       if(!glyph_argument_ok||glyph_argument>=607||text_full_d)reply(5'd8,7'd11);
        else begin text_glyph<=glyph_argument;emit(8,0);reply(5'd23,7'd10);end
       end else if(text_empty_d)reply(5'd8,7'd11);
       else begin emit(9,0);reply(5'd24,7'd12);end

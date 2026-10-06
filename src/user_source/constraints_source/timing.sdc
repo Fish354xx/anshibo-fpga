@@ -132,3 +132,15 @@ set_false_path -to [get_regs {u_campus_osd/alert_sync0[*]}]
 set_false_path -to [get_regs {u_campus_osd/candidate_sync0[*]}]
 set_false_path -to [get_regs {u_campus_osd/select_sync0}]
 set_false_path -to [get_regs {u_hdmi_audio_tone_i2s_64fs/level_sync0[*]}]
+
+# Event-bank and presentation feedback toggle first stages.
+set_false_path -to [get_regs {u_event_packet/ack_sync0}]
+set_false_path -to [get_regs {u_event_packet/request_sync0}]
+set_false_path -to [get_regs {u_event_packet/shown_sync0}]
+set_false_path -to [get_regs {u_event_packet/shown_id_sync0[*]}]
+set_false_path -to [get_regs {u_event_packet/shown_level_sync0[*]}]
+set_false_path -to [get_regs {u_campus_osd/event_valid_sync0}]
+set_false_path -to [get_regs {u_campus_osd/event_source_sync0}]
+# Requested bundle is held until frame installation returns its toggle ack.
+set_false_path -from [get_regs {u_event_packet/requested_*}] -to [get_regs {u_campus_osd/u_event_view/*}]
+set_false_path -to [get_regs {u_event_packet/shown_generation_sync0[*]}]

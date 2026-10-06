@@ -42,7 +42,7 @@ initial begin
  command("TBEGIN",6,{"OK TBEGIN",8'd13,8'd10});
  command("TCHAR 021",9,{"OK TCHAR",8'd13,8'd10}); // A
  command("TCHAR 05F",9,{"OK TCHAR",8'd13,8'd10}); // 今
- command("TCHAR 25E",9,{"ERR RANGE",8'd13,8'd10}); // first unsupported ID
+ command("TCHAR 3FF",9,{"ERR RANGE",8'd13,8'd10}); // first unsupported ID
  command("TCHAR 0G0",9,{"ERR RANGE",8'd13,8'd10});
  if(active||length!=2)$fatal(1,"partial text exposed or invalid append accepted");
  command("TCOMMIT",7,{"OK TCOMMIT",8'd13,8'd10});
@@ -84,6 +84,7 @@ initial begin
 end
 initial begin #250000000;$fatal(1,"timeout");end
 endmodule
+
 
 
 

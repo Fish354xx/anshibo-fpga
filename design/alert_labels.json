@@ -12,5 +12,6 @@
   "select1": "待确认：一级提醒",
   "select2": "待确认：二级警戒",
   "select3": "待确认：三级紧急",
-  "help": "KEY2选择  KEY3确认"
+  "help": "KEY2选择  KEY3确认",
+  "area_prefix": "区域："
 }

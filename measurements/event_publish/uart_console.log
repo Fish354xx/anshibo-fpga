@@ -1,10 +1,10 @@
-# vsim -do {run -all; quit -f} -l C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/uart_console.log -lib C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work -c tb_uart_console 
-# Loading C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work.tb_uart_console
-# Loading C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work.uart_console
-# Loading C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work.uart_rx_8n1
-# Loading C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work.uart_tx_8n1
-# Loading C:/Users/Fish/Desktop/111/anshibo_alert_project/sim/work.emergency_mode_ctrl
-# ** Warning: (vsim-3017) tb/tb_uart_console.v(13): [TFMPC] - Too few port connections. Expected 28, found 9.
+# vsim -do {run -all; quit -f} -l C:/Users/Fish/Desktop/111/anshibo_event_project/sim/uart_console.log -lib C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work -c tb_uart_console 
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.tb_uart_console
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.uart_console
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.uart_rx_8n1
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.uart_tx_8n1
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.emergency_mode_ctrl
+# ** Warning: (vsim-3017) tb/tb_uart_console.v(13): [TFMPC] - Too few port connections. Expected 46, found 9.
 # 
 #         Region: /tb_uart_console/dut
 # ** Warning: (vsim-3722) tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'auto_status'.
@@ -22,6 +22,42 @@
 # ** Warning: (vsim-3722) tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'local_alert'.
 # 
 # ** Warning: (vsim-3722) tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'remote_alert'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'event_busy'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'event_result_valid'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'event_result'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'event_active_valid'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'event_active_id'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'event_active_crc'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'event_active_level'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'event_state'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'event_active_area'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'event_active_body'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'event_cmd_valid'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'event_cmd'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'event_id'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'event_crc'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'event_level'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'event_area'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'event_body'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'event_glyph'.
 # 
 # ** Warning: (vsim-3722) tb/tb_uart_console.v(13): [TFMPC] - Missing connection for port 'command_valid'.
 # 
@@ -110,4 +146,4 @@
 # 
 # UART CONSOLE: ALL CHECKS PASSED
 # ** Note: $finish    : tb/tb_uart_console.v(101)
-#    Time: 28816290 ns  Iteration: 1  Instance: /tb_uart_console
+#    Time: 28816630 ns  Iteration: 1  Instance: /tb_uart_console

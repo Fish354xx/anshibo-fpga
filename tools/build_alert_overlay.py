@@ -12,7 +12,7 @@ labels={
  'critical_ticker':'三级紧急  请保持冷静，按疏散指引有序离开，禁止乘坐电梯  ',
  'select0':'待确认：解除本地预警', 'select1':'待确认：一级提醒',
  'select2':'待确认：二级警戒', 'select3':'待确认：三级紧急',
- 'help':'KEY2选择  KEY3确认'}
+ 'help':'KEY2选择  KEY3确认','area_prefix':'区域：'}
 (root/'design/alert_labels.json').write_text(json.dumps(labels,ensure_ascii=False,indent=2),encoding='utf-8')
 p=root/'tools/build_text_font.py';s=p.read_text(encoding='utf-8-sig')
 s=s.replace("characters = list(dict.fromkeys([chr(i) for i in range(32, 127)] + list(words)))",

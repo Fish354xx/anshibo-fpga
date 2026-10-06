@@ -1,5 +1,5 @@
 // 本地与后台预警分别保存，取较高等级。短按选择/确认，长按直接紧急。
-// 本阶段固定内容；事件编号、文本与完整数据包提交在后续协议阶段实现。
+// 本模块保存等级；事件编号、区域和正文由事务缓冲模块统一提交。
 module graded_alert_ctrl #(
  parameter integer CLK_FREQ_HZ=100000000,
  parameter integer DEBOUNCE_CYCLES=CLK_FREQ_HZ/50,
@@ -80,3 +80,4 @@ always @(posedge clk or posedge rst)begin
  end
 end
 endmodule
+
