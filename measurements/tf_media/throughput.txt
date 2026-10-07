@@ -1,0 +1,11 @@
+# vsim -do {run -all; quit -f} -l sim/tf_media_budget.log -lib C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work -c tb_tf_media_budget 
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.tb_tf_media_budget
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.bmp_read
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.bmp_nearest_scaler
+# run -all 
+# MEDIA 160x120 cycles=7603417 ms=76.034170 max_model_fps=13.151982 sectors=114 pixels=307200
+# MEDIA 320x240 cycles=15275425 ms=152.754250 max_model_fps=6.546463 sectors=452 pixels=307200
+# MEDIA 640x480 cycles=45614395 ms=456.143950 max_model_fps=2.192290 sectors=1802 pixels=307200
+# MEDIA BUDGET: ALL CHECKS PASSED
+# ** Note: $finish    : tb/tb_tf_media_budget.v(70)
+#    Time: 684932450 ns  Iteration: 1  Instance: /tb_tf_media_budget
