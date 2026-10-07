@@ -160,3 +160,6 @@ set_false_path -to [get_regs {u_campus_osd/u_transition/epoch_sync0}]
 set_false_path -to [get_regs {u_campus_osd/u_transition/cancel_sync0}]
 set_false_path -to [get_regs {sd_card_bmp_m0/reader_mix_sync0}]
 set_false_path -to [get_regs {sd_card_bmp_m0/cancel_ack_sync0}]
+
+# First stage only for committed resource fallback metadata.
+set_false_path -to [get_regs {u_campus_osd/fallback_sync0}]

@@ -8,7 +8,7 @@
 |---|---|
 | PING / STATUS | 通信检查 / 状态查询 |
 | NEXT | 普通图片下一张 |
-| SHOW 1 / SHOW 2 / SHOW 3 | 指定普通图片，同时停止轮播 |
+| SHOW 1～16 | 指定普通图片，同时停止轮播 |
 | AUTO ON / AUTO OFF | 开启 / 关闭轮播 |
 | EMERGENCY ON / EMERGENCY OFF | 进入 / 退出应急，第四张图片及同步报警 |
 | BRIGHTNESS 0～4 / BRIGHTNESS + / BRIGHTNESS - | 设置 / 增加 / 减小亮度 |
@@ -58,3 +58,7 @@ TEXT DEFAULT
 ## 日常转场
 
 TRANSITION SLIDE / FADE / CUT分别选择相接滑动、淡出淡入、直接切屏；TRANSITION查询当前设置。默认SLIDE，复位恢复默认。当前动画不受中途设置影响，新设置用于下一次动画。应急进入与解除不执行转场。具体实现与验收见TRANSITIONS.md。
+
+## 资源管理
+
+RESOURCES报告合法日常文件数、播放条目数、应急文件存在状态、错误位、当前条目索引和停留时间。SHOW 1～16选择配置后的播放条目。目录和可选列表格式见RESOURCE_MANAGEMENT.md。STATUS的紧凑图片标签可能饱和，准确数量与索引请使用RESOURCES。源码和新固件支持FAT32碎片文件，视频开发继续暂停。

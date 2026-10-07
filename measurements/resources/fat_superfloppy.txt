@@ -1,0 +1,10 @@
+# vsim +VARIANT=superfloppy -do {run -all; quit -f} -l sim/fat_superfloppy.log -lib C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work -c tb_fat_variants 
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.tb_fat_variants
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.fat32_resources
+# run -all 
+# PASS FAT32 volume without partition table mounted
+# PASS configured dwell seconds
+# PASS header rewind maps file start
+# FAT VARIANTS: ALL CHECKS PASSED superfloppy
+# ** Note: $finish    : tb/tb_fat_variants.v(94)
+#    Time: 663690 ns  Iteration: 1  Instance: /tb_fat_variants

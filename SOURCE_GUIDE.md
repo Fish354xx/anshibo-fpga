@@ -30,3 +30,5 @@ VS Code打开本包，TD打开src/td_project/anshibo.al。主要RTL位于src/use
 转场阶段：picture_transition管理特效和帧步进，frame_fifo_read执行行内滑动读地址，campus_osd使用实际读帧偏移遮住回绕区域。默认SLIDE，串口可选FADE/CUT；应急恢复根据当前应急图片标签绕过转场。旧generate_osd.py已加保护，避免覆盖维护后的源码。
 
 相接滑动修正：frame_fifo_read按偏移拼接旧图行尾与新图行首，campus_osd不再遮成黑色。滑动结束及取消采用读帧代次握手，确保双缓存安全释放。视频开发继续暂停。
+
+资源管理阶段：SD/fat32_resources.v负责只读FAT32挂载、目录簇链扫描、三位数字文件排序、播放列表、逻辑扇区映射和异常降级。sd_card_bmp.v在RESOURCE_ENABLE模式接入该模块，并扩展日常索引至16张，应急使用独立索引16；bmp_read.v继续负责BMP校验、像素与最近邻缩放。emergency_mode_ctrl以已提交画面的停留时间调度轮播。uart_console.v增加RESOURCES和SHOW 1～16；字体叠加模块增加资源不可用提示。物理SPI和SDRAM/HDMI基础接口保持既有来源。

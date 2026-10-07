@@ -1,0 +1,29 @@
+# vsim -do {run -all; quit -f} -l sim/fat_resources.log -lib C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work -c tb_fat_resources 
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.tb_fat_resources
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.fat32_resources
+# run -all 
+# PASS directories catalogued independently
+# PASS invalid BMP and absent playlist entry reported
+# PASS configured dwell seconds
+# PASS header rewind maps file start
+# PASS configured dwell seconds
+# PASS header rewind maps file start
+# PASS configured dwell seconds
+# PASS header rewind maps file start
+# PASS emergency path independent
+# PASS truncated fragmented chain returns error and drain data
+# PASS disabled broken file uses builtin status background
+# PASS missing optional playlist uses automatic order
+# PASS configured dwell seconds
+# PASS header rewind maps file start
+# PASS configured dwell seconds
+# PASS header rewind maps file start
+# PASS configured dwell seconds
+# PASS header rewind maps file start
+# PASS missing emergency resource reported
+# PASS missing emergency has builtin fallback
+# PASS missing normal directory has zero resources
+# PASS empty daily catalog remains renderable
+# FAT RESOURCE: ALL CHECKS PASSED
+# ** Note: $finish    : tb/tb_fat_resources.v(86)
+#    Time: 2782270 ns  Iteration: 1  Instance: /tb_fat_resources

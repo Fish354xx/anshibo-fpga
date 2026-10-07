@@ -80,10 +80,11 @@ module campus_osd #(
     parameter integer GRADED_ALERT_ENABLE=0,
     parameter integer EVENT_ENABLE=0,
     parameter integer SLIDE_ENABLE=0,
+    parameter integer RESOURCE_ENABLE=0,
     parameter integer SUBTITLE_DEBOUNCE_CYCLES=CLK_FREQ_HZ/50
 )(
     input clk, rst, in_vs, in_de, emergency_async,
-    input subtitle_enable_async,
+    input subtitle_enable_async,resource_fallback_async,
     input [23:0] in_rgb,
     input [7:0] settings_async,
     input dynamic_text_active,dynamic_text_changed,
@@ -187,13 +188,85 @@ event_text_layout u_event_layout(.x(x),.y(y),.scroll(scroll),.level(frame_alert)
  .read_index(event_read_index),.band(event_band_raw),.text(event_text),.glyph(event_glyph),
  .row(event_row),.col(event_col),.background(event_background),.ink(event_ink));
 wire event_band=EVENT_ENABLE&&event_frame_remote&&event_band_raw&&!(frame_select&&y>=368&&y<416);
-wire overlay_band=(GRADED_ALERT_ENABLE&&alert_band)||event_band;
-wire overlay_text=event_band?event_text:alert_text;
-wire[9:0]overlay_glyph=event_band?event_glyph:alert_glyph;
-wire[3:0]overlay_row=event_band?event_row:alert_row;
-wire[3:0]overlay_col=event_band?event_col:alert_col;
-wire[23:0]overlay_background=event_band?event_background:alert_background;
-wire[23:0]overlay_ink=event_band?event_ink:alert_ink;
+reg fallback_sync0,fallback_sync1,frame_fallback;
+always @(posedge clk or posedge rst)begin
+ if(rst)begin fallback_sync0<=0;fallback_sync1<=0;frame_fallback<=0;end
+ else begin fallback_sync0<=RESOURCE_ENABLE&&resource_fallback_async;fallback_sync1<=fallback_sync0;
+  if(frame_start)frame_fallback<=fallback_sync1;end
+end
+function[9:0]resource_label;input[5:0]i;input emergency;begin
+if(emergency)begin case(i)
+0:resource_label=10'd38;
+1:resource_label=10'd47;
+2:resource_label=10'd44;
+3:resource_label=10'd44;
+4:resource_label=10'd47;
+5:resource_label=10'd55;
+6:resource_label=10'd0;
+7:resource_label=10'd51;
+8:resource_label=10'd52;
+9:resource_label=10'd33;
+10:resource_label=10'd38;
+11:resource_label=10'd38;
+12:resource_label=10'd0;
+13:resource_label=10'd13;
+14:resource_label=10'd0;
+15:resource_label=10'd46;
+16:resource_label=10'd47;
+17:resource_label=10'd0;
+18:resource_label=10'd33;
+19:resource_label=10'd44;
+20:resource_label=10'd37;
+21:resource_label=10'd50;
+22:resource_label=10'd52;
+23:resource_label=10'd0;
+24:resource_label=10'd41;
+25:resource_label=10'd45;
+26:resource_label=10'd33;
+27:resource_label=10'd39;
+28:resource_label=10'd37;
+default:resource_label=0;
+endcase end else begin case(i)
+0:resource_label=10'd41;
+1:resource_label=10'd45;
+2:resource_label=10'd33;
+3:resource_label=10'd39;
+4:resource_label=10'd37;
+5:resource_label=10'd0;
+6:resource_label=10'd53;
+7:resource_label=10'd46;
+8:resource_label=10'd33;
+9:resource_label=10'd54;
+10:resource_label=10'd33;
+11:resource_label=10'd41;
+12:resource_label=10'd44;
+13:resource_label=10'd33;
+14:resource_label=10'd34;
+15:resource_label=10'd44;
+16:resource_label=10'd37;
+17:resource_label=10'd0;
+18:resource_label=10'd13;
+19:resource_label=10'd0;
+20:resource_label=10'd35;
+21:resource_label=10'd40;
+22:resource_label=10'd37;
+23:resource_label=10'd35;
+24:resource_label=10'd43;
+25:resource_label=10'd0;
+26:resource_label=10'd52;
+27:resource_label=10'd38;
+default:resource_label=0;
+endcase end end endfunction
+wire resource_band=RESOURCE_ENABLE&&frame_fallback&&y>=320&&y<344;
+wire resource_text=resource_band&&y>=324&&y<340&&x>=96&&x<544;
+wire[9:0]resource_glyph=resource_label((x-96)>>4,frame_alert>=2);
+wire overlay_band=(GRADED_ALERT_ENABLE&&alert_band)||event_band||resource_band;
+wire overlay_text=resource_band?resource_text:event_band?event_text:alert_text;
+wire[9:0]overlay_glyph=resource_band?resource_glyph:event_band?event_glyph:alert_glyph;
+wire[3:0]overlay_row=resource_band?(y-324):event_band?event_row:alert_row;
+wire[3:0]overlay_col=resource_band?((x-96)&15):event_band?event_col:alert_col;
+wire[23:0]overlay_background=resource_band?24'h302818:event_band?event_background:alert_background;
+wire[23:0]overlay_ink=resource_band?24'hFFC040:event_band?event_ink:alert_ink;
 always @(posedge clk or posedge rst) begin
     if(rst) begin
         subtitle_sync0<=1'b1; subtitle_sync1<=1'b1;

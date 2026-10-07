@@ -10,7 +10,8 @@ module sd_card_bmp #(
     parameter [31:0]  SCAN_START_SECTOR = 32'd0,
     parameter [31:0]  SCAN_MAX_SECTOR   = 32'd131071,
     parameter [2:0]   SCAN_TARGET_COUNT = 3'd4,
-    parameter integer FRAME_READER_FEEDBACK = 0
+    parameter integer FRAME_READER_FEEDBACK = 0,
+    parameter integer RESOURCE_ENABLE = 0
 )(
     input                       clk,
     input                       rst,
@@ -18,8 +19,13 @@ module sd_card_bmp #(
     input                       contrast_switch,
     input                       command_valid,
     input [3:0]                 command_code,
-    input [2:0]                 command_value,
+    input [4:0]                 command_value,
     output                      auto_play_active,
+    output [4:0] resource_normal_count,resource_active_count,resource_index,
+    output reg [5:0] resource_seconds,
+    output [7:0] resource_flags,
+    output resource_catalog_ready,resource_emergency_file,
+    output reg display_fallback,
     input                       remote_next,       // 同时钟域串口切图脉冲
     output [2:0]                next_block_reason, // 串口操作拒绝原因
     input                       key_next,
@@ -55,6 +61,8 @@ module sd_card_bmp #(
     input                       SD_MISO
 );
 
+localparam integer INDEX_BITS=RESOURCE_ENABLE?5:2;
+localparam [INDEX_BITS-1:0] EMERGENCY_SLOT=RESOURCE_ENABLE?16:3;
 wire key_next_press;
 wire key_auto_press;
 
@@ -67,7 +75,8 @@ wire             bmp_data_wr_en;
 wire [23:0]      bmp_data;
 wire             sd_init_done;
 wire             bmp_ready;
-wire             scan_done;
+wire bmp_scan_done;
+wire scan_done=RESOURCE_ENABLE?resource_catalog_ready:bmp_scan_done;
 wire             scan_paused;
 wire scan_resume;
 wire             scan_found_valid;
@@ -79,9 +88,9 @@ reg              load_start_pulse;
 reg [31:0]       load_sector;
 reg              scan_kicked;
 reg              first_image_committed;
-reg [2:0]        img_found_count;
-reg [1:0]        img_idx;              // 当前真正显示中的图片编号
-reg [1:0]        load_idx;             // 当前正在写入的图片编号
+reg [INDEX_BITS:0] img_found_count;
+reg [INDEX_BITS-1:0] img_idx;              // 当前真正显示中的图片编号
+reg [INDEX_BITS-1:0] load_idx;             // 当前正在写入的图片编号
 reg [1:0]        pending_buf_idx;      // 当前正在写入的目标缓冲区
 reg [31:0]       img_sector0;
 reg [31:0]       img_sector1;
@@ -92,13 +101,19 @@ assign scan_resume=scan_paused && first_image_committed && bmp_ready && !load_bu
 
 // 普通模式/应急模式控制器接口
 wire             ctrl_load_req;        // 加载请求（仅流水空闲时拉高，单周期）
-wire [1:0]       ctrl_load_idx;        // 请求加载的图片编号
+wire [INDEX_BITS-1:0] ctrl_load_idx;        // 请求加载的图片编号
 wire             ctrl_load_is_emerg;   // 该请求是否为应急图
-wire             disp_commit_en;       // 本次事务结束后是否允许切换显示
+wire ctrl_disp_commit_en;
+wire bmp_load_failed,resource_load_error,resource_selected_fallback;
+wire[5:0]resource_hold_seconds;
+reg source_started_seen;
+wire disp_commit_en=ctrl_disp_commit_en&&!(RESOURCE_ENABLE&&source_started_seen&&(bmp_load_failed||resource_load_error));
+reg write_started,retry_emergency;
+wire[4:0] effective_resource_count=(resource_active_count==0)?5'd1:resource_active_count;
+assign resource_index=img_idx;
 
 // bmp_ready 先表示"源文件读取/送 FIFO 完成"；真正切显示要等 write_finish_toggle 同步后
 reg              source_done_seen;
-reg              source_started_seen;
 reg              memory_done_seen;
 reg [1:0]        transition_ready_sync;
 wire             commit_allowed;
@@ -133,24 +148,26 @@ reg [2:0]        wrfin_tgl_sync;
 reg [1:0]        write_ack_sync;
 wire             write_finish_pulse;
 
-assign o_emergency_loaded = display_valid && (img_idx==2'd3);
+assign o_emergency_loaded = display_valid && (img_idx==EMERGENCY_SLOT);
 assign write_en           = bmp_data_wr_en;
 assign write_data         = {bmp_data[23:16], bmp_data[15:8], bmp_data[7:0], 8'b0};
 assign write_finish_pulse = wrfin_tgl_sync[2] ^ wrfin_tgl_sync[1];
 // Read-only diagnostics: image count / displayed index / loading index / status flags.
-assign debug_status = {1'b0, img_found_count, 2'b00, img_idx,
-                       2'b00, load_idx, scan_done, bmp_ready, load_busy, o_emergency_mode};
+wire[3:0] debug_count=(img_found_count>15)?4'hF:img_found_count;
+wire[3:0] debug_image=(img_idx>15)?4'hF:img_idx;
+wire[3:0] debug_loading=(load_idx>15)?4'hF:load_idx;
+assign debug_status={debug_count,debug_image,debug_loading,scan_done,bmp_ready,load_busy,o_emergency_mode};
 
 wire settings_active;
 assign next_block_reason = (!scan_done || !display_valid) ? 3'd1 :
                            o_emergency_mode ? 3'd2 : settings_active ? 3'd3 :
-                           (img_found_count<2) ? 3'd5 : load_busy ? 3'd4 : 3'd0;
+                           ((RESOURCE_ENABLE?effective_resource_count:img_found_count)<2) ? 3'd5 : load_busy ? 3'd4 : 3'd0;
 picture_key_control #(.CLK_FREQ_HZ(CLK_FREQ_HZ)) u_picture_keys (
     .clk(clk), .rst(rst), .key_next(key_next), .key_auto(key_auto),
     .adjustment_switch(adjustment_switch), .contrast_switch(contrast_switch),
     .remote_brightness_valid(REMOTE_ENABLE && command_valid && command_code==5),
     .remote_contrast_valid(REMOTE_ENABLE && command_valid && command_code==6),
-    .remote_level(command_value),
+    .remote_level(command_value[2:0]),
     .emergency_mode(o_emergency_mode), .next_press(key_next_press),
     .auto_press(key_auto_press), .settings_active(settings_active),
     .settings(picture_settings)
@@ -158,18 +175,19 @@ picture_key_control #(.CLK_FREQ_HZ(CLK_FREQ_HZ)) u_picture_keys (
 
 // 普通模式/应急模式控制：模式按键同步消抖、模式切换、加载仲裁、显示提交许可
 emergency_mode_ctrl #(
+    .INDEX_BITS(INDEX_BITS),.RESOURCE_ENABLE(RESOURCE_ENABLE),
     .REMOTE_ENABLE(REMOTE_ENABLE),
     .CLK_FREQ_HZ          (CLK_FREQ_HZ),
     .DEBOUNCE_MS          (20),
-    .EMERGENCY_INDEX      (2'd3),
-    .EMERGENCY_MIN_IMAGES (3'd4),
-    .NORMAL_ROTATE_COUNT  (3'd3)
+    .EMERGENCY_INDEX      (EMERGENCY_SLOT),
+    .EMERGENCY_MIN_IMAGES (RESOURCE_ENABLE?1:4),
+    .NORMAL_ROTATE_COUNT  (RESOURCE_ENABLE?16:3)
 ) u_emergency_mode_ctrl (
     .clk                   (clk),
     .rst                   (rst),
     .remote_valid          (command_valid),
     .remote_code           (command_code),
-    .remote_value          (command_value),
+    .remote_value          (RESOURCE_ENABLE?{1'b0,command_value}:command_value[2:0]),
     .auto_play_active      (auto_play_active),
     .key_mode              (key_mode),
     .key_next_press        (key_next_press | remote_next),
@@ -182,11 +200,13 @@ emergency_mode_ctrl #(
     .load_busy             (load_busy),
     .img_found_count       (img_found_count),
     .cur_img_idx           (img_idx),
+    .resource_count        (resource_active_count),.retry_emergency(retry_emergency),
+    .resource_hold_seconds (resource_seconds),.hold_seconds(),
     .emergency_mode        (o_emergency_mode),
     .load_req              (ctrl_load_req),
     .load_req_idx          (ctrl_load_idx),
     .load_req_is_emergency (ctrl_load_is_emerg),
-    .disp_commit_en        (disp_commit_en)
+    .disp_commit_en        (ctrl_disp_commit_en)
 );
 
 function [31:0] sector_lut;
@@ -239,15 +259,16 @@ always @(posedge clk or posedge rst) begin
         source_started_seen   <= 1'b0;
         memory_done_seen      <= 1'b0;
         transition_ready_sync <= 2'b00;
-        display_valid         <= 1'b0;
+        display_valid         <= 1'b0;write_started<=0;display_fallback<=0;resource_seconds<=1;retry_emergency<=0;
     end else begin
+        retry_emergency<=0;
         wrfin_tgl_sync   <= {wrfin_tgl_sync[1:0], write_finish_toggle};
         write_ack_sync   <= {write_ack_sync[0], write_req_ack};
         transition_ready_sync <= {transition_ready_sync[0], transition_black_ready};
         scan_start_pulse <= 1'b0;
         load_start_pulse <= 1'b0;
 
-        if (!sd_init_done) begin
+        if (RESOURCE_ENABLE?!resource_catalog_ready:!sd_init_done) begin
             scan_kicked           <= 1'b0;
             first_image_committed <= 1'b0;
             img_found_count       <= 3'd0;
@@ -267,7 +288,7 @@ always @(posedge clk or posedge rst) begin
             display_valid         <= 1'b0;
         end else begin
             // 扫描阶段缓存前 4 张图的起始 sector
-            if (scan_found_valid) begin
+            if (!RESOURCE_ENABLE&&scan_found_valid) begin
                 case (img_found_count)
                     3'd0: img_sector0 <= scan_found_sector;
                     3'd1: img_sector1 <= scan_found_sector;
@@ -282,6 +303,8 @@ always @(posedge clk or posedge rst) begin
 
             // 记住 bmp_read 已经把源图送完 FIFO，但还不能切显示，得等整帧写完
             // 加载请求被接受前ready仍为1；先观察busy，避免把初始idle误记为读完。
+            if(load_busy&&write_req&&write_ack_sync[1])write_started<=1;
+            if(load_busy&&source_started_seen&&bmp_ready&&bmp_load_failed&&!write_started)memory_done_seen<=1;
             if(load_busy && !bmp_ready) source_started_seen<=1'b1;
             if (load_busy && source_started_seen && bmp_ready)
                 source_done_seen <= 1'b1;
@@ -295,13 +318,17 @@ always @(posedge clk or posedge rst) begin
                 memory_done_seen <= 1'b1;
             // 保留写完成状态，等待日常转场的缓存交换许可。
             if (commit_allowed) begin
-                load_busy        <= 1'b0;
+                if(RESOURCE_ENABLE&&!disp_commit_en&&(bmp_load_failed||resource_load_error)&&load_idx==EMERGENCY_SLOT&&o_emergency_mode)
+                    retry_emergency<=1;
+                load_busy        <= 1'b0;write_started<=0;
                 source_done_seen <= 1'b0;
                 source_started_seen <= 1'b0;
                 memory_done_seen <= 1'b0;
                 if (disp_commit_en) begin
                     disp_buf_idx          <= pending_buf_idx;
                     img_idx               <= load_idx;
+                    display_fallback      <= RESOURCE_ENABLE&&resource_selected_fallback;
+                    resource_seconds      <= RESOURCE_ENABLE?resource_hold_seconds:1;
                     display_valid         <= 1'b1;
                     first_image_committed <= 1'b1;
                 end
@@ -309,10 +336,10 @@ always @(posedge clk or posedge rst) begin
 
             // 上电后自动发起一次"扫描前 4 张 BMP"
             if (!scan_kicked && bmp_ready) begin
-                scan_start_pulse      <= 1'b1;
+                scan_start_pulse      <= !RESOURCE_ENABLE;
                 scan_kicked           <= 1'b1;
                 first_image_committed <= 1'b0;
-                img_found_count       <= 3'd0;
+                img_found_count       <= RESOURCE_ENABLE?({1'b0,effective_resource_count}+1'b1):0;
                 img_idx               <= 2'd0;
                 load_idx              <= 2'd0;
                 pending_buf_idx       <= 2'd0;
@@ -327,8 +354,9 @@ always @(posedge clk or posedge rst) begin
             // 唯一的加载发起口：由模式控制器仲裁（首图 / 应急图 / 恢复图 / 手动 / 自动），
             // 控制器只在流水空闲时给出单周期请求，本模块据此启动一次加载事务
             else if (ctrl_load_req) begin
+                write_started<=0;
                 load_idx         <= ctrl_load_idx;
-                load_sector      <= sector_lut(ctrl_load_idx);
+                load_sector      <= RESOURCE_ENABLE?0:sector_lut(ctrl_load_idx[1:0]);
                 pending_buf_idx  <= next_buf_lut(disp_buf_idx, display_valid);
                 write_buf_idx    <= next_buf_lut(disp_buf_idx, display_valid);
                 load_start_pulse <= 1'b1;
@@ -341,7 +369,7 @@ always @(posedge clk or posedge rst) begin
     end
 end
 
-bmp_read #(.EARLY_FIRST_IMAGE(1)) bmp_read_m0(
+bmp_read #(.EARLY_FIRST_IMAGE(!RESOURCE_ENABLE),.FILE_READ_ENABLE(RESOURCE_ENABLE)) bmp_read_m0(
     .clk                    (clk),
     .rst                    (rst),
     .ready                  (bmp_ready),
@@ -352,15 +380,16 @@ bmp_read #(.EARLY_FIRST_IMAGE(1)) bmp_read_m0(
     .scan_start_sector      (SCAN_START_SECTOR),
     .scan_max_sector        (SCAN_MAX_SECTOR),
     .scan_target_count      (SCAN_TARGET_COUNT),
-    .scan_done              (scan_done),
+    .scan_done              (bmp_scan_done),
     .scan_found_valid       (scan_found_valid),
     .scan_found_sector      (scan_found_sector),
     .scan_found_total       (scan_found_total),
 
     .load_start             (load_start_pulse),
-    .load_sector            (load_sector),
+    .load_sector            (RESOURCE_ENABLE?32'd0:load_sector),
 
-    .sd_init_done           (sd_init_done),
+    .sd_init_done           (RESOURCE_ENABLE?resource_catalog_ready:sd_init_done),
+    .file_read_error(resource_load_error),.load_failed(bmp_load_failed),
     .state_code             (state_code),
     .bmp_width              (bmp_width),
     .bmp_height             (bmp_height),
@@ -376,6 +405,27 @@ bmp_read #(.EARLY_FIRST_IMAGE(1)) bmp_read_m0(
     .bmp_data               (bmp_data)
 );
 
+wire physical_sec_read,physical_sec_valid,physical_sec_end;
+wire[31:0]physical_sec_addr;wire[7:0]physical_sec_data;
+generate if(RESOURCE_ENABLE)begin:filesystem
+ fat32_resources #(.CLK_FREQ_HZ(CLK_FREQ_HZ)) resources(
+  .clk(clk),.rst(rst),.sd_init_done(sd_init_done),.catalog_ready(resource_catalog_ready),
+  .normal_count(resource_normal_count),.active_count(resource_active_count),
+  .emergency_file(resource_emergency_file),.status_flags(resource_flags),
+  .select_file(load_start_pulse),.file_index(load_idx),.selected_seconds(resource_hold_seconds),.decoder_failed(bmp_load_failed),
+  .load_error(resource_load_error),.selected_fallback(resource_selected_fallback),
+  .virtual_read(sd_sec_read),.virtual_sector(sd_sec_read_addr),.virtual_data(sd_sec_read_data),
+  .virtual_valid(sd_sec_read_data_valid),.virtual_end(sd_sec_read_end),
+  .physical_read(physical_sec_read),.physical_sector(physical_sec_addr),
+  .physical_data(physical_sec_data),.physical_valid(physical_sec_valid),.physical_end(physical_sec_end));
+end else begin:legacy_scan
+ assign physical_sec_read=sd_sec_read;assign physical_sec_addr=sd_sec_read_addr;
+ assign sd_sec_read_data=physical_sec_data;assign sd_sec_read_data_valid=physical_sec_valid;assign sd_sec_read_end=physical_sec_end;
+ assign resource_normal_count=0;assign resource_active_count=0;assign resource_catalog_ready=0;
+ assign resource_emergency_file=0;assign resource_flags=0;assign resource_load_error=0;
+ assign resource_selected_fallback=0;assign resource_hold_seconds=1;
+end endgenerate
+
 sd_card_top sd_card_top_m0(
     .clk                    (clk),
     .rst                    (rst),
@@ -384,14 +434,14 @@ sd_card_top sd_card_top_m0(
     .SD_MOSI                (SD_MOSI),
     .SD_MISO                (SD_MISO),
     .sd_init_done           (sd_init_done),
-    .sd_sec_read            (sd_sec_read),
-    .sd_sec_read_addr       (sd_sec_read_addr),
-    .sd_sec_read_data       (sd_sec_read_data),
-    .sd_sec_read_data_valid (sd_sec_read_data_valid),
-    .sd_sec_read_end        (sd_sec_read_end),
+    .sd_sec_read            (physical_sec_read),
+    .sd_sec_read_addr       (physical_sec_addr),
+    .sd_sec_read_data       (physical_sec_data),
+    .sd_sec_read_data_valid (physical_sec_valid),
+    .sd_sec_read_end        (physical_sec_end),
     .sd_sec_write           (1'b0),
     .sd_sec_write_addr      (32'd0),
-    .sd_sec_write_data      (),
+    .sd_sec_write_data      (8'd0),
     .sd_sec_write_data_req  (),
     .sd_sec_write_end       ()
 );
@@ -538,18 +588,20 @@ endmodule
 //   - 进入应急时若正在写普通图，等当前写事务结束（load_busy=0）后最高优先级加载应急图
 module emergency_mode_ctrl #(
     parameter integer REMOTE_ENABLE = 0,
+    parameter integer INDEX_BITS = 2,
+    parameter integer RESOURCE_ENABLE = 0,
     parameter integer CLK_FREQ_HZ = 100_000_000,
     parameter integer DEBOUNCE_MS = 20,
-    parameter [1:0]   EMERGENCY_INDEX      = 2'd3,
-    parameter [2:0]   EMERGENCY_MIN_IMAGES = 3'd4,
-    parameter [2:0]   NORMAL_ROTATE_COUNT  = 3'd3
+    parameter [INDEX_BITS-1:0] EMERGENCY_INDEX      = 2'd3,
+    parameter [INDEX_BITS:0] EMERGENCY_MIN_IMAGES = 3'd4,
+    parameter [INDEX_BITS:0] NORMAL_ROTATE_COUNT  = 3'd3
 )(
     input             clk,
     input             rst,
     // 按键
     input             remote_valid,
     input [3:0]       remote_code,
-    input [2:0]       remote_value,
+    input [INDEX_BITS:0] remote_value,
     output            auto_play_active,
     input             key_mode,              // 原始引脚，异步，松开=1 按下=0
     input             key_next_press,        // 已消抖的"手动下一张"单周期脉冲
@@ -561,12 +613,16 @@ module emergency_mode_ctrl #(
     input             first_image_committed, // 首图已提交显示
     input             display_valid,         // 帧缓存中已有可显示画面
     input             load_busy,             // 正在向 SDRAM 写一帧（事务进行中）
-    input      [2:0]  img_found_count,       // 扫描到的合法图片数量(0..4)
-    input      [1:0]  cur_img_idx,           // 当前显示中的图片索引
+    input [INDEX_BITS:0] img_found_count,       // 扫描到的合法图片数量(0..4)
+    input [INDEX_BITS-1:0] cur_img_idx,           // 当前显示中的图片索引
     // 输出
+    input [4:0] resource_count,
+    input retry_emergency,
+    input [5:0] resource_hold_seconds,
+    output reg [5:0] hold_seconds,
     output reg        emergency_mode,        // 0=普通模式 1=应急模式
     output reg        load_req,              // 加载请求（仅在流水空闲时拉高，单周期）
-    output reg [1:0]  load_req_idx,          // 请求加载的图片索引
+    output reg [INDEX_BITS-1:0] load_req_idx,          // 请求加载的图片索引
     output reg        load_req_is_emergency, // 该请求是否为应急图
     output            disp_commit_en         // 加载完成时是否允许切换显示
 );
@@ -575,7 +631,9 @@ module emergency_mode_ctrl #(
     localparam integer DEBOUNCE_CYCLES = (CLK_FREQ_HZ / 1000) * DEBOUNCE_MS; // 20ms 消抖计数
 
     reg  [31:0] auto_cnt;
-    wire        auto_tick = (auto_cnt == (CLK_FREQ_HZ - 1));                 // 1Hz 自动切图节拍
+    reg[5:0]elapsed_seconds;
+    wire second_tick=(auto_cnt==(CLK_FREQ_HZ-1));
+    wire auto_tick=second_tick&&(elapsed_seconds+1>=hold_seconds);                 // 1Hz 自动切图节拍
 
     // ---------------- (2) 模式按键：2 级同步 + 消抖 + 按下沿单脉冲 ----------------
     reg        mode_sync0;
@@ -610,9 +668,10 @@ module emergency_mode_ctrl #(
     end
 
     // ---------------- (3) 普通模式可用轮播张数（>=3 时也只轮播 0..2） ----------------
-    reg [2:0] normal_count;
+    reg [INDEX_BITS:0] normal_count;
     always @(*) begin
-        if (img_found_count >= NORMAL_ROTATE_COUNT) begin
+        if(RESOURCE_ENABLE)normal_count=(resource_count==0)?1:resource_count;
+        else if (img_found_count >= NORMAL_ROTATE_COUNT) begin
             normal_count = NORMAL_ROTATE_COUNT;
         end else begin
             normal_count = img_found_count;
@@ -620,9 +679,9 @@ module emergency_mode_ctrl #(
     end
 
     // ---------------- (4) 索引递增（count 为可用张数，到末页回 0） ----------------
-    function [1:0] next_index_limited;
-        input [1:0] cur;
-        input [2:0] count;
+    function [INDEX_BITS-1:0] next_index_limited;
+        input [INDEX_BITS-1:0] cur;
+        input [INDEX_BITS:0] count;
         begin
             case (count)
                 3'd0:    next_index_limited = 2'd0;
@@ -633,14 +692,14 @@ module emergency_mode_ctrl #(
     endfunction
 
     // ---------------- (5) 状态寄存器 ----------------
-    reg [1:0] saved_img_idx;        // 恢复目标：进入应急前确认有效的普通图索引
-    reg [1:0] last_normal_idx;      // 最近一次确认显示过的有效普通图索引（恢复索引兜底来源）
+    reg [INDEX_BITS-1:0] saved_img_idx;        // 恢复目标：进入应急前确认有效的普通图索引
+    reg [INDEX_BITS-1:0] last_normal_idx;      // 最近一次确认显示过的有效普通图索引（恢复索引兜底来源）
     reg       emerg_req_pending;    // 待服务：加载应急图
     reg       restore_req_pending;  // 待服务：恢复普通图
     reg       load_is_emergency;    // 当前在飞行的这次加载是否为应急图
     reg       auto_play_en;         // 自动轮播开关（应急期间保持不变）
     reg       specific_pending;
-    reg [1:0] requested_index;
+    reg [INDEX_BITS-1:0] requested_index;
     wire remote_show = REMOTE_ENABLE && remote_valid && remote_code==2;
     wire remote_auto = REMOTE_ENABLE && remote_valid && remote_code==3;
     wire remote_emergency = REMOTE_ENABLE && remote_valid && remote_code==4;
@@ -749,6 +808,7 @@ module emergency_mode_ctrl #(
                 if (can_restore) begin
                     restore_req_pending <= 1'b0;
                 end
+                if(RESOURCE_ENABLE&&retry_emergency&&emergency_mode)emerg_req_pending<=1;
             end
         end
     end
@@ -757,7 +817,7 @@ module emergency_mode_ctrl #(
     always @(posedge clk or posedge rst) begin
         if (rst || !scan_done) begin
             auto_play_en     <= 1'b0;
-            auto_cnt         <= 32'd0;
+            auto_cnt         <= 32'd0;elapsed_seconds<=0;hold_seconds<=RESOURCE_ENABLE?5:1;
             next_req_pending <= 1'b0;
             specific_pending <= 1'b0;requested_index<=0;
         end else begin
@@ -765,7 +825,7 @@ module emergency_mode_ctrl #(
             if (mode_enter_req || pause_rotate) begin
                 next_req_pending <= 1'b0;specific_pending<=0;
             end else if (remote_show && !emergency_mode && remote_value<normal_count) begin
-                next_req_pending<=1;specific_pending<=1;requested_index<=remote_value[1:0];
+                next_req_pending<=1;specific_pending<=1;requested_index<=remote_value[INDEX_BITS-1:0];
             end else if (key_next_press && !emergency_mode && (img_found_count != 3'd0)) begin
                 next_req_pending <= 1'b1;specific_pending<=0;
             end else if (load_req && (can_manual || can_first)) begin
@@ -781,20 +841,24 @@ module emergency_mode_ctrl #(
                 auto_play_en <= ~auto_play_en;
             end
 
+            // 使用成功提交画面的停留时间，失败加载不改变当前画面的计时规则。
+            if(RESOURCE_ENABLE&&resource_hold_seconds!=0)hold_seconds<=resource_hold_seconds;
             // 自动轮播计时（单一赋值链）
             if (load_req) begin
-                auto_cnt <= 32'd0;
-            end else if (remote_auto || remote_show || (key_auto_press && !emergency_mode && (img_found_count > 3'd1))) begin
-                auto_cnt <= 32'd0;
+                auto_cnt <= 32'd0;elapsed_seconds<=0;
+            end else if (remote_auto || remote_show || (key_auto_press && !emergency_mode && ((RESOURCE_ENABLE?normal_count:img_found_count)>1))) begin
+                auto_cnt <= 32'd0;elapsed_seconds<=0;
             end else if (auto_play_en && display_valid && !load_busy && first_image_committed &&
                          !emergency_mode && !pause_rotate && (normal_count > 3'd1)) begin
                 if (auto_tick) begin
-                    auto_cnt <= 32'd0;
+                    auto_cnt <= 32'd0;elapsed_seconds<=0;
+                end else if(second_tick)begin
+                    auto_cnt<=0;elapsed_seconds<=elapsed_seconds+1'b1;
                 end else begin
                     auto_cnt <= auto_cnt + 32'd1;
                 end
             end else begin
-                auto_cnt <= 32'd0;
+                auto_cnt <= 32'd0;elapsed_seconds<=0;
             end
         end
     end

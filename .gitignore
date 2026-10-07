@@ -24,6 +24,7 @@ src/td_project/*.qor
 !measurements/remote_controls/*.log
 
 sim/*.ppm
+sim/fat_fixture_*.hex
 !measurements/graded_alert/*.log
 
 !measurements/event_publish/*.log

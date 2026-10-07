@@ -89,7 +89,10 @@ wire uart_next;
 wire [2:0] uart_next_block_reason;
 wire command_valid,auto_play_active,uart_reset;
 wire [3:0] command_code;
-wire [2:0] command_value;
+wire [4:0] command_value;
+wire[4:0]resource_normal_count,resource_active_count,resource_index;
+wire[5:0]resource_seconds;wire[7:0]resource_flags;
+wire resource_catalog_ready,resource_emergency_file,display_fallback;
 wire[1:0]local_alert_level,remote_alert_level,effective_alert_level,alert_candidate,alert_audio_level;
 wire alert_selecting,alert_backend_key,alert_major_valid,alert_major_value;
 wire event_cmd_valid,event_busy,event_result_valid,event_apply_valid,event_active_valid;
@@ -102,12 +105,12 @@ wire[6:0]event_body,event_active_body,event_pending_body,event_read_index;
 wire[9:0]event_glyph,event_data;
 wire event_pending,event_pending_bank,event_install,event_read_bank,event_shown_remote;
 wire[3:0]alert_control_code=event_apply_valid?4'd13:command_code;
-wire[2:0]alert_control_value=event_apply_valid?{1'b0,event_apply_level}:command_value;
+wire[2:0]alert_control_value=event_apply_valid?{1'b0,event_apply_level}:command_value[2:0];
 wire alert_control_valid=event_apply_valid||command_valid;
 event_packet_buffer u_event_packet(
  .clk(sd_card_clk),.rst(rst_sd),.cmd_valid(event_cmd_valid),.cmd(event_cmd),
  .event_id(event_id),.check_crc(event_crc),.level(event_level),.area_length(event_area),.body_length(event_body),.glyph(event_glyph),
- .ready(uart_next_block_reason!=1),.major_available(sd_debug_status[14:12]>=4),
+ .ready(uart_next_block_reason!=1),.major_available(resource_catalog_ready),
  .legacy_change(command_valid&&(command_code==4||command_code==13)),.local_level(local_alert_level),
  .result_valid(event_result_valid),.result(event_result),.apply_valid(event_apply_valid),.apply_level(event_apply_level),
  .active_valid(event_active_valid),.active_id(event_active_id),.active_crc(event_active_crc),.active_level(event_active_level),
@@ -122,10 +125,10 @@ event_packet_buffer u_event_packet(
 wire alert_picture_ready,alert_restore_ready;
 wire sd_command_valid=alert_major_valid || (command_valid&&command_code!=4&&command_code!=13);
 wire[3:0]sd_command_code=alert_major_valid?4'd4:command_code;
-wire[2:0]sd_command_value=alert_major_valid?{2'b0,alert_major_value}:command_value;
+wire[4:0]sd_command_value=alert_major_valid?{4'b0,alert_major_value}:command_value;
 graded_alert_ctrl u_graded_alert(
  .clk(sd_card_clk),.rst(rst_sd),.key_mode(key_mode),.key_next(key1),
- .ready(uart_next_block_reason!=1),.major_available(sd_debug_status[14:12]>=4),
+ .ready(uart_next_block_reason!=1),.major_available(resource_catalog_ready),
  .command_valid(alert_control_valid),.command_code(alert_control_code),.command_value(alert_control_value),
  .backend_major(emergency_mode),.local_level(local_alert_level),.remote_level(remote_alert_level),
  .effective_level(effective_alert_level),.selecting(alert_selecting),.candidate(alert_candidate),
@@ -152,9 +155,12 @@ always @(posedge sd_card_clk or posedge physical_reset) begin
     else if(serial_reset_hold!=0) serial_reset_hold<=serial_reset_hold-1'b1;
 end
 // 与TF控制同100MHz域，无需跨域传递命令脉冲。
-uart_console #(.CLK_FREQ_HZ(100_000_000),.BAUD(115200),.EXTENDED_STATUS(1),.GRADED_ALERT_ENABLE(1),.EVENT_ENABLE(1),.TRANSITION_ENABLE(1)) u_uart_console(
+uart_console #(.CLK_FREQ_HZ(100_000_000),.BAUD(115200),.EXTENDED_STATUS(1),.GRADED_ALERT_ENABLE(1),.EVENT_ENABLE(1),.TRANSITION_ENABLE(1),.RESOURCE_ENABLE(1)) u_uart_console(
     .clk(sd_card_clk),.rst(rst_sd),.rx(uart_rx),.tx(uart_tx),
     .next_block_reason(uart_next_block_reason),.debug_status(sd_debug_status),
+    .resource_normal_count(resource_normal_count),.resource_active_count(resource_active_count),
+    .resource_index(resource_index),.resource_seconds(resource_seconds),.resource_flags(resource_flags),
+    .resource_ready(resource_catalog_ready),.resource_emergency_file(resource_emergency_file),
     .state_code(state_code),.picture_settings(picture_settings),.next_pulse(uart_next),
     .command_valid(command_valid),.command_code(command_code),.command_value(command_value),
     .auto_status(auto_play_active),.overlay_status(effective_overlay),.soft_reset(uart_reset),
@@ -289,7 +295,7 @@ sd_card_bmp #(
     .SCAN_START_SECTOR (32'd0),
     .SCAN_MAX_SECTOR   (32'd131071),
     .SCAN_TARGET_COUNT (3'd4),
-    .FRAME_READER_FEEDBACK(1)
+    .FRAME_READER_FEEDBACK(1),.RESOURCE_ENABLE(1)
 ) sd_card_bmp_m0(
     .clk               (sd_card_clk),
     .rst               (rst_sd),
@@ -297,6 +303,10 @@ sd_card_bmp #(
     .command_code      (sd_command_code),
     .command_value     (sd_command_value),
     .auto_play_active  (auto_play_active),
+    .resource_normal_count(resource_normal_count),.resource_active_count(resource_active_count),
+    .resource_index(resource_index),.resource_seconds(resource_seconds),.resource_flags(resource_flags),
+    .resource_catalog_ready(resource_catalog_ready),.resource_emergency_file(resource_emergency_file),
+    .display_fallback(display_fallback),
     .remote_next       (uart_next),
     .next_block_reason (uart_next_block_reason),
     .key_next          (alert_backend_key),
@@ -506,7 +516,7 @@ audio_arc_calculate #(
 );
 
 // ===================== RGB/DE 转 AXIS 视频 =====================
-campus_osd #(.DYNAMIC_TEXT_ENABLE(1),.GRADED_ALERT_ENABLE(1),.EVENT_ENABLE(1),.SLIDE_ENABLE(1)) u_campus_osd(
+campus_osd #(.DYNAMIC_TEXT_ENABLE(1),.GRADED_ALERT_ENABLE(1),.EVENT_ENABLE(1),.SLIDE_ENABLE(1),.RESOURCE_ENABLE(1)) u_campus_osd(
     .clk(video_clk), .rst(rst_video), .in_vs(vs), .in_de(de),
     .in_rgb(vout_data), .emergency_async(emergency_mode),
     .transition_pending_async(transition_pending), .transition_black_ready(transition_black_ready),
@@ -516,6 +526,7 @@ campus_osd #(.DYNAMIC_TEXT_ENABLE(1),.GRADED_ALERT_ENABLE(1),.EVENT_ENABLE(1),.S
     .slide_offset(slide_offset),.slide_in(slide_in),
     .read_slide_epoch_async(read_slide_epoch),.transition_cancel_request_async(transition_cancel_request),
     .slide_mix(slide_mix),.slide_epoch(slide_epoch),.transition_cancel_ack(transition_cancel_ack),
+    .resource_fallback_async(display_fallback),
     .subtitle_enable_async(effective_overlay), .settings_async(picture_settings),
     .dynamic_text_active(text_active),.dynamic_text_changed(text_changed),
     .alert_level_async(effective_alert_level),.alert_select_async(alert_selecting),.alert_candidate_async(alert_candidate),

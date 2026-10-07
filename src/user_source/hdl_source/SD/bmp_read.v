@@ -3,7 +3,7 @@
 // 来源与修改说明：参见SOURCE_ORIGIN.md。
 // 约束：正高度RGB24非压缩BMP，宽1～1280、高1～960，输出640×480。
 // 协议：write_ready为写侧背压；帧提交需同时等待源读取和内存写入完成。
-module bmp_read #(parameter integer EARLY_FIRST_IMAGE=0)(
+module bmp_read #(parameter integer EARLY_FIRST_IMAGE=0,parameter integer FILE_READ_ENABLE=0)(
     input                       clk,
     input                       rst,
     output                      ready,
@@ -25,6 +25,8 @@ module bmp_read #(parameter integer EARLY_FIRST_IMAGE=0)(
     input  [31:0]               load_sector,
 
     input                       sd_init_done,
+    input                       file_read_error,
+    output reg                  load_failed,
     output reg [3:0]            state_code,
     input  [15:0]               bmp_width,
     input  [15:0]               bmp_height,
@@ -229,6 +231,7 @@ end
 always @(posedge clk or posedge rst) begin
     if (rst) begin
         state             <= ST_IDLE;
+        load_failed<=0;
         bmp_len_cnt<=0;sector_wr<=0;sector_pos<=0;scale_start<=0;
         state_code        <= 4'd0;
         sd_sec_read       <= 1'b0;
@@ -243,6 +246,7 @@ always @(posedge clk or posedge rst) begin
         load_sector_latched <= 32'd0;
     end else if (!sd_init_done) begin
         state             <= ST_IDLE;
+        load_failed<=0;
         bmp_len_cnt<=0;sector_wr<=0;sector_pos<=0;scale_start<=0;
         state_code        <= 4'd0;
         sd_sec_read       <= 1'b0;
@@ -258,6 +262,8 @@ always @(posedge clk or posedge rst) begin
     end else begin
         scan_found_valid <= 1'b0;
         scale_start<=0;
+
+        if(FILE_READ_ENABLE&&file_read_error)load_failed<=1;
 
         case (state)
             ST_IDLE: begin
@@ -275,6 +281,7 @@ always @(posedge clk or posedge rst) begin
                 end else if (scan_resume && scan_paused) begin
                     scan_paused<=0; sd_sec_read_addr<=scan_sector; state<=ST_SCAN;
                 end else if (load_start) begin
+                    load_failed<=0;
                     load_sector_latched <= load_sector;
                     sd_sec_read_addr    <= load_sector;
                     state               <= ST_LOAD_HDR;
@@ -330,6 +337,7 @@ always @(posedge clk or posedge rst) begin
                         sd_sec_read_addr <= load_sector_latched;
                         state            <= ST_LOAD_WAIT;
                     end else begin
+                        load_failed<=1;
                         state <= ST_IDLE;
                     end
                 end

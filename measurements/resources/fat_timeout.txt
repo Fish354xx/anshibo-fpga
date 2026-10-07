@@ -1,0 +1,9 @@
+# vsim +VARIANT=timeout -do {run -all; quit -f} -l sim/fat_timeout.log -lib C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work -c tb_fat_variants 
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.tb_fat_variants
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.fat32_resources
+# run -all 
+# PASS unsupported geometry rejected
+# PASS invalid volume still renders builtin status
+# FAT VARIANTS: ALL CHECKS PASSED timeout
+# ** Note: $finish    : tb/tb_fat_variants.v(94)
+#    Time: 5005400 ns  Iteration: 1  Instance: /tb_fat_variants

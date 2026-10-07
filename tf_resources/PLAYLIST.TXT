@@ -1,0 +1,5 @@
+# File,seconds
+001.BMP,5
+002.BMP,5
+003.BMP,5
+004.BMP,5

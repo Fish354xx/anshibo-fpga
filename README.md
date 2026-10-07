@@ -1,10 +1,10 @@
 # 安视播：校园电子广告牌与完整应急事件发布
 
-在现有校园信息发布工程中继续开发。日常图片切换轮播、TEXT普通通知、本地分级预警和声音规则保留。本阶段增加事件编号、预警等级、区域、正文、CRC校验及发布回执。活动视频、联网服务、事件有效期、语音播报和断电保持尚未实现。
+在现有校园信息发布工程中继续开发。日常图片切换轮播、TEXT普通通知、本地分级预警和声音规则保留。保留事件编号、预警等级、区域、正文、CRC校验及发布回执；本阶段扩展FAT32文件夹与可选播放列表资源管理。活动视频、联网服务、事件有效期、语音播报和断电保持尚未实现。
 
 ## 上板操作
 
-BitWriter使用PROGRAM_SRAM，只添加firmware/anshibo_slide_transition.bit下载。本阶段默认相接滑动，支持TRANSITION SLIDE / FADE / CUT及查询；进入和解除应急直接切屏，详见TRANSITIONS.md。2026-10-07用户反馈本阶段上板测试“没问题”，相接滑动阶段验收通过。TF四张图保持原样。退出旧串口窗口，双击本目录tools/launch_uart.cmd，选择已有COM端口（此前COM3）。
+BitWriter使用PROGRAM_SRAM，只添加firmware/anshibo_resource_manager.bit下载。本阶段默认相接滑动，支持TRANSITION SLIDE / FADE / CUT及查询；进入和解除应急直接切屏，详见TRANSITIONS.md。相接滑动已验收；本资源管理版本待上板确认。请将tf_resources内的NORMAL、ALERT复制到FAT32 TF根目录，PLAYLIST.TXT可选（首次测试先不复制），资源规则和测试见RESOURCE_MANAGEMENT.md。退出旧串口窗口，双击本目录tools/launch_uart.cmd，选择已有COM端口（此前COM3）。
 
 输入PUBLISH，向导依次录入：
 
@@ -36,3 +36,7 @@ ESTATUS查询该后台事件状态。APPLIED表示FPGA已开始输出该事件�
 协议与源码说明见EVENT_PROTOCOL.md。工程入口src/td_project/anshibo.al；事件处理与双银行event_packet_buffer.v；串口uart_console.v；显示video_rgb_to_axis_640x480.v；电脑工具event_protocol.ps1。仿真及最终编译记录在measurements/event_publish。
 
 最新转场阶段：日常图片三种特效可选，默认SLIDE；字幕波形保持原位。视频开发暂停，TF_MEDIA_PLAN.md仅保留研究记录。
+
+## 文件夹与可选播放列表
+
+NORMAL目录最多16张编号BMP；ALERT/EVAC.BMP独立作为应急底图。PLAYLIST.TXT可选，可指定顺序、重复引用和1～60秒停留时间；不提供则按数字编号播放，每张默认5秒。读取沿FAT32簇链进行，支持碎片文件。RESOURCES查看资源状态，SHOW 1～16选择播放条目。保持双缓冲、相接滑动、分级应急、TEXT和PUBLISH。当前资源阶段等待用户上板验收。

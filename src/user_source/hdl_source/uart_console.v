@@ -7,10 +7,14 @@ module uart_console #(
     parameter integer EXTENDED_STATUS=0,
     parameter integer GRADED_ALERT_ENABLE=0,
     parameter integer EVENT_ENABLE=0,
-    parameter integer TRANSITION_ENABLE=0
+    parameter integer TRANSITION_ENABLE=0,
+    parameter integer RESOURCE_ENABLE=0
 )(
     input clk,rst,rx,output tx,
     input [2:0] next_block_reason,
+    input[4:0]resource_normal_count,resource_active_count,resource_index,
+    input[5:0]resource_seconds,input[7:0]resource_flags,
+    input resource_ready,resource_emergency_file,
     input [15:0] debug_status,
     input [3:0] state_code,
     input [7:0] picture_settings,
@@ -27,7 +31,7 @@ module uart_console #(
     output reg[6:0]event_body,output reg[9:0]event_glyph,
     output reg next_pulse,command_valid,
     output reg [3:0] command_code,
-    output reg [2:0] command_value,
+    output reg [4:0] command_value,
     output reg [9:0] text_glyph,
     output reg overlay_override,overlay_value,adjust_override,adjust_value,
     output reg select_override,select_value,soft_reset,
@@ -42,7 +46,7 @@ uart_tx_8n1 #(.CLK_FREQ_HZ(CLK_FREQ_HZ),.BAUD(BAUD)) sender(
 reg [255:0] line_buffer;
 reg [5:0] line_length;
 reg line_error,busy_reply_pending,reset_pending;
-reg [511:0] reply_buffer;
+reg [511:0] reply_buffer,reply_snapshot;
 reg [5:0] reply_kind;
 reg event_wait;
 reg[15:0]event_snapshot_id,event_snapshot_crc;
@@ -78,26 +82,32 @@ wire ready_for_control=(next_block_reason!=1);
 wire [2:0] image_count=debug_status[14:12];
 wire [7:0] argument=line_buffer[7:0];
 // 命令匹配提前寄存，拆开长比较与应答选择，满足100MHz时序。
-reg [33:0] decoded;
+reg [34:0] decoded;
 reg [1:0] transition_snapshot;
-reg [33:0] operation_mask;
+reg [34:0] operation_mask;
 reg[7:0] argument_d;
+reg[4:0] show_number_d;reg show_valid_d;
+reg[4:0]rs_normal,rs_active,rs_index;reg[5:0]rs_seconds;reg[7:0]rs_flags;reg rs_ready,rs_emergency;
 always @(posedge clk or posedge rst)begin
- if(rst)begin operation_mask<=0;argument_d<=0;end
+ if(rst)begin operation_mask<=0;argument_d<=0;show_number_d<=0;show_valid_d<=0;end
  else begin
   operation_mask<=decoded;argument_d<=argument;
+  show_number_d<=(line_length==7)?((line_buffer[15:8]-48)*10+line_buffer[7:0]-48):line_buffer[7:0]-48;
+  show_valid_d<=(line_length==6&&line_buffer[7:0]>="1"&&line_buffer[7:0]<="9")||
+   (line_length==7&&line_buffer[15:8]=="1"&&line_buffer[7:0]>="0"&&line_buffer[7:0]<="6");
  end
 end
 always @(posedge clk or posedge rst) begin
  if(rst) decoded<=0;
  else begin
   decoded[0]<=(line_buffer=="PING");
+  decoded[34]<=RESOURCE_ENABLE&&(line_buffer=="RESOURCES");
   decoded[30]<=TRANSITION_ENABLE&&(line_buffer=="TRANSITION SLIDE");
   decoded[31]<=TRANSITION_ENABLE&&(line_buffer=="TRANSITION FADE");
   decoded[32]<=TRANSITION_ENABLE&&(line_buffer=="TRANSITION CUT");
   decoded[33]<=TRANSITION_ENABLE&&(line_buffer=="TRANSITION");
   decoded[1]<=(line_buffer=="NEXT");
-  decoded[2]<=(line_length==6 && (line_buffer>>8)=="SHOW ");
+  decoded[2]<=(line_length==6&&(line_buffer>>8)=="SHOW ")||(RESOURCE_ENABLE&&line_length==7&&(line_buffer>>16)=="SHOW ");
   decoded[3]<=(line_buffer=="AUTO ON");
   decoded[4]<=(line_buffer=="AUTO OFF");
   decoded[5]<=(line_buffer=="EMERGENCY ON");
@@ -245,6 +255,12 @@ reply_buffer=0;case(reply_kind)
 6'd44:reply_buffer={"ERR NOTREADY",8'd13,8'd10};
 6'd45:reply_buffer={"ERR NOEVENT",8'd13,8'd10};
 6'd46:reply_buffer={"ERR NOIMAGE",8'd13,8'd10};
+6'd49:reply_buffer={"RES N=",hex_ascii({3'b0,rs_normal[4]}),hex_ascii(rs_normal[3:0]),
+ " P=",hex_ascii({3'b0,rs_active[4]}),hex_ascii(rs_active[3:0]),
+ " E=",hex_ascii({3'b0,rs_emergency})," F=",hex_ascii(rs_flags[7:4]),hex_ascii(rs_flags[3:0]),
+ " I=",hex_ascii({3'b0,rs_index[4]}),hex_ascii(rs_index[3:0]),
+ " T=",hex_ascii({2'b0,rs_seconds[5:4]}),hex_ascii(rs_seconds[3:0]),
+ " R=",hex_ascii({3'b0,rs_ready}),8'd13,8'd10};
 6'd47:reply_buffer={"OK TRANSITION",8'd13,8'd10};
 6'd48:begin
  if(transition_snapshot==1)reply_buffer={"TRANSITION SLIDE",8'd13,8'd10};
@@ -253,10 +269,11 @@ reply_buffer=0;case(reply_kind)
 end
 default:reply_buffer=0;endcase end
 always @(posedge clk or posedge rst)begin
- if(rst)begin byte_index<=0;byte_candidate<=0;byte_group<=0;byte_lane<=0;end
+ if(rst)begin byte_index<=0;byte_candidate<=0;byte_group<=0;byte_lane<=0;reply_snapshot<=0;end
  else begin
+  if(reply_warmup==5)reply_snapshot<=reply_buffer;
   byte_index<=remaining-1'b1;
-  byte_group<=reply_buffer[{byte_index[5:3],6'b000000}+:64];byte_lane<=byte_index[2:0];
+  byte_group<=reply_snapshot[{byte_index[5:3],6'b000000}+:64];byte_lane<=byte_index[2:0];
   byte_candidate<=byte_group[{byte_lane,3'b000}+:8];
  end
 end
@@ -268,7 +285,7 @@ task send_event;input[2:0]code;
  begin event_cmd_valid<=1;event_cmd<=code;event_wait<=1;end
 endtask
 task emit;
- input[3:0] code;input[2:0] value;
+ input[3:0] code;input[4:0] value;
  begin command_valid<=1;command_code<=code;command_value<=value;end
 endtask
 task block_reply;
@@ -295,6 +312,7 @@ always @(posedge clk or posedge rst) begin
   event_snapshot_area<=0;event_snapshot_body<=0;event_snapshot_pending<=0;
   command_valid<=0;command_code<=0;command_value<=0;text_glyph<=0;reset_pending<=0;soft_reset<=0;
   transition_mode<=1;transition_snapshot<=1;
+  rs_normal<=0;rs_active<=0;rs_index<=0;rs_seconds<=0;rs_flags<=0;rs_ready<=0;rs_emergency<=0;
   overlay_override<=0;overlay_value<=1;adjust_override<=0;adjust_value<=0;
   select_override<=0;select_value<=0;
  end else begin
@@ -326,6 +344,11 @@ always @(posedge clk or posedge rst) begin
      if(reply_busy_d)busy_reply_pending<=1;
      else if(line_error)reply(5'd5,7'd10);
      else case(1'b1)
+     operation_mask[34]:begin
+      rs_normal<=resource_normal_count;rs_active<=resource_active_count;rs_index<=resource_index;
+      rs_seconds<=resource_seconds;rs_flags<=resource_flags;rs_ready<=resource_ready;rs_emergency<=resource_emergency_file;
+      reply(49,38);
+     end
      operation_mask[30]||operation_mask[31]||operation_mask[32]:begin
       transition_mode<=(operation_mask[30])?2'd1:(operation_mask[31])?2'd2:2'd0;
       reply(47,15);
@@ -340,21 +363,21 @@ always @(posedge clk or posedge rst) begin
       else begin next_pulse<=1;reply(5'd7,7'd9);end
      end
      operation_mask[2]:begin
-      if(argument_d<"1" || argument_d>"3")reply(5'd8,7'd11);
-      else if(next_block_reason!=0)block_reply(next_block_reason);
-      else if((argument_d-8'd48)>image_count)block_reply(5);
-      else begin emit(2,argument_d-8'd49);reply(5'd9,7'd9);end
+      if(!show_valid_d||show_number_d>(RESOURCE_ENABLE?16:3))reply(5'd8,7'd11);
+      else if(next_block_reason!=0&&!(RESOURCE_ENABLE&&next_block_reason==5&&resource_active_count!=0))block_reply(next_block_reason);
+      else if(show_number_d>(RESOURCE_ENABLE?resource_active_count:image_count))block_reply(5);
+      else begin emit(2,show_number_d-1'b1);reply(5'd9,7'd9);end
      end
      operation_mask[3]||operation_mask[4]:begin
       if(!ready_for_control)block_reply(1);
       else if(debug_status[0])block_reply(2);
-      else if(operation_mask[3] && image_count<2)block_reply(5);
+      else if(operation_mask[3] && (RESOURCE_ENABLE?resource_active_count:image_count)<2)block_reply(5);
       else begin emit(3,operation_mask[3]);reply(5'd10,7'd9);end
      end
      operation_mask[5]||operation_mask[6]:begin
       if(EVENT_ENABLE&&event_busy)reply(38,15);
       else if(!ready_for_control)block_reply(1);
-      else if(operation_mask[5] && image_count<4)block_reply(5);
+      else if(operation_mask[5] && (RESOURCE_ENABLE?!resource_ready:image_count<4))block_reply(5);
       else begin emit(4,operation_mask[5]);reply(5'd11,7'd14);end
      end
      operation_mask[7]||operation_mask[8]:begin
@@ -386,7 +409,7 @@ always @(posedge clk or posedge rst) begin
       if(EVENT_ENABLE&&event_busy)reply(38,15);
       else if(!ready_for_control)block_reply(1);
       else if(argument_d<"1"||argument_d>"3")reply(5'd8,7'd11);
-      else if(argument_d>"1"&&image_count<4)block_reply(5);
+      else if(argument_d>"1"&&(RESOURCE_ENABLE?!resource_ready:image_count<4))block_reply(5);
       else begin emit(13,argument_d-8'd48);reply(5'd19,7'd10);end
      end
      operation_mask[23]:begin

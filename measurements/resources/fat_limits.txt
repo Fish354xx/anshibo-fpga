@@ -1,0 +1,24 @@
+# vsim +VARIANT=limits -do {run -all; quit -f} -l sim/fat_limits.log -lib C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work -c tb_fat_variants 
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.tb_fat_variants
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.fat32_resources
+# run -all 
+# PASS sixteen numeric assets retained independently of directory order
+# PASS sorted resource descriptor correct
+# PASS sorted resource descriptor correct
+# PASS sorted resource descriptor correct
+# PASS sorted resource descriptor correct
+# PASS sorted resource descriptor correct
+# PASS sorted resource descriptor correct
+# PASS sorted resource descriptor correct
+# PASS sorted resource descriptor correct
+# PASS sorted resource descriptor correct
+# PASS sorted resource descriptor correct
+# PASS sorted resource descriptor correct
+# PASS sorted resource descriptor correct
+# PASS sorted resource descriptor correct
+# PASS sorted resource descriptor correct
+# PASS sorted resource descriptor correct
+# PASS sorted resource descriptor correct
+# FAT VARIANTS: ALL CHECKS PASSED limits
+# ** Note: $finish    : tb/tb_fat_variants.v(94)
+#    Time: 1444100 ns  Iteration: 1  Instance: /tb_fat_variants

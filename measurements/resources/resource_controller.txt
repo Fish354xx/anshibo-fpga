@@ -1,0 +1,12 @@
+# vsim -do {run -all; quit -f} -l sim/resource_controller.log -lib C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work -c tb_resource_controller 
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.tb_resource_controller
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.emergency_mode_ctrl
+# ** Warning: (vsim-3017) tb/tb_resource_controller.v(14): [TFMPC] - Too few port connections. Expected 25, found 24.
+# 
+#         Region: /tb_resource_controller/dut
+# ** Warning: (vsim-3722) tb/tb_resource_controller.v(14): [TFMPC] - Missing connection for port 'auto_play_active'.
+# 
+# run -all 
+# RESOURCE CONTROL: ALL CHECKS PASSED
+# ** Note: $finish    : tb/tb_resource_controller.v(33)
+#    Time: 30440 ns  Iteration: 1  Instance: /tb_resource_controller
