@@ -4,7 +4,7 @@
 
 ## 上板操作
 
-BitWriter使用PROGRAM_SRAM，只添加firmware/anshibo_slide_transition.bit下载。本阶段默认相接滑动，支持TRANSITION SLIDE / FADE / CUT及查询；进入和解除应急直接切屏，详见TRANSITIONS.md。当前为待上板验收版本。TF四张图保持原样。退出旧串口窗口，双击本目录tools/launch_uart.cmd，选择已有COM端口（此前COM3）。
+BitWriter使用PROGRAM_SRAM，只添加firmware/anshibo_slide_transition.bit下载。本阶段默认相接滑动，支持TRANSITION SLIDE / FADE / CUT及查询；进入和解除应急直接切屏，详见TRANSITIONS.md。2026-10-07用户反馈本阶段上板测试“没问题”，相接滑动阶段验收通过。TF四张图保持原样。退出旧串口窗口，双击本目录tools/launch_uart.cmd，选择已有COM端口（此前COM3）。
 
 输入PUBLISH，向导依次录入：
 
