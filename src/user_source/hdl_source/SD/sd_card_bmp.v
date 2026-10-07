@@ -37,6 +37,8 @@ module sd_card_bmp #(
     output                      transition_pending,
     input                       transition_black_ready,
     input [1:0]                 read_active_index_async,
+    input                       read_slide_mix_async,transition_cancel_ack_async,
+    output reg                  transition_cancel_request,
 
     input                       write_finish_toggle,
     output reg [1:0]            write_buf_idx,
@@ -101,13 +103,27 @@ reg              memory_done_seen;
 reg [1:0]        transition_ready_sync;
 wire             commit_allowed;
 reg [1:0] reader_index_sync0,reader_index_sync1;
-wire reader_bank_safe=!FRAME_READER_FEEDBACK || !display_valid || reader_index_sync1==disp_buf_idx;
+reg reader_mix_sync0,reader_mix_sync1,cancel_ack_sync0,cancel_ack_sync1,cancel_started;
+wire reader_bank_safe=!FRAME_READER_FEEDBACK || !display_valid ||
+    (reader_index_sync1==disp_buf_idx && !reader_mix_sync1);
+wire retire_safe=!FRAME_READER_FEEDBACK || disp_commit_en ||
+    (cancel_started && cancel_ack_sync1==transition_cancel_request);
 always @(posedge clk or posedge rst)begin
- if(rst)begin reader_index_sync0<=0;reader_index_sync1<=0;end
- else begin reader_index_sync0<=read_active_index_async;reader_index_sync1<=reader_index_sync0;end
+ if(rst)begin
+  reader_index_sync0<=0;reader_index_sync1<=0;reader_mix_sync0<=0;reader_mix_sync1<=0;
+  cancel_ack_sync0<=0;cancel_ack_sync1<=0;transition_cancel_request<=0;cancel_started<=0;
+ end else begin
+  reader_index_sync0<=read_active_index_async;reader_index_sync1<=reader_index_sync0;
+  reader_mix_sync0<=read_slide_mix_async;reader_mix_sync1<=reader_mix_sync0;
+  cancel_ack_sync0<=transition_cancel_ack_async;cancel_ack_sync1<=cancel_ack_sync0;
+  if(!load_busy)cancel_started<=0;
+  else if(FRAME_READER_FEEDBACK&&!disp_commit_en&&!cancel_started)begin
+   transition_cancel_request<=~transition_cancel_request;cancel_started<=1;
+  end
+ end
 end
 frame_commit_gate u_frame_commit_gate(
-    .load_busy(load_busy), .source_done(source_done_seen), .memory_done(memory_done_seen),
+    .load_busy(load_busy && retire_safe), .source_done(source_done_seen), .memory_done(memory_done_seen),
     .display_valid(display_valid), .emergency_mode(o_emergency_mode || o_emergency_loaded),
     .display_permit(disp_commit_en), .black_ready(transition_ready_sync[1]),
     .transition_pending(transition_pending), .commit_allowed(commit_allowed));

@@ -80,14 +80,12 @@ wire [7:0] argument=line_buffer[7:0];
 // 命令匹配提前寄存，拆开长比较与应答选择，满足100MHz时序。
 reg [33:0] decoded;
 reg [1:0] transition_snapshot;
-reg [5:0] operation;
-integer op_index;
+reg [33:0] operation_mask;
+reg[7:0] argument_d;
 always @(posedge clk or posedge rst)begin
- if(rst)operation<=63;
+ if(rst)begin operation_mask<=0;argument_d<=0;end
  else begin
-  operation<=63;
-  for(op_index=0;op_index<34;op_index=op_index+1)
-   if(decoded[op_index])operation<=op_index;
+  operation_mask<=decoded;argument_d<=argument;
  end
 end
 always @(posedge clk or posedge rst) begin
@@ -327,112 +325,112 @@ always @(posedge clk or posedge rst) begin
     if(line_length!=0 || line_error)begin
      if(reply_busy_d)busy_reply_pending<=1;
      else if(line_error)reply(5'd5,7'd10);
-     else case(operation)
-     30,31,32:begin
-      transition_mode<=(operation==30)?2'd1:(operation==31)?2'd2:2'd0;
+     else case(1'b1)
+     operation_mask[30]||operation_mask[31]||operation_mask[32]:begin
+      transition_mode<=(operation_mask[30])?2'd1:(operation_mask[31])?2'd2:2'd0;
       reply(47,15);
      end
-     33:begin
+     operation_mask[33]:begin
       transition_snapshot<=transition_mode;
       reply(48,(transition_mode==1)?18:(transition_mode==2)?17:16);
      end
-     0:reply(5'd6,7'd6);
-     1:begin
+     operation_mask[0]:reply(5'd6,7'd6);
+     operation_mask[1]:begin
       if(next_block_reason!=0)block_reply(next_block_reason);
       else begin next_pulse<=1;reply(5'd7,7'd9);end
      end
-     2:begin
-      if(argument<"1" || argument>"3")reply(5'd8,7'd11);
+     operation_mask[2]:begin
+      if(argument_d<"1" || argument_d>"3")reply(5'd8,7'd11);
       else if(next_block_reason!=0)block_reply(next_block_reason);
-      else if((argument-8'd48)>image_count)block_reply(5);
-      else begin emit(2,argument-8'd49);reply(5'd9,7'd9);end
+      else if((argument_d-8'd48)>image_count)block_reply(5);
+      else begin emit(2,argument_d-8'd49);reply(5'd9,7'd9);end
      end
-     3,4:begin
+     operation_mask[3]||operation_mask[4]:begin
       if(!ready_for_control)block_reply(1);
       else if(debug_status[0])block_reply(2);
-      else if(operation==3 && image_count<2)block_reply(5);
-      else begin emit(3,operation==3);reply(5'd10,7'd9);end
+      else if(operation_mask[3] && image_count<2)block_reply(5);
+      else begin emit(3,operation_mask[3]);reply(5'd10,7'd9);end
      end
-     5,6:begin
+     operation_mask[5]||operation_mask[6]:begin
       if(EVENT_ENABLE&&event_busy)reply(38,15);
       else if(!ready_for_control)block_reply(1);
-      else if(operation==5 && image_count<4)block_reply(5);
-      else begin emit(4,operation==5);reply(5'd11,7'd14);end
+      else if(operation_mask[5] && image_count<4)block_reply(5);
+      else begin emit(4,operation_mask[5]);reply(5'd11,7'd14);end
      end
-     7,8:begin
+     operation_mask[7]||operation_mask[8]:begin
       if(debug_status[0])block_reply(2);
-      else if(!((argument>="0" && argument<="4") || argument=="+" || argument=="-"))
+      else if(!((argument_d>="0" && argument_d<="4") || argument_d=="+" || argument_d=="-"))
        reply(5'd8,7'd11);
-      else if(operation==7)begin
-       emit(5,level_value(picture_settings[5:3],argument));reply(5'd12,7'd15);
-      end else begin emit(6,level_value(picture_settings[2:0],argument));reply(5'd13,7'd13);end
+      else if(operation_mask[7])begin
+       emit(5,level_value(picture_settings[5:3],argument_d));reply(5'd12,7'd15);
+      end else begin emit(6,level_value(picture_settings[2:0],argument_d));reply(5'd13,7'd13);end
      end
-     9,10:begin
+     operation_mask[9]||operation_mask[10]:begin
       if(debug_status[0])block_reply(2);
-      else begin adjust_override<=1;adjust_value<=operation==9;reply(5'd14,7'd11);end
+      else begin adjust_override<=1;adjust_value<=operation_mask[9];reply(5'd14,7'd11);end
      end
-     11,12:begin
+     operation_mask[11]||operation_mask[12]:begin
       if(debug_status[0])block_reply(2);
-      else begin select_override<=1;select_value<=operation==12;reply(5'd15,7'd11);end
+      else begin select_override<=1;select_value<=operation_mask[12];reply(5'd15,7'd11);end
      end
-     13,14:begin
-      overlay_override<=1;overlay_value<=operation==13;reply(5'd16,7'd12);
+     operation_mask[13]||operation_mask[14]:begin
+      overlay_override<=1;overlay_value<=operation_mask[13];reply(5'd16,7'd12);
      end
-     15:begin
+     operation_mask[15]:begin
       overlay_override<=0;adjust_override<=0;select_override<=0;reply(5'd17,7'd10);
      end
-     16:begin
+     operation_mask[16]:begin
       reset_pending<=1;reply(5'd18,7'd10);
      end
-     22:begin
+     operation_mask[22]:begin
       if(EVENT_ENABLE&&event_busy)reply(38,15);
       else if(!ready_for_control)block_reply(1);
-      else if(argument<"1"||argument>"3")reply(5'd8,7'd11);
-      else if(argument>"1"&&image_count<4)block_reply(5);
-      else begin emit(13,argument-8'd48);reply(5'd19,7'd10);end
+      else if(argument_d<"1"||argument_d>"3")reply(5'd8,7'd11);
+      else if(argument_d>"1"&&image_count<4)block_reply(5);
+      else begin emit(13,argument_d-8'd48);reply(5'd19,7'd10);end
      end
-     23:begin
+     operation_mask[23]:begin
       if(EVENT_ENABLE&&event_busy)reply(38,15);
       else begin emit(13,0);reply(5'd27,7'd10);end
      end
-     24:begin
+     operation_mask[24]:begin
       if(!header_valid_d||!header_counts_d)reply(43,11);
       else begin
        event_id<=header_id_d;event_level<=header_level_d;
        event_area<=header_area_d;event_body<=header_body_d;send_event(1);
       end
      end
-     25:begin
+     operation_mask[25]:begin
       if(!event_glyph_ok_d)reply(43,11);
       else begin event_glyph<=event_glyph_d;send_event(2);end
      end
-     26:begin
+     operation_mask[26]:begin
       if(!tail_hex_d)reply(43,11);
       else begin event_crc<=tail_value_d;send_event(3);end
      end
-     27:send_event(4);
-     28:begin
+     operation_mask[27]:send_event(4);
+     operation_mask[28]:begin
       if(!tail_hex_d)reply(43,11);
       else begin event_id<=tail_value_d;send_event(5);end
      end
-     29:begin
+     operation_mask[29]:begin
       event_snapshot_id<=event_active_id;event_snapshot_crc<=event_active_crc;
       event_snapshot_level<=event_active_level;event_snapshot_state<=event_state;
       event_snapshot_area<=event_active_area;event_snapshot_body<=event_active_body;
       event_snapshot_pending<=event_busy;reply(28,43);
      end
-     18,19,20,21:begin
+     operation_mask[18]||operation_mask[19]||operation_mask[20]||operation_mask[21]:begin
       if(!text_ready_d) block_reply(4);
-      else if(operation==18)begin emit(7,0);reply(5'd20,7'd11);end
-      else if(operation==21)begin emit(10,0);reply(5'd21,7'd13);end
+      else if(operation_mask[18])begin emit(7,0);reply(5'd20,7'd11);end
+      else if(operation_mask[21])begin emit(10,0);reply(5'd21,7'd13);end
       else if(!text_open_d)reply(5'd22,7'd10);
-      else if(operation==19)begin
-       if(!glyph_argument_ok||glyph_argument>=607||text_full_d)reply(5'd8,7'd11);
-       else begin text_glyph<=glyph_argument;emit(8,0);reply(5'd23,7'd10);end
+      else if(operation_mask[19])begin
+       if(!event_glyph_ok_d||event_glyph_d>=607||text_full_d)reply(5'd8,7'd11);
+       else begin text_glyph<=event_glyph_d;emit(8,0);reply(5'd23,7'd10);end
       end else if(text_empty_d)reply(5'd8,7'd11);
       else begin emit(9,0);reply(5'd24,7'd12);end
      end
-     17:begin
+     operation_mask[17]:begin
       status_debug<=debug_status;status_state<=state_code;status_settings<=picture_settings;
       status_auto<=auto_status;status_overlay<=overlay_status;
       status_ownership<={overlay_override,adjust_override,select_override};

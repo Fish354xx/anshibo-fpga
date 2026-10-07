@@ -1,0 +1,72 @@
+# vsim -do {run -all; quit -f} -l sim/event_serial_push.log -lib C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work -c tb_event_serial 
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.tb_event_serial
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.event_packet_buffer
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.graded_alert_ctrl
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.alert_key_filter
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.uart_console
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.uart_rx_8n1
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.uart_tx_8n1
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.picture_key_control
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.key_press_debounce
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.emergency_mode_ctrl
+# ** Warning: (vsim-3017) tb/tb_event_serial.v(40): [TFMPC] - Too few port connections. Expected 44, found 39.
+# 
+#         Region: /tb_event_serial/packet
+# ** Warning: (vsim-3722) tb/tb_event_serial.v(40): [TFMPC] - Missing connection for port 'pending_id'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_serial.v(40): [TFMPC] - Missing connection for port 'pending_generation'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_serial.v(40): [TFMPC] - Missing connection for port 'pending_level'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_serial.v(40): [TFMPC] - Missing connection for port 'pending_area_length'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_serial.v(40): [TFMPC] - Missing connection for port 'pending_body_length'.
+# 
+# ** Warning: (vsim-3017) tb/tb_event_serial.v(68): [TFMPC] - Too few port connections. Expected 47, found 42.
+# 
+#         Region: /tb_event_serial/console
+# ** Warning: (vsim-3722) tb/tb_event_serial.v(68): [TFMPC] - Missing connection for port 'text_ready'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_serial.v(68): [TFMPC] - Missing connection for port 'text_open'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_serial.v(68): [TFMPC] - Missing connection for port 'text_length'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_serial.v(68): [TFMPC] - Missing connection for port 'text_glyph'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_serial.v(68): [TFMPC] - Missing connection for port 'transition_mode'.
+# 
+# run -all 
+# PASS command: PING
+# PASS command: ESTATUS
+# PASS command: EBEGIN 0001 1 02 03
+# PASS command: ECHAR 021
+# PASS command: ECHAR 022
+# PASS command: ECHAR 023
+# PASS command: ECHAR 024
+# PASS command: ECHAR 025
+# PASS state: wire upload does not change alert
+# PASS command: ECOMMIT 84BD
+# PASS state: wire CRC failure does not publish
+# PASS command: ECOMMIT 84BC
+# PASS state: wire accepted atomically
+# PASS command: ESTATUS
+# PASS command: ALERT 3
+# PASS command: ESTATUS
+# PASS command: NEXT
+# PASS command: ECLEAR 0002
+# PASS command: ECLEAR 0001
+# PASS state: wire targeted clear
+# PASS command: EBEGIN 0002 3 20 03
+# PASS command: EBEGIN 00GG 3 02 03
+# PASS command: EBEGIN 0002 3 02 03
+# PASS command: ECHAR 02G
+# PASS command: ECHAR 25F
+# PASS command: ECOMMIT 0000
+# PASS command: EABORT
+# PASS command: ALERT 2
+# PASS state: legacy graded control retained
+# PASS command: ALERT CLEAR
+# PASS command: PING
+# EVENT SERIAL: ALL CHECKS PASSED
+# ** Note: $finish    : tb/tb_event_serial.v(148)
+#    Time: 56164795 ns  Iteration: 1  Instance: /tb_event_serial

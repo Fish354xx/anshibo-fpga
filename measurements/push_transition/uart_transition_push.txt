@@ -1,0 +1,122 @@
+# vsim -do {run -all; quit -f} -l sim/uart_transition_push.log -lib C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work -c tb_uart_transition 
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.tb_uart_transition
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.uart_console
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.uart_rx_8n1
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.uart_tx_8n1
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.emergency_mode_ctrl
+# ** Warning: (vsim-3017) tb/tb_uart_transition.v(14): [TFMPC] - Too few port connections. Expected 47, found 10.
+# 
+#         Region: /tb_uart_transition/dut
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'auto_status'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'overlay_status'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'text_ready'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'text_open'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'text_length'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'effective_alert'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'local_alert'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'remote_alert'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'event_busy'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'event_result_valid'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'event_result'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'event_active_valid'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'event_active_id'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'event_active_crc'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'event_active_level'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'event_state'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'event_active_area'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'event_active_body'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'event_cmd_valid'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'event_cmd'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'event_id'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'event_crc'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'event_level'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'event_area'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'event_body'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'event_glyph'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'command_valid'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'command_code'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'command_value'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'text_glyph'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'overlay_override'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'overlay_value'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'adjust_override'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'adjust_value'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'select_override'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'select_value'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(14): [TFMPC] - Missing connection for port 'soft_reset'.
+# 
+# ** Warning: (vsim-3017) tb/tb_uart_transition.v(21): [TFMPC] - Too few port connections. Expected 22, found 18.
+# 
+#         Region: /tb_uart_transition/ctrl
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(21): [TFMPC] - Missing connection for port 'remote_valid'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(21): [TFMPC] - Missing connection for port 'remote_code'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(21): [TFMPC] - Missing connection for port 'remote_value'.
+# 
+# ** Warning: (vsim-3722) tb/tb_uart_transition.v(21): [TFMPC] - Missing connection for port 'auto_play_active'.
+# 
+# run -all 
+# PASS response: TRANSITION SLIDE
+# 
+# 
+# PASS response: OK TRANSITION
+# 
+# 
+# PASS response: TRANSITION FADE
+# 
+# 
+# PASS response: OK TRANSITION
+# 
+# 
+# PASS response: TRANSITION CUT
+# 
+# 
+# PASS response: ERR CMD
+# 
+# 
+# PASS response: OK TRANSITION
+# 
+# 
+# PASS response: TRANSITION SLIDE
+# 
+# 
+# UART TRANSITION: ALL CHECKS PASSED
+# ** Note: $finish    : tb/tb_uart_transition.v(75)
+#    Time: 20081845 ns  Iteration: 1  Instance: /tb_uart_transition

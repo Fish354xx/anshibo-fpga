@@ -148,8 +148,15 @@ set_false_path -to [get_regs {u_event_packet/shown_generation_sync0[*]}]
 # Slide request/feedback are held for a frame; constrain destination stages.
 set_false_path -to [get_regs {u_campus_osd/u_transition/mode_sync0[*]}]
 set_false_path -to [get_regs {u_campus_osd/u_transition/bypass_sync0}]
-set_false_path -to [get_regs {u_campus_osd/read_shift_sync0[*]}]
-set_false_path -to [get_regs {u_campus_osd/read_in_sync0}]
 set_false_path -to [get_regs {frame_read_write_m0/frame_fifo_read_m0/slide_sync0[*]}]
 set_false_path -to [get_regs {frame_read_write_m0/frame_fifo_read_m0/slide_in_sync0}]
 set_false_path -to [get_regs {sd_card_bmp_m0/reader_index_sync0[*]}]
+
+# Push transition endpoint/cancellation request and adoption feedback.
+set_false_path -to [get_regs {frame_read_write_m0/frame_fifo_read_m0/target_sync0[*]}]
+set_false_path -to [get_regs {frame_read_write_m0/frame_fifo_read_m0/mix_sync0}]
+set_false_path -to [get_regs {frame_read_write_m0/frame_fifo_read_m0/epoch_sync0}]
+set_false_path -to [get_regs {u_campus_osd/u_transition/epoch_sync0}]
+set_false_path -to [get_regs {u_campus_osd/u_transition/cancel_sync0}]
+set_false_path -to [get_regs {sd_card_bmp_m0/reader_mix_sync0}]
+set_false_path -to [get_regs {sd_card_bmp_m0/cancel_ack_sync0}]

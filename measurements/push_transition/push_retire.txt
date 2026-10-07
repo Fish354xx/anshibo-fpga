@@ -1,0 +1,52 @@
+# vsim -do {run -all; quit -f} -l sim/push_retire.log -lib C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work -c tb_push_retire 
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.tb_push_retire
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.sd_card_bmp
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.frame_commit_gate
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.picture_key_control
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.key_press_debounce
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.emergency_mode_ctrl
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.bmp_read
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.bmp_nearest_scaler
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.sd_card_top
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.sd_card_sec_read_write
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.sd_card_cmd
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.spi_master
+# ** Warning: (vsim-3017) tb/tb_push_retire.v(14): [TFMPC] - Too few port connections. Expected 39, found 22.
+# 
+#         Region: /tb_push_retire/dut
+# ** Warning: (vsim-3722) tb/tb_push_retire.v(14): [TFMPC] - Missing connection for port 'auto_play_active'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_retire.v(14): [TFMPC] - Missing connection for port 'next_block_reason'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_retire.v(14): [TFMPC] - Missing connection for port 'state_code'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_retire.v(14): [TFMPC] - Missing connection for port 'display_valid'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_retire.v(14): [TFMPC] - Missing connection for port 'o_emergency_loaded'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_retire.v(14): [TFMPC] - Missing connection for port 'debug_status'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_retire.v(14): [TFMPC] - Missing connection for port 'picture_settings'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_retire.v(14): [TFMPC] - Missing connection for port 'transition_pending'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_retire.v(14): [TFMPC] - Missing connection for port 'write_buf_idx'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_retire.v(14): [TFMPC] - Missing connection for port 'disp_buf_idx'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_retire.v(14): [TFMPC] - Missing connection for port 'write_req'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_retire.v(14): [TFMPC] - Missing connection for port 'write_en'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_retire.v(14): [TFMPC] - Missing connection for port 'write_data'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_retire.v(14): [TFMPC] - Missing connection for port 'SD_nCS'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_retire.v(14): [TFMPC] - Missing connection for port 'SD_DCLK'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_retire.v(14): [TFMPC] - Missing connection for port 'SD_MOSI'.
+# 
+# run -all 
+# PUSH RETIRE: ALL CHECKS PASSED
+# ** Note: $finish    : tb/tb_push_retire.v(42)
+#    Time: 580 ns  Iteration: 1  Instance: /tb_push_retire

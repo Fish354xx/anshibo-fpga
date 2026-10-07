@@ -57,4 +57,4 @@ TEXT DEFAULT
 
 ## 日常转场
 
-TRANSITION SLIDE / FADE / CUT分别选择滑出滑入、淡出淡入、直接切屏；TRANSITION查询当前设置。默认SLIDE，复位恢复默认。当前动画不受中途设置影响，新设置用于下一次动画。应急进入与解除不执行转场。具体实现与验收见TRANSITIONS.md。
+TRANSITION SLIDE / FADE / CUT分别选择相接滑动、淡出淡入、直接切屏；TRANSITION查询当前设置。默认SLIDE，复位恢复默认。当前动画不受中途设置影响，新设置用于下一次动画。应急进入与解除不执行转场。具体实现与验收见TRANSITIONS.md。

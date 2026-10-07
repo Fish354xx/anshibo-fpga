@@ -82,6 +82,8 @@ wire [1:0] read_active_index;
 wire [1:0] transition_mode;
 wire [9:0] slide_offset,read_slide_offset;
 wire slide_in,read_slide_in;
+wire slide_mix,slide_epoch,read_slide_mix,read_slide_epoch;
+wire transition_cancel_request,transition_cancel_ack;
 wire [7:0] picture_settings;
 wire uart_next;
 wire [2:0] uart_next_block_reason;
@@ -309,6 +311,8 @@ sd_card_bmp #(
     .transition_pending(transition_pending),
     .transition_black_ready(transition_black_ready),
     .read_active_index_async(read_active_index),
+    .read_slide_mix_async(read_slide_mix),.transition_cancel_request(transition_cancel_request),
+    .transition_cancel_ack_async(transition_cancel_ack),
     .state_code        (state_code),
     .bmp_width         (16'd640),
     .bmp_height        (16'd480),
@@ -414,6 +418,8 @@ frame_read_write #(
     .read_addr_index   (disp_buf_idx),
     .read_active_index (read_active_index),
     .slide_offset(slide_offset),.slide_in(slide_in),
+    .slide_target_index(write_buf_idx),.slide_mix(slide_mix),.slide_epoch(slide_epoch),
+    .read_slide_mix(read_slide_mix),.read_slide_epoch(read_slide_epoch),
     .read_slide_offset(read_slide_offset),.read_slide_in(read_slide_in),
     .read_len          (FRAME_PIXELS),
     .read_en           (video_read_en),
@@ -508,6 +514,8 @@ campus_osd #(.DYNAMIC_TEXT_ENABLE(1),.GRADED_ALERT_ENABLE(1),.EVENT_ENABLE(1),.S
     .transition_bypass_async(emergency_mode || emergency_picture_loaded || effective_alert_level>=2),
     .read_slide_offset_async(read_slide_offset),.read_slide_in_async(read_slide_in),
     .slide_offset(slide_offset),.slide_in(slide_in),
+    .read_slide_epoch_async(read_slide_epoch),.transition_cancel_request_async(transition_cancel_request),
+    .slide_mix(slide_mix),.slide_epoch(slide_epoch),.transition_cancel_ack(transition_cancel_ack),
     .subtitle_enable_async(effective_overlay), .settings_async(picture_settings),
     .dynamic_text_active(text_active),.dynamic_text_changed(text_changed),
     .alert_level_async(effective_alert_level),.alert_select_async(alert_selecting),.alert_candidate_async(alert_candidate),

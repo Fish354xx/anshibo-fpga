@@ -107,8 +107,10 @@ module campus_osd #(
     input transition_bypass_async,
     input [9:0] read_slide_offset_async,
     input read_slide_in_async,
+    input read_slide_epoch_async,transition_cancel_request_async,
     output [9:0] slide_offset,
     output slide_in,
+    output slide_mix,slide_epoch,transition_cancel_ack,
     output transition_black_ready,
     output out_vs, out_de,
     output [23:0] out_rgb
@@ -210,22 +212,10 @@ wire [4:0] fade_level;
 picture_transition #(.SLIDE_ENABLE(SLIDE_ENABLE)) u_transition(.clk(clk),.rst(rst),.frame_start(frame_start),
     .pending_async(transition_pending_async),.emergency_async(emergency_async),
     .mode_async(transition_mode_async),.bypass_async(transition_bypass_async),
+    .read_epoch_async(read_slide_epoch_async),.cancel_request_async(transition_cancel_request_async),
+    .slide_mix(slide_mix),.slide_epoch(slide_epoch),.cancel_ack(transition_cancel_ack),
     .slide_offset(slide_offset),.slide_in(slide_in),
     .black_ready(transition_black_ready),.level(fade_level));
-// Address mapping is adopted by the memory reader at its frame request.
-// Use its held feedback, rather than the next requested step, for the mask.
-reg [9:0] read_shift_sync0,read_shift_sync1;
-reg read_in_sync0,read_in_sync1,slide_mask_d;
-always @(posedge clk or posedge rst)begin
- if(rst)begin read_shift_sync0<=0;read_shift_sync1<=0;read_in_sync0<=0;read_in_sync1<=0;slide_mask_d<=0;end
- else begin
-  read_shift_sync0<=SLIDE_ENABLE?read_slide_offset_async:10'd0;
-  read_shift_sync1<=read_shift_sync0;
-  read_in_sync0<=SLIDE_ENABLE&&read_slide_in_async;read_in_sync1<=read_in_sync0;
-  slide_mask_d<=SLIDE_ENABLE && ((read_shift_sync1>=640) ||
-   (read_in_sync1 ? x<read_shift_sync1 : x>=640-read_shift_sync1));
- end
-end
 always @(posedge clk or posedge rst) begin
     if(rst) begin
         mode_sync0<=0; mode_sync1<=0; frame_mode<=0;
@@ -18059,8 +18049,7 @@ input [4:0] level;
 reg [12:0] product;
 begin product=channel*level; fade_channel=product[11:4]; end
 endfunction
-wire [23:0] faded_rgb=slide_mask_d?24'd0:
-    {fade_channel(rgb_d[23:16],fade_level),
+wire [23:0] faded_rgb={fade_channel(rgb_d[23:16],fade_level),
     fade_channel(rgb_d[15:8],fade_level),fade_channel(rgb_d[7:0],fade_level)};
 wire [23:0] shaded={2'b00,faded_rgb[23:18],2'b00,faded_rgb[15:10],2'b00,faded_rgb[7:2]};
 assign out_de=de_d;
@@ -18118,40 +18107,57 @@ always @(posedge clk or posedge rst) begin
 end
 endmodule
 
-// Level changes only in vertical blanking. Keep the new buffer hidden for two
-// frame boundaries after commit so the frame-reader can adopt its base address.
+// 转场步进只在场消隐更新。相接滑动等待新缓存独占读帧后提交；
+// 淡入淡出保留换缓存后的消隐等待，应急取消通过读帧代次确认。
 module picture_transition #(parameter SLIDE_ENABLE=0)(
     input clk,rst,frame_start,pending_async,emergency_async,
     input [1:0] mode_async,
     input bypass_async,
+    input read_epoch_async,cancel_request_async,
     output [9:0] slide_offset,
     output slide_in,
+    output slide_mix,
+    output reg slide_epoch,cancel_ack,
     output black_ready,
     output reg [4:0] level
 );
-localparam IDLE=0,OUT=1,BLACK=2,SETTLE=3,IN=4;
+localparam IDLE=0,OUT=1,BLACK=2,SETTLE=3,IN=4,CANCEL=5;
 reg [2:0] state;
 reg pending_sync0,pending_sync1,emergency_sync0,emergency_sync1;
 reg [1:0] settle_frames;
 reg [1:0] mode_sync0,mode_sync1,active_mode;
 reg bypass_sync0,bypass_sync1;
 reg [9:0] shift;
+reg epoch_sync0,epoch_sync1,cancel_sync0,cancel_sync1;
 assign slide_offset=(SLIDE_ENABLE&&active_mode==1)?shift:10'd0;
 assign slide_in=SLIDE_ENABLE&&active_mode==1&&state==IN;
-assign black_ready=(state==BLACK);
+assign slide_mix=SLIDE_ENABLE&&active_mode==1&&(state==OUT||state==BLACK);
+// At a push endpoint, wait for a raster using only the new bank before releasing old memory.
+assign black_ready=(state==BLACK)&&(!SLIDE_ENABLE||active_mode!=1||epoch_sync1==slide_epoch);
 always @(posedge clk or posedge rst) begin
     if(rst) begin
         state<=IDLE;level<=16;settle_frames<=0;
         pending_sync0<=0;pending_sync1<=0;emergency_sync0<=0;emergency_sync1<=0;
         mode_sync0<=1;mode_sync1<=1;active_mode<=SLIDE_ENABLE?1:2;
         bypass_sync0<=0;bypass_sync1<=0;shift<=0;
+        epoch_sync0<=0;epoch_sync1<=0;cancel_sync0<=0;cancel_sync1<=0;slide_epoch<=0;cancel_ack<=0;
     end else begin
         pending_sync0<=pending_async;pending_sync1<=pending_sync0;
         emergency_sync0<=emergency_async;emergency_sync1<=emergency_sync0;
         mode_sync0<=SLIDE_ENABLE?mode_async:2'd2;mode_sync1<=mode_sync0;
         bypass_sync0<=SLIDE_ENABLE&&bypass_async;bypass_sync1<=bypass_sync0;
+        epoch_sync0<=read_epoch_async;epoch_sync1<=epoch_sync0;
+        cancel_sync0<=SLIDE_ENABLE&&cancel_request_async;cancel_sync1<=cancel_sync0;
         if(frame_start) begin
-            if(emergency_sync1||bypass_sync1) begin state<=IDLE;level<=16;settle_frames<=0;shift<=0;end
+            if(SLIDE_ENABLE&&state==CANCEL)begin
+                if(epoch_sync1==slide_epoch)begin cancel_ack<=cancel_sync1;state<=IDLE;end
+            end else if(SLIDE_ENABLE&&cancel_sync1!=cancel_ack)begin
+                state<=CANCEL;shift<=0;level<=16;slide_epoch<=~slide_epoch;
+            end else if(emergency_sync1||bypass_sync1) begin
+                if(SLIDE_ENABLE&&slide_mix)begin state<=CANCEL;slide_epoch<=~slide_epoch;end
+                else state<=IDLE;
+                level<=16;settle_frames<=0;shift<=0;
+            end
             else case(state)
             IDLE: if(pending_sync1) begin
                 active_mode<=mode_sync1;
@@ -18161,13 +18167,13 @@ always @(posedge clk or posedge rst) begin
             end
             OUT: if(!pending_sync1) begin state<=IN;end
                  else if(active_mode==1)begin
-                    if(shift>=600)begin shift<=640;level<=0;state<=BLACK;end
+                    if(shift>=600)begin shift<=640;level<=16;state<=BLACK;slide_epoch<=~slide_epoch;end
                     else shift<=shift+40;
                  end
                  else if(level==1) begin level<=0;state<=BLACK;end
                  else level<=level-1'b1;
             BLACK: if(!pending_sync1) begin
-                if(active_mode==0)begin state<=IDLE;level<=16;end
+                if(active_mode==0||active_mode==1)begin state<=IDLE;level<=16;shift<=0;end
                 else begin state<=SETTLE;settle_frames<=0;end
             end
             SETTLE: if(settle_frames==1) begin state<=IN;end

@@ -1,0 +1,180 @@
+# vsim -do {run -all; quit -f} -l sim/remote_text_push.log -lib C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work -c tb_remote_text 
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.tb_remote_text
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.uart_console
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.uart_rx_8n1
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.uart_tx_8n1
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.remote_text_buffer
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.campus_osd
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.event_view_control
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.alert_overlay_layout
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.event_text_layout
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.picture_transition
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.audio_wave_snapshot
+# ** Warning: (vsim-3017) tb/tb_remote_text.v(11): [TFMPC] - Too few port connections. Expected 47, found 16.
+# 
+#         Region: /tb_remote_text/dut
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'effective_alert'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'local_alert'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'remote_alert'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'event_busy'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'event_result_valid'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'event_result'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'event_active_valid'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'event_active_id'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'event_active_crc'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'event_active_level'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'event_state'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'event_active_area'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'event_active_body'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'event_cmd_valid'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'event_cmd'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'event_id'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'event_crc'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'event_level'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'event_area'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'event_body'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'event_glyph'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'next_pulse'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'command_value'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'overlay_override'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'overlay_value'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'adjust_override'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'adjust_value'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'select_override'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'select_value'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'soft_reset'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(11): [TFMPC] - Missing connection for port 'transition_mode'.
+# 
+# ** Warning: (vsim-3017) tb/tb_remote_text.v(21): [TFMPC] - Too few port connections. Expected 54, found 16.
+# 
+#         Region: /tb_remote_text/osd
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'alert_level_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'alert_candidate_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'alert_select_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'alert_picture_ready'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'alert_restore_ready'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'event_valid_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'event_remote_wins_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'event_pending'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'event_pending_bank'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'event_pending_id'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'event_pending_generation'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'event_pending_level'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'event_pending_area'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'event_pending_body'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'event_data'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'event_install'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'event_read_bank'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'event_shown_remote'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'event_read_index'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'event_shown_id'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'event_shown_generation'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'event_shown_level'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'alert_audio_level'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'transition_mode_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'transition_bypass_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'read_slide_offset_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'read_slide_in_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'read_slide_epoch_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'transition_cancel_request_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'slide_offset'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'slide_in'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'slide_mix'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'slide_epoch'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'transition_cancel_ack'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'transition_black_ready'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'out_vs'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'out_de'.
+# 
+# ** Warning: (vsim-3722) tb/tb_remote_text.v(21): [TFMPC] - Missing connection for port 'out_rgb'.
+# 
+# ** Warning: Design size of 11 instances exceeds ModelSim ALTERA recommended capacity.
+# This may because you are loading cell libraries which are not recommended with
+# the ModelSim Altera version. Expect performance to be adversely affected.
+# run -all 
+# PASS text command: TCOMMIT
+# PASS text command: TBEGIN
+# PASS text command: TCHAR 021
+# PASS text command: TCHAR 05F
+# PASS text command: TCHAR 3FF
+# PASS text command: TCHAR 0G0
+# PASS text command: TCOMMIT
+# PASS text command: TBEGIN
+# PASS text command: TBEGIN
+# PASS text command: TCHAR 042
+# PASS text command: TCOMMIT
+# PASS text command: TDEFAULT
+# PASS text command: TBEGIN
+# PASS text command: TCOMMIT
+# PASS text command: TCHAR 021
+# PASS text command: TCHAR 021
+# PASS text command: TCOMMIT
+# REMOTE TEXT: ALL CHECKS PASSED
+# ** Note: $finish    : tb/tb_remote_text.v(83)
+#    Time: 28810720 ns  Iteration: 0  Instance: /tb_remote_text

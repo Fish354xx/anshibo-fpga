@@ -28,3 +28,5 @@ VS Code打开本包，TD打开src/td_project/anshibo.al。主要RTL位于src/use
 事件阶段：event_packet_buffer.v负责元数据、字形、CRC及双银行事务；event_view_control负责帧安装与显示代次；event_protocol.ps1是电脑端序列化和发布向导。当前仅使用tools/build_event_layout.py统一生成警戒与事件布局，不单独运行旧generate_osd.py或build_alert_overlay.py覆盖扩展模块。
 
 转场阶段：picture_transition管理特效和帧步进，frame_fifo_read执行行内滑动读地址，campus_osd使用实际读帧偏移遮住回绕区域。默认SLIDE，串口可选FADE/CUT；应急恢复根据当前应急图片标签绕过转场。旧generate_osd.py已加保护，避免覆盖维护后的源码。
+
+相接滑动修正：frame_fifo_read按偏移拼接旧图行尾与新图行首，campus_osd不再遮成黑色。滑动结束及取消采用读帧代次握手，确保双缓存安全释放。视频开发继续暂停。

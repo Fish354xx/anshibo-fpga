@@ -12,7 +12,7 @@ frame_fifo_read #(.SLIDE_ENABLE(1),.BURST_SIZE(256)) dut(.rst(rst),.mem_clk(clk)
  .read_addr_0(21'd0),.read_addr_1(21'd307200),.read_addr_2(21'd0),.read_addr_3(21'd0),
  .read_active_index(active),.read_addr_index(bank),.read_len(21'd307200),
  .fifo_aclr(clear),.wrusedw(used),.slide_offset(shift),.slide_in(incoming),
- .read_slide_offset(held_shift),.read_slide_in(held_in));
+ .slide_target_index(2'd0),.slide_mix(1'b0),.slide_epoch(1'b0),.read_slide_offset(held_shift),.read_slide_in(held_in));
 integer count=0,errors=0,expected,source_x,rotation,offset,base,cyc=0;
 always @(negedge clk)begin
  cyc=cyc+1;used=(cyc%300<30)?400:0; // Exercise FIFO stalls between bursts.

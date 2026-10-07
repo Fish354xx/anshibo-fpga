@@ -1,0 +1,41 @@
+# vsim -do {run -all; quit -f} -l sim/push_reader.log -lib C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work -c tb_push_reader 
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.tb_push_reader
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.frame_fifo_read
+# run -all 
+# READER shift=0 in=0 bank=0 checked=307200
+# READER shift=40 in=0 bank=0 checked=307200
+# READER shift=80 in=0 bank=0 checked=307200
+# READER shift=120 in=0 bank=0 checked=307200
+# READER shift=160 in=0 bank=0 checked=307200
+# READER shift=200 in=0 bank=0 checked=307200
+# READER shift=240 in=0 bank=0 checked=307200
+# READER shift=280 in=0 bank=0 checked=307200
+# READER shift=320 in=0 bank=0 checked=307200
+# READER shift=360 in=0 bank=0 checked=307200
+# READER shift=400 in=0 bank=0 checked=307200
+# READER shift=440 in=0 bank=0 checked=307200
+# READER shift=480 in=0 bank=0 checked=307200
+# READER shift=520 in=0 bank=0 checked=307200
+# READER shift=560 in=0 bank=0 checked=307200
+# READER shift=600 in=0 bank=0 checked=307200
+# READER shift=640 in=0 bank=0 checked=307200
+# READER shift=0 in=0 bank=1 checked=307200
+# READER shift=40 in=0 bank=1 checked=307200
+# READER shift=80 in=0 bank=1 checked=307200
+# READER shift=120 in=0 bank=1 checked=307200
+# READER shift=160 in=0 bank=1 checked=307200
+# READER shift=200 in=0 bank=1 checked=307200
+# READER shift=240 in=0 bank=1 checked=307200
+# READER shift=280 in=0 bank=1 checked=307200
+# READER shift=320 in=0 bank=1 checked=307200
+# READER shift=360 in=0 bank=1 checked=307200
+# READER shift=400 in=0 bank=1 checked=307200
+# READER shift=440 in=0 bank=1 checked=307200
+# READER shift=480 in=0 bank=1 checked=307200
+# READER shift=520 in=0 bank=1 checked=307200
+# READER shift=560 in=0 bank=1 checked=307200
+# READER shift=600 in=0 bank=1 checked=307200
+# READER shift=640 in=0 bank=1 checked=307200
+# PUSH READER: ALL CHECKS PASSED
+# ** Note: $finish    : tb/tb_push_reader.v(43)
+#    Time: 122400050 ns  Iteration: 1  Instance: /tb_push_reader

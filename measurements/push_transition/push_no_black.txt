@@ -1,0 +1,94 @@
+# vsim -do {run -all; quit -f} -l sim/push_no_black.log -lib C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work -c tb_push_no_black 
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.tb_push_no_black
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.campus_osd
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.event_view_control
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.alert_overlay_layout
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.event_text_layout
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.picture_transition
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.audio_wave_snapshot
+# ** Warning: (vsim-3017) tb/tb_push_no_black.v(11): [TFMPC] - Too few port connections. Expected 54, found 16.
+# 
+#         Region: /tb_push_no_black/osd
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'dynamic_text_active'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'dynamic_text_changed'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'alert_level_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'alert_candidate_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'alert_select_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'alert_picture_ready'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'alert_restore_ready'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'event_valid_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'event_remote_wins_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'event_pending'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'event_pending_bank'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'event_pending_id'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'event_pending_generation'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'event_pending_level'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'event_pending_area'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'event_pending_body'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'event_data'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'event_install'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'event_read_bank'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'event_shown_remote'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'event_read_index'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'event_shown_id'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'event_shown_generation'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'event_shown_level'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'alert_audio_level'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'dynamic_text_glyph'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'dynamic_text_index'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'dynamic_frame_start'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'read_slide_epoch_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'transition_cancel_request_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'slide_offset'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'slide_in'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'slide_mix'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'slide_epoch'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'transition_cancel_ack'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'transition_black_ready'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'out_vs'.
+# 
+# ** Warning: (vsim-3722) tb/tb_push_no_black.v(11): [TFMPC] - Missing connection for port 'out_de'.
+# 
+# ** Warning: Design size of 7 instances exceeds ModelSim ALTERA recommended capacity.
+# This may because you are loading cell libraries which are not recommended with
+# the ModelSim Altera version. Expect performance to be adversely affected.
+# run -all 
+# PUSH NO BLACK: ALL CHECKS PASSED
+# ** Note: $finish    : tb/tb_push_no_black.v(30)
+#    Time: 192550 ns  Iteration: 1  Instance: /tb_push_no_black

@@ -1,6 +1,6 @@
 // 文件：frame_fifo_read.v
 // 职责：通过读FIFO衔接SDRAM与视频像素时钟域。
-// 来源：官方参考模块；增加缓存标签、滑动地址映射与帧参数锁存。
+// 来源：官方参考模块；增加双图拼接、缓存标签与读帧代次锁存。
 `timescale 1ns/1ps
 module frame_fifo_read
 #
@@ -41,6 +41,9 @@ module frame_fifo_read
 	output reg [1:0] read_active_index, // 当前帧实际锁存的缓存编号（mem_clk域）
     input [9:0] slide_offset,
     input slide_in,
+    input [1:0] slide_target_index,
+    input slide_mix,slide_epoch,
+    output reg read_slide_mix,read_slide_epoch,
     output reg [9:0] read_slide_offset,
     output reg read_slide_in,
 	input[1:0]                       read_addr_index,            // select valid base address from read_addr_0 read_addr_1 read_addr_2 read_addr_3
@@ -73,6 +76,13 @@ reg [ADDR_BITS - 1:0]	 App_rd_addr_r;
 reg [9:0] slide_sync0,slide_sync1,source_x,output_x,read_rotation;
 reg slide_in_sync0,slide_in_sync1;
 reg [ADDR_BITS-1:0] row_base;
+reg [ADDR_BITS-1:0] target_row_base;
+reg [1:0] target_sync0,target_sync1;
+reg mix_sync0,mix_sync1,epoch_sync0,epoch_sync1;
+wire [ADDR_BITS-1:0] selected_base=(read_addr_index_d1==0)?read_addr_0:
+    (read_addr_index_d1==1)?read_addr_1:(read_addr_index_d1==2)?read_addr_2:read_addr_3;
+wire [ADDR_BITS-1:0] target_base=(target_sync1==0)?read_addr_0:
+    (target_sync1==1)?read_addr_1:(target_sync1==2)?read_addr_2:read_addr_3;
 wire [9:0] requested_shift=(SLIDE_ENABLE && slide_sync1>0 && slide_sync1<640)?
     (slide_in_sync1?10'd640-slide_sync1:slide_sync1):10'd0;
 
@@ -106,6 +116,7 @@ begin
 		read_addr_index_d0 <= 2'b00;
 		read_addr_index_d1 <= 2'b00;
 		slide_sync0<=0;slide_sync1<=0;slide_in_sync0<=0;slide_in_sync1<=0;
+        target_sync0<=0;target_sync1<=0;mix_sync0<=0;mix_sync1<=0;epoch_sync0<=0;epoch_sync1<=0;
 	end
 	else
 	begin
@@ -118,6 +129,9 @@ begin
 		read_addr_index_d1 <= read_addr_index_d0;
         slide_sync0<=SLIDE_ENABLE?slide_offset:10'd0;slide_sync1<=slide_sync0;
         slide_in_sync0<=SLIDE_ENABLE&&slide_in;slide_in_sync1<=slide_in_sync0;
+        target_sync0<=slide_target_index;target_sync1<=target_sync0;
+        mix_sync0<=SLIDE_ENABLE&&slide_mix;mix_sync1<=mix_sync0;
+        epoch_sync0<=slide_epoch;epoch_sync1<=epoch_sync0;
 		
 	end 
 end
@@ -139,6 +153,7 @@ begin
 		App_rd_addr_r <= ZERO[ADDR_BITS - 1:0];
         read_active_index <= 2'd0;
         read_slide_offset<=0;read_slide_in<=0;source_x<=0;output_x<=0;row_base<=0;read_rotation<=0;
+        target_row_base<=0;read_slide_mix<=0;read_slide_epoch<=0;
 		App_rd_en_d0 <= 1'b0;
 	end
 	else begin
@@ -152,11 +167,16 @@ begin
 		//
 		if(state == S_ACK)
 			begin
-                read_active_index <= read_addr_index_d1;
+                read_active_index <= (mix_sync1&&slide_sync1>=640)?target_sync1:read_addr_index_d1;
+                read_slide_mix<=mix_sync1;read_slide_epoch<=epoch_sync1;
                 read_slide_offset<=slide_sync1;read_slide_in<=slide_in_sync1;
-                source_x<=requested_shift;output_x<=0;
+                source_x<=requested_shift;output_x<=0;target_row_base<=target_base;
                 read_rotation<=requested_shift;
-				if(read_addr_index_d1 == 2'd0)
+                if(mix_sync1)begin
+                    row_base<=selected_base;
+                    App_rd_addr_r<=(slide_sync1>=640)?target_base:selected_base+requested_shift;
+                end
+				else if(read_addr_index_d1 == 2'd0)
 					begin App_rd_addr_r <= read_addr_0+requested_shift;row_base<=read_addr_0;end
 				else if(read_addr_index_d1 == 2'd1)
 					begin App_rd_addr_r <= read_addr_1+requested_shift;row_base<=read_addr_1;end
@@ -167,16 +187,17 @@ begin
 			end
 		else if(App_rd_en)
             begin
-                // Rotate each row while still issuing exactly one read/pixel.
-                // OSD masks the wrapped region, so no extra frame RAM is needed.
+                // A single raster joins the old row tail to the new row head.
+                // Exactly one read is issued per pixel; both buffers stay immutable.
                 if(!SLIDE_ENABLE) App_rd_addr_r<=App_rd_addr_r+1'b1;
                 else if(output_x==639)begin
                     output_x<=0;source_x<=read_rotation;
                     row_base<=row_base+640;
-                    App_rd_addr_r<=row_base+640+read_rotation;
+                    target_row_base<=target_row_base+640;
+                    App_rd_addr_r<=(read_slide_mix&&read_slide_offset>=640)?target_row_base+640:row_base+640+read_rotation;
                 end else begin
                     output_x<=output_x+1'b1;
-                    if(source_x==639)begin source_x<=0;App_rd_addr_r<=row_base;end
+                    if(source_x==639)begin source_x<=0;App_rd_addr_r<=read_slide_mix?target_row_base:row_base;end
                     else begin source_x<=source_x+1'b1;App_rd_addr_r<=App_rd_addr_r+1'b1;end
                 end
             end

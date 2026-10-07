@@ -47,6 +47,9 @@ module frame_read_write
 	output [1:0] read_active_index, // 当前读帧缓存编号，由读控制器提供
     input [9:0] slide_offset,
     input slide_in,
+    input [1:0] slide_target_index,
+    input slide_mix,slide_epoch,
+    output read_slide_mix,read_slide_epoch,
     output [9:0] read_slide_offset,
     output read_slide_in,
 	input[1:0]                       read_addr_index,            // select valid base address from read_addr_0 read_addr_1 read_addr_2 read_addr_3
@@ -201,6 +204,8 @@ frame_fifo_read_m0
 	.read_addr_index            (read_addr_index          ),
     .read_active_index          (read_active_index),    
     .slide_offset(slide_offset),.slide_in(slide_in),
+    .slide_target_index(slide_target_index),.slide_mix(slide_mix),.slide_epoch(slide_epoch),
+    .read_slide_mix(read_slide_mix),.read_slide_epoch(read_slide_epoch),
     .read_slide_offset(read_slide_offset),.read_slide_in(read_slide_in),
 	.read_len                   (read_len                 ),
 	.fifo_aclr                  (read_fifo_aclr           ),

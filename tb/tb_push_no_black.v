@@ -1,5 +1,5 @@
 `timescale 1ns/1ps
-module tb_slide_mask;
+module tb_push_no_black;
 reg clk=0,rst=1,incoming=0;reg[9:0]shift=0;
 wire[23:0]rgb;
 always #5 clk=~clk;
@@ -19,14 +19,14 @@ initial begin
   shift=amount;incoming=d;repeat(5)@(negedge clk);
   for(position=0;position<640;position=position+1)begin
    repeat(3)@(negedge clk);
-   black=(amount==640)||(d?position<amount:position>=640-amount);
+   black=0; // Both old and incoming regions must pass their memory pixels.
    if(rgb!==(black?24'd0:24'h80A0C0))begin
     if(errors<3)$display("FAIL mask in=%0d shift=%0d x=%0d rgb=%h",d,amount,position,rgb);
     errors=errors+1;
    end
   end
  end
- if(errors)$fatal(1,"SLIDE MASK errors=%0d",errors);
- $display("SLIDE MASK: ALL CHECKS PASSED");$finish;
+ if(errors)$fatal(1,"PUSH NO BLACK errors=%0d",errors);
+ $display("PUSH NO BLACK: ALL CHECKS PASSED");$finish;
 end
 endmodule
