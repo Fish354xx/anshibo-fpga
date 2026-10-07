@@ -54,3 +54,7 @@ TEXT DEFAULT
 分级阶段新增ALERT 1/2/3与ALERT CLEAR，分别发布后台等级及清除后台记录。本地记录独立，实际取高等级；STATUS增加E仲裁等级、B本地、M后台。当前预警正文固定，事件包、区域和动态应急正文已经实现，见EVENT_PROTOCOL.md。普通TEXT不能改写预警正文。
 
 完整事件阶段：PUBLISH录入编号、等级、区域及正文，ESTATUS查询输出状态，CLEAR解除后台事件；细节见EVENT_PROTOCOL.md。
+
+## 日常转场
+
+TRANSITION SLIDE / FADE / CUT分别选择滑出滑入、淡出淡入、直接切屏；TRANSITION查询当前设置。默认SLIDE，复位恢复默认。当前动画不受中途设置影响，新设置用于下一次动画。应急进入与解除不执行转场。具体实现与验收见TRANSITIONS.md。

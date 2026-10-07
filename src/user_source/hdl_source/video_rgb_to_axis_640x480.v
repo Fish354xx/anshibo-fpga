@@ -79,6 +79,7 @@ module campus_osd #(
     parameter integer DYNAMIC_TEXT_ENABLE=0,
     parameter integer GRADED_ALERT_ENABLE=0,
     parameter integer EVENT_ENABLE=0,
+    parameter integer SLIDE_ENABLE=0,
     parameter integer SUBTITLE_DEBOUNCE_CYCLES=CLK_FREQ_HZ/50
 )(
     input clk, rst, in_vs, in_de, emergency_async,
@@ -102,6 +103,12 @@ module campus_osd #(
     input audio_valid,
     input [23:0] audio_sample,
     input transition_pending_async,
+    input [1:0] transition_mode_async,
+    input transition_bypass_async,
+    input [9:0] read_slide_offset_async,
+    input read_slide_in_async,
+    output [9:0] slide_offset,
+    output slide_in,
     output transition_black_ready,
     output out_vs, out_de,
     output [23:0] out_rgb
@@ -200,9 +207,25 @@ always @(posedge clk or posedge rst) begin
 end
 
 wire [4:0] fade_level;
-picture_transition u_transition(.clk(clk),.rst(rst),.frame_start(frame_start),
+picture_transition #(.SLIDE_ENABLE(SLIDE_ENABLE)) u_transition(.clk(clk),.rst(rst),.frame_start(frame_start),
     .pending_async(transition_pending_async),.emergency_async(emergency_async),
+    .mode_async(transition_mode_async),.bypass_async(transition_bypass_async),
+    .slide_offset(slide_offset),.slide_in(slide_in),
     .black_ready(transition_black_ready),.level(fade_level));
+// Address mapping is adopted by the memory reader at its frame request.
+// Use its held feedback, rather than the next requested step, for the mask.
+reg [9:0] read_shift_sync0,read_shift_sync1;
+reg read_in_sync0,read_in_sync1,slide_mask_d;
+always @(posedge clk or posedge rst)begin
+ if(rst)begin read_shift_sync0<=0;read_shift_sync1<=0;read_in_sync0<=0;read_in_sync1<=0;slide_mask_d<=0;end
+ else begin
+  read_shift_sync0<=SLIDE_ENABLE?read_slide_offset_async:10'd0;
+  read_shift_sync1<=read_shift_sync0;
+  read_in_sync0<=SLIDE_ENABLE&&read_slide_in_async;read_in_sync1<=read_in_sync0;
+  slide_mask_d<=SLIDE_ENABLE && ((read_shift_sync1>=640) ||
+   (read_in_sync1 ? x<read_shift_sync1 : x>=640-read_shift_sync1));
+ end
+end
 always @(posedge clk or posedge rst) begin
     if(rst) begin
         mode_sync0<=0; mode_sync1<=0; frame_mode<=0;
@@ -18036,7 +18059,8 @@ input [4:0] level;
 reg [12:0] product;
 begin product=channel*level; fade_channel=product[11:4]; end
 endfunction
-wire [23:0] faded_rgb={fade_channel(rgb_d[23:16],fade_level),
+wire [23:0] faded_rgb=slide_mask_d?24'd0:
+    {fade_channel(rgb_d[23:16],fade_level),
     fade_channel(rgb_d[15:8],fade_level),fade_channel(rgb_d[7:0],fade_level)};
 wire [23:0] shaded={2'b00,faded_rgb[23:18],2'b00,faded_rgb[15:10],2'b00,faded_rgb[7:2]};
 assign out_de=de_d;
@@ -18096,8 +18120,12 @@ endmodule
 
 // Level changes only in vertical blanking. Keep the new buffer hidden for two
 // frame boundaries after commit so the frame-reader can adopt its base address.
-module picture_transition(
+module picture_transition #(parameter SLIDE_ENABLE=0)(
     input clk,rst,frame_start,pending_async,emergency_async,
+    input [1:0] mode_async,
+    input bypass_async,
+    output [9:0] slide_offset,
+    output slide_in,
     output black_ready,
     output reg [4:0] level
 );
@@ -18105,27 +18133,53 @@ localparam IDLE=0,OUT=1,BLACK=2,SETTLE=3,IN=4;
 reg [2:0] state;
 reg pending_sync0,pending_sync1,emergency_sync0,emergency_sync1;
 reg [1:0] settle_frames;
+reg [1:0] mode_sync0,mode_sync1,active_mode;
+reg bypass_sync0,bypass_sync1;
+reg [9:0] shift;
+assign slide_offset=(SLIDE_ENABLE&&active_mode==1)?shift:10'd0;
+assign slide_in=SLIDE_ENABLE&&active_mode==1&&state==IN;
 assign black_ready=(state==BLACK);
 always @(posedge clk or posedge rst) begin
     if(rst) begin
         state<=IDLE;level<=16;settle_frames<=0;
         pending_sync0<=0;pending_sync1<=0;emergency_sync0<=0;emergency_sync1<=0;
+        mode_sync0<=1;mode_sync1<=1;active_mode<=SLIDE_ENABLE?1:2;
+        bypass_sync0<=0;bypass_sync1<=0;shift<=0;
     end else begin
         pending_sync0<=pending_async;pending_sync1<=pending_sync0;
         emergency_sync0<=emergency_async;emergency_sync1<=emergency_sync0;
+        mode_sync0<=SLIDE_ENABLE?mode_async:2'd2;mode_sync1<=mode_sync0;
+        bypass_sync0<=SLIDE_ENABLE&&bypass_async;bypass_sync1<=bypass_sync0;
         if(frame_start) begin
-            if(emergency_sync1) begin state<=IDLE;level<=16;settle_frames<=0;end
+            if(emergency_sync1||bypass_sync1) begin state<=IDLE;level<=16;settle_frames<=0;shift<=0;end
             else case(state)
-            IDLE: if(pending_sync1) begin state<=OUT;level<=15;end
+            IDLE: if(pending_sync1) begin
+                active_mode<=mode_sync1;
+                if(mode_sync1==0)begin state<=BLACK;level<=16;shift<=0;end
+                else if(mode_sync1==1)begin state<=OUT;level<=16;shift<=40;end
+                else begin state<=OUT;level<=15;shift<=0;end
+            end
             OUT: if(!pending_sync1) begin state<=IN;end
+                 else if(active_mode==1)begin
+                    if(shift>=600)begin shift<=640;level<=0;state<=BLACK;end
+                    else shift<=shift+40;
+                 end
                  else if(level==1) begin level<=0;state<=BLACK;end
                  else level<=level-1'b1;
-            BLACK: if(!pending_sync1) begin state<=SETTLE;settle_frames<=0;end
+            BLACK: if(!pending_sync1) begin
+                if(active_mode==0)begin state<=IDLE;level<=16;end
+                else begin state<=SETTLE;settle_frames<=0;end
+            end
             SETTLE: if(settle_frames==1) begin state<=IN;end
                     else settle_frames<=settle_frames+1'b1;
-            IN: if(level==15) begin level<=16;state<=IDLE;end
+            IN: if(active_mode==1)begin
+                    level<=16;
+                    if(shift<=40)begin shift<=0;state<=IDLE;end
+                    else shift<=shift-40;
+                end
+                else if(level==15) begin level<=16;state<=IDLE;end
                 else level<=level+1'b1;
-            default: begin state<=IDLE;level<=16;end
+            default: begin state<=IDLE;level<=16;shift<=0;end
             endcase
         end
     end

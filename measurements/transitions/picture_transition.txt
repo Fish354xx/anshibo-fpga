@@ -1,0 +1,113 @@
+# vsim -do {run -all; quit -f} -l sim/picture_transition.log -lib C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work -c tb_picture_transition 
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.tb_picture_transition
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.picture_transition
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.frame_commit_gate
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.campus_osd
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.event_view_control
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.alert_overlay_layout
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.event_text_layout
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.audio_wave_snapshot
+# ** Warning: (vsim-3017) tb/tb_picture_transition.v(10): [TFMPC] - Too few port connections. Expected 11, found 7.
+# 
+#         Region: /tb_picture_transition/ctrl
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(10): [TFMPC] - Missing connection for port 'mode_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(10): [TFMPC] - Missing connection for port 'bypass_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(10): [TFMPC] - Missing connection for port 'slide_offset'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(10): [TFMPC] - Missing connection for port 'slide_in'.
+# 
+# ** Warning: (vsim-3017) tb/tb_picture_transition.v(17): [TFMPC] - Too few port connections. Expected 49, found 15.
+# 
+#         Region: /tb_picture_transition/osd
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'dynamic_text_active'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'dynamic_text_changed'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'alert_level_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'alert_candidate_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'alert_select_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'alert_picture_ready'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'alert_restore_ready'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'event_valid_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'event_remote_wins_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'event_pending'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'event_pending_bank'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'event_pending_id'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'event_pending_generation'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'event_pending_level'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'event_pending_area'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'event_pending_body'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'event_data'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'event_install'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'event_read_bank'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'event_shown_remote'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'event_read_index'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'event_shown_id'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'event_shown_generation'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'event_shown_level'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'alert_audio_level'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'dynamic_text_glyph'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'dynamic_text_index'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'dynamic_frame_start'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'transition_mode_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'transition_bypass_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'read_slide_offset_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'read_slide_in_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'slide_offset'.
+# 
+# ** Warning: (vsim-3722) tb/tb_picture_transition.v(17): [TFMPC] - Missing connection for port 'slide_in'.
+# 
+# ** Warning: Design size of 8 instances exceeds ModelSim ALTERA recommended capacity.
+# This may because you are loading cell libraries which are not recommended with
+# the ModelSim Altera version. Expect performance to be adversely affected.
+# run -all 
+# PASS: startup full opacity without transition
+# PASS: early memory completion waits for source drain
+# PASS: source completion alone cannot switch buffers
+# PASS: completed normal image waits for black handshake
+# PASS: 16 frame fade-out reaches black before commit
+# PASS: black holds until producer acknowledges commit
+# PASS: two frame settling interval hides buffer adoption
+# PASS: 16 frame fade-in restores exact full opacity
+# PASS: emergency cancels transition at next frame boundary
+# PASS: emergency commit bypasses transition wait
+# PASS: rejected stale transaction retires without waiting
+# PASS: first image bypasses transition wait
+# PASS: 4352 opacity cases and previous state checks passed
+# PASS: cancelled transaction recovers without black handshake
+# PASS: integrated RGB path applies level 15/16
+# TRANSITION RESULT: ALL CHECKS PASSED
+# ** Note: $finish    : tb/tb_picture_transition.v(70)
+#    Time: 6700 ns  Iteration: 1  Instance: /tb_picture_transition

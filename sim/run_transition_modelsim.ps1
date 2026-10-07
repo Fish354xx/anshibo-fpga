@@ -1,25 +1,16 @@
-$ErrorActionPreference = 'Stop'
-$projectRoot = Split-Path $PSScriptRoot -Parent
-Push-Location $projectRoot
+$ErrorActionPreference='Stop'
+$root=Split-Path $PSScriptRoot -Parent
+$simulator='D:/FPGA/modelsim_ase/win32aloem'
+Push-Location $root
 try {
-    $simulatorDir = 'D:\FPGA\modelsim_ase\win32aloem'
-    if (!(Test-Path 'sim/work')) {
-        & "$simulatorDir\vlib.exe" sim/work
-        if ($LASTEXITCODE -ne 0) { throw 'vlib failed' }
-    }
-    & "$simulatorDir\vlog.exe" -work sim/work src/user_source/hdl_source/SD/sd_card_bmp.v src/user_source/hdl_source/video_rgb_to_axis_640x480.v tb/tb_picture_transition.v
-    if ($LASTEXITCODE -ne 0) { throw 'Compilation failed' }
-    $libraryPath = (Join-Path $projectRoot 'sim/work').Replace('\', '/')
-    $logPath = (Join-Path $projectRoot 'sim/transition.log').Replace('\', '/')
-    & "$simulatorDir\vsim.exe" -c -lib $libraryPath tb_picture_transition -l $logPath -do 'run -all; quit -f'
-    if ($LASTEXITCODE -ne 0) { throw 'Simulator failed' }
-    $result = Get-Content -LiteralPath $logPath -Raw
-    if ($result -notmatch 'TRANSITION RESULT: ALL CHECKS PASSED' -or $result -match 'FAIL:') {
-        throw 'Picture transition checks failed; see sim/transition.log'
-    }
-    Write-Host 'PASS: all picture transition behavior checks passed'
-} finally {
-    Pop-Location
-}
-
-
+ if(!(Test-Path 'sim/work')){& "$simulator/vlib.exe" sim/work}
+ & "$simulator/vlog.exe" -work sim/work src/user_source/hdl_source/event_packet_buffer.v src/user_source/hdl_source/uart_console.v src/user_source/hdl_source/SD/sd_card_bmp.v src/user_source/hdl_source/SD/frame_fifo_read.v src/user_source/hdl_source/video_rgb_to_axis_640x480.v tb/tb_picture_transition.v tb/tb_slide_transition.v tb/tb_slide_reader.v tb/tb_slide_mask.v tb/tb_uart_transition.v
+ if($LASTEXITCODE -ne 0){throw 'Compilation failed'}
+ $checks=@{tb_picture_transition='TRANSITION RESULT: ALL CHECKS PASSED';tb_slide_transition='SLIDE CONTROL: ALL CHECKS PASSED';tb_slide_reader='SLIDE READER: ALL CHECKS PASSED';tb_slide_mask='SLIDE MASK: ALL CHECKS PASSED';tb_uart_transition='UART TRANSITION: ALL CHECKS PASSED'}
+ foreach($name in $checks.Keys){
+  $log=Join-Path $root "sim/$name.log"
+  & "$simulator/vsim.exe" -c -lib (Join-Path $root 'sim/work') $name -l $log -do 'run -all; quit -f'
+  $result=Get-Content $log -Raw
+  if($LASTEXITCODE -ne 0 -or !$result.Contains($checks[$name]) -or $result -match 'Fatal|FAIL'){throw "$name failed"}
+ }
+} finally{Pop-Location}

@@ -63,6 +63,7 @@ function Show-Status([string]$Response) {
 function Show-Help {
     Write-Host 'PING | STATUS | NEXT | SHOW 1 / SHOW 2 / SHOW 3 | ALERT 1 / 2 / 3 / CLEAR'
     Write-Host 'AUTO ON / OFF | EMERGENCY ON / OFF'
+    Write-Host 'TRANSITION SLIDE / FADE / CUT | TRANSITION queries current setting'
     Write-Host 'BRIGHTNESS 0..4 / + / - | CONTRAST 0..4 / + / -'
     Write-Host 'ADJUST ON / OFF | SELECT BRIGHTNESS / CONTRAST'
     Write-Host 'OVERLAY ON / OFF | LOCAL | RESET | HELP | EXIT'
@@ -107,7 +108,7 @@ try {
         if ($command -eq 'EXIT') { break }
         if ($command -eq '') { continue }
         if ($command -eq 'HELP') { Show-Help; continue }
-        if ($command -notmatch '^(PING|STATUS|NEXT|LOCAL|RESET|TDEFAULT|ALERT ([1-3]|CLEAR)|SHOW [1-3]|(AUTO|EMERGENCY|ADJUST|OVERLAY) (ON|OFF)|SELECT (BRIGHTNESS|CONTRAST)|(BRIGHTNESS|CONTRAST) ([0-4]|\+|-))$') {
+        if ($command -notmatch '^(PING|STATUS|NEXT|LOCAL|RESET|TDEFAULT|TRANSITION(?: (SLIDE|FADE|CUT))?|ALERT ([1-3]|CLEAR)|SHOW [1-3]|(AUTO|EMERGENCY|ADJUST|OVERLAY) (ON|OFF)|SELECT (BRIGHTNESS|CONTRAST)|(BRIGHTNESS|CONTRAST) ([0-4]|\+|-))$') {
             Write-Host 'Unknown command. Type HELP for the command list.'
             continue
         }

@@ -1,10 +1,10 @@
 # 安视播：校园电子广告牌与完整应急事件发布
 
-独立扩展已验收的graded-alert / v1.3-graded-alert-validated。日常图片切换轮播、TEXT普通通知、本地分级预警和声音规则保留。本阶段增加事件编号、预警等级、区域、正文、CRC校验及发布回执。活动视频、联网服务、事件有效期、语音播报和断电保持尚未实现。
+在现有校园信息发布工程中继续开发。日常图片切换轮播、TEXT普通通知、本地分级预警和声音规则保留。本阶段增加事件编号、预警等级、区域、正文、CRC校验及发布回执。活动视频、联网服务、事件有效期、语音播报和断电保持尚未实现。
 
 ## 上板操作
 
-BitWriter使用PROGRAM_SRAM，只添加firmware/anshibo_event_publish.bit下载。TF四张图保持原样。退出旧串口窗口，双击本目录tools/launch_uart.cmd，选择已有COM端口（此前COM3）。
+BitWriter使用PROGRAM_SRAM，只添加firmware/anshibo_slide_transition.bit下载。本阶段默认滑出滑入，支持TRANSITION SLIDE / FADE / CUT及查询；进入和解除应急直接切屏，详见TRANSITIONS.md。当前为待上板验收版本。TF四张图保持原样。退出旧串口窗口，双击本目录tools/launch_uart.cmd，选择已有COM端口（此前COM3）。
 
 输入PUBLISH，向导依次录入：
 
@@ -34,3 +34,5 @@ ESTATUS查询该后台事件状态。APPLIED表示FPGA已开始输出该事件�
 发布一个二级事件，检查区域和正文；换新编号发布不同内容；CLEAR恢复日常；本地长按三级后发布后台一级，应提示被本地覆盖；解除本地后检查该后台消息出现。确认日常TEXT仍正常。通过后保存GitHub。
 
 协议与源码说明见EVENT_PROTOCOL.md。工程入口src/td_project/anshibo.al；事件处理与双银行event_packet_buffer.v；串口uart_console.v；显示video_rgb_to_axis_640x480.v；电脑工具event_protocol.ps1。仿真及最终编译记录在measurements/event_publish。
+
+最新转场阶段：日常图片三种特效可选，默认SLIDE；字幕波形保持原位。视频开发暂停，TF_MEDIA_PLAN.md仅保留研究记录。

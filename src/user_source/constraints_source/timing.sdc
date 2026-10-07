@@ -144,3 +144,12 @@ set_false_path -to [get_regs {u_campus_osd/event_source_sync0}]
 # Requested bundle is held until frame installation returns its toggle ack.
 set_false_path -from [get_regs {u_event_packet/requested_*}] -to [get_regs {u_campus_osd/u_event_view/*}]
 set_false_path -to [get_regs {u_event_packet/shown_generation_sync0[*]}]
+
+# Slide request/feedback are held for a frame; constrain destination stages.
+set_false_path -to [get_regs {u_campus_osd/u_transition/mode_sync0[*]}]
+set_false_path -to [get_regs {u_campus_osd/u_transition/bypass_sync0}]
+set_false_path -to [get_regs {u_campus_osd/read_shift_sync0[*]}]
+set_false_path -to [get_regs {u_campus_osd/read_in_sync0}]
+set_false_path -to [get_regs {frame_read_write_m0/frame_fifo_read_m0/slide_sync0[*]}]
+set_false_path -to [get_regs {frame_read_write_m0/frame_fifo_read_m0/slide_in_sync0}]
+set_false_path -to [get_regs {sd_card_bmp_m0/reader_index_sync0[*]}]

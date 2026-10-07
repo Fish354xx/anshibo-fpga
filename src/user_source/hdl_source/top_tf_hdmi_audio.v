@@ -79,6 +79,9 @@ wire emergency_mode;
 wire emergency_picture_loaded;
 wire emergency_audio_enable;
 wire [1:0] read_active_index;
+wire [1:0] transition_mode;
+wire [9:0] slide_offset,read_slide_offset;
+wire slide_in,read_slide_in;
 wire [7:0] picture_settings;
 wire uart_next;
 wire [2:0] uart_next_block_reason;
@@ -147,7 +150,7 @@ always @(posedge sd_card_clk or posedge physical_reset) begin
     else if(serial_reset_hold!=0) serial_reset_hold<=serial_reset_hold-1'b1;
 end
 // 与TF控制同100MHz域，无需跨域传递命令脉冲。
-uart_console #(.CLK_FREQ_HZ(100_000_000),.BAUD(115200),.EXTENDED_STATUS(1),.GRADED_ALERT_ENABLE(1),.EVENT_ENABLE(1)) u_uart_console(
+uart_console #(.CLK_FREQ_HZ(100_000_000),.BAUD(115200),.EXTENDED_STATUS(1),.GRADED_ALERT_ENABLE(1),.EVENT_ENABLE(1),.TRANSITION_ENABLE(1)) u_uart_console(
     .clk(sd_card_clk),.rst(rst_sd),.rx(uart_rx),.tx(uart_tx),
     .next_block_reason(uart_next_block_reason),.debug_status(sd_debug_status),
     .state_code(state_code),.picture_settings(picture_settings),.next_pulse(uart_next),
@@ -162,7 +165,7 @@ uart_console #(.CLK_FREQ_HZ(100_000_000),.BAUD(115200),.EXTENDED_STATUS(1),.GRAD
     .event_area(event_area),.event_body(event_body),.event_glyph(event_glyph),
     .overlay_override(overlay_override),.overlay_value(overlay_value),
     .adjust_override(adjust_override),.adjust_value(adjust_value),
-    .select_override(select_override),.select_value(select_value));
+    .select_override(select_override),.select_value(select_value),.transition_mode(transition_mode));
 wire transition_pending,transition_black_ready;
 wire sd_card_write_ready;
 reg [19:0] debug_sync0, debug_sync1;
@@ -283,7 +286,8 @@ sd_card_bmp #(
     .CLK_FREQ_HZ       (100_000_000),
     .SCAN_START_SECTOR (32'd0),
     .SCAN_MAX_SECTOR   (32'd131071),
-    .SCAN_TARGET_COUNT (3'd4)
+    .SCAN_TARGET_COUNT (3'd4),
+    .FRAME_READER_FEEDBACK(1)
 ) sd_card_bmp_m0(
     .clk               (sd_card_clk),
     .rst               (rst_sd),
@@ -304,6 +308,7 @@ sd_card_bmp #(
     .picture_settings  (picture_settings),
     .transition_pending(transition_pending),
     .transition_black_ready(transition_black_ready),
+    .read_active_index_async(read_active_index),
     .state_code        (state_code),
     .bmp_width         (16'd640),
     .bmp_height        (16'd480),
@@ -384,7 +389,8 @@ assign vout_data = display_valid_sync1 ? vout_data_raw : 24'd0;
 frame_read_write #(
     .WRITE_V_FLIP     (1),
     .FRAME_WIDTH      (640),
-    .FRAME_HEIGHT     (480)
+    .FRAME_HEIGHT     (480),
+    .SLIDE_ENABLE     (1)
 ) frame_read_write_m0(
     .mem_clk           (ext_mem_clk),
     .rst               (rst_mem),
@@ -407,6 +413,8 @@ frame_read_write #(
     .read_addr_3       (24'd0),
     .read_addr_index   (disp_buf_idx),
     .read_active_index (read_active_index),
+    .slide_offset(slide_offset),.slide_in(slide_in),
+    .read_slide_offset(read_slide_offset),.read_slide_in(read_slide_in),
     .read_len          (FRAME_PIXELS),
     .read_en           (video_read_en),
     .read_data         (video_read_data),
@@ -492,10 +500,14 @@ audio_arc_calculate #(
 );
 
 // ===================== RGB/DE 转 AXIS 视频 =====================
-campus_osd #(.DYNAMIC_TEXT_ENABLE(1),.GRADED_ALERT_ENABLE(1),.EVENT_ENABLE(1)) u_campus_osd(
+campus_osd #(.DYNAMIC_TEXT_ENABLE(1),.GRADED_ALERT_ENABLE(1),.EVENT_ENABLE(1),.SLIDE_ENABLE(1)) u_campus_osd(
     .clk(video_clk), .rst(rst_video), .in_vs(vs), .in_de(de),
     .in_rgb(vout_data), .emergency_async(emergency_mode),
     .transition_pending_async(transition_pending), .transition_black_ready(transition_black_ready),
+    .transition_mode_async(transition_mode),
+    .transition_bypass_async(emergency_mode || emergency_picture_loaded || effective_alert_level>=2),
+    .read_slide_offset_async(read_slide_offset),.read_slide_in_async(read_slide_in),
+    .slide_offset(slide_offset),.slide_in(slide_in),
     .subtitle_enable_async(effective_overlay), .settings_async(picture_settings),
     .dynamic_text_active(text_active),.dynamic_text_changed(text_changed),
     .alert_level_async(effective_alert_level),.alert_select_async(alert_selecting),.alert_candidate_async(alert_candidate),

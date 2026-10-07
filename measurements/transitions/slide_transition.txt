@@ -1,0 +1,8 @@
+# vsim -do {run -all; quit -f} -l sim/slide_transition.log -lib C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work -c tb_slide_transition 
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.tb_slide_transition
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.frame_commit_gate
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.picture_transition
+# run -all 
+# SLIDE CONTROL: ALL CHECKS PASSED
+# ** Note: $finish    : tb/tb_slide_transition.v(43)
+#    Time: 4800 ns  Iteration: 1  Instance: /tb_slide_transition

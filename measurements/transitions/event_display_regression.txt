@@ -1,0 +1,66 @@
+# vsim -do {run -all; quit -f} -l sim/event_display_regression.log -lib C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work -c tb_event_display 
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.tb_event_display
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.event_packet_buffer
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.campus_osd
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.event_view_control
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.alert_overlay_layout
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.event_text_layout
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.picture_transition
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.audio_wave_snapshot
+# ** Warning: (vsim-3017) tb/tb_event_display.v(24): [TFMPC] - Too few port connections. Expected 44, found 41.
+# 
+#         Region: /tb_event_display/packet
+# ** Warning: (vsim-3722) tb/tb_event_display.v(24): [TFMPC] - Missing connection for port 'active_generation'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_display.v(24): [TFMPC] - Missing connection for port 'active_area_length'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_display.v(24): [TFMPC] - Missing connection for port 'active_body_length'.
+# 
+# ** Warning: (vsim-3017) tb/tb_event_display.v(37): [TFMPC] - Too few port connections. Expected 49, found 38.
+# 
+#         Region: /tb_event_display/display
+# ** Warning: (vsim-3722) tb/tb_event_display.v(37): [TFMPC] - Missing connection for port 'dynamic_text_index'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_display.v(37): [TFMPC] - Missing connection for port 'dynamic_frame_start'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_display.v(37): [TFMPC] - Missing connection for port 'transition_mode_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_display.v(37): [TFMPC] - Missing connection for port 'transition_bypass_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_display.v(37): [TFMPC] - Missing connection for port 'read_slide_offset_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_display.v(37): [TFMPC] - Missing connection for port 'read_slide_in_async'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_display.v(37): [TFMPC] - Missing connection for port 'slide_offset'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_display.v(37): [TFMPC] - Missing connection for port 'slide_in'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_display.v(37): [TFMPC] - Missing connection for port 'transition_black_ready'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_display.v(37): [TFMPC] - Missing connection for port 'out_vs'.
+# 
+# ** Warning: (vsim-3722) tb/tb_event_display.v(37): [TFMPC] - Missing connection for port 'out_de'.
+# 
+# ** Warning: Design size of 8 instances exceeds ModelSim ALTERA recommended capacity.
+# This may because you are loading cell libraries which are not recommended with
+# the ModelSim Altera version. Expect performance to be adversely affected.
+# run -all 
+# PASS: first event displayed and acknowledged
+# PASS: upload keeps old event
+# PASS: invalid CRC keeps old event
+# PASS: new severity cannot use old event text while loading
+# PASS: new level/area/body install on one frame
+# PASS: new area selected
+# PASS: new body selected
+# PASS: local tie wins and reports blocked
+# PASS: hidden lower event installed without leaking text
+# PASS: restoration holds complete old local page
+# PASS: cached remote event shown after local clear
+# PASS: reminder body from its own event
+# PASS: wrong clear ID rejected
+# PASS: same ID new generation stays pending before first pixel
+# PASS: new generation acknowledged only at its first pixel
+# PASS: targeted clear returns daily page
+# EVENT DISPLAY: ALL CHECKS PASSED
+# ** Note: $finish    : tb/tb_event_display.v(84)
+#    Time: 24623720 ns  Iteration: 1  Instance: /tb_event_display

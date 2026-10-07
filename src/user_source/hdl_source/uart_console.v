@@ -6,7 +6,8 @@ module uart_console #(
     parameter integer BAUD=115200,
     parameter integer EXTENDED_STATUS=0,
     parameter integer GRADED_ALERT_ENABLE=0,
-    parameter integer EVENT_ENABLE=0
+    parameter integer EVENT_ENABLE=0,
+    parameter integer TRANSITION_ENABLE=0
 )(
     input clk,rst,rx,output tx,
     input [2:0] next_block_reason,
@@ -29,7 +30,8 @@ module uart_console #(
     output reg [2:0] command_value,
     output reg [9:0] text_glyph,
     output reg overlay_override,overlay_value,adjust_override,adjust_value,
-    output reg select_override,select_value,soft_reset
+    output reg select_override,select_value,soft_reset,
+    output reg [1:0] transition_mode
 );
 wire [7:0] rx_data;wire rx_valid,rx_error,tx_ready;
 reg [7:0] tx_data;reg tx_start;
@@ -76,14 +78,15 @@ wire ready_for_control=(next_block_reason!=1);
 wire [2:0] image_count=debug_status[14:12];
 wire [7:0] argument=line_buffer[7:0];
 // 命令匹配提前寄存，拆开长比较与应答选择，满足100MHz时序。
-reg [29:0] decoded;
+reg [33:0] decoded;
+reg [1:0] transition_snapshot;
 reg [5:0] operation;
 integer op_index;
 always @(posedge clk or posedge rst)begin
  if(rst)operation<=63;
  else begin
   operation<=63;
-  for(op_index=0;op_index<30;op_index=op_index+1)
+  for(op_index=0;op_index<34;op_index=op_index+1)
    if(decoded[op_index])operation<=op_index;
  end
 end
@@ -91,6 +94,10 @@ always @(posedge clk or posedge rst) begin
  if(rst) decoded<=0;
  else begin
   decoded[0]<=(line_buffer=="PING");
+  decoded[30]<=TRANSITION_ENABLE&&(line_buffer=="TRANSITION SLIDE");
+  decoded[31]<=TRANSITION_ENABLE&&(line_buffer=="TRANSITION FADE");
+  decoded[32]<=TRANSITION_ENABLE&&(line_buffer=="TRANSITION CUT");
+  decoded[33]<=TRANSITION_ENABLE&&(line_buffer=="TRANSITION");
   decoded[1]<=(line_buffer=="NEXT");
   decoded[2]<=(line_length==6 && (line_buffer>>8)=="SHOW ");
   decoded[3]<=(line_buffer=="AUTO ON");
@@ -240,6 +247,12 @@ reply_buffer=0;case(reply_kind)
 6'd44:reply_buffer={"ERR NOTREADY",8'd13,8'd10};
 6'd45:reply_buffer={"ERR NOEVENT",8'd13,8'd10};
 6'd46:reply_buffer={"ERR NOIMAGE",8'd13,8'd10};
+6'd47:reply_buffer={"OK TRANSITION",8'd13,8'd10};
+6'd48:begin
+ if(transition_snapshot==1)reply_buffer={"TRANSITION SLIDE",8'd13,8'd10};
+ else if(transition_snapshot==2)reply_buffer={"TRANSITION FADE",8'd13,8'd10};
+ else reply_buffer={"TRANSITION CUT",8'd13,8'd10};
+end
 default:reply_buffer=0;endcase end
 always @(posedge clk or posedge rst)begin
  if(rst)begin byte_index<=0;byte_candidate<=0;byte_group<=0;byte_lane<=0;end
@@ -283,6 +296,7 @@ always @(posedge clk or posedge rst) begin
   event_snapshot_id<=0;event_snapshot_crc<=0;event_snapshot_level<=0;event_snapshot_state<=0;
   event_snapshot_area<=0;event_snapshot_body<=0;event_snapshot_pending<=0;
   command_valid<=0;command_code<=0;command_value<=0;text_glyph<=0;reset_pending<=0;soft_reset<=0;
+  transition_mode<=1;transition_snapshot<=1;
   overlay_override<=0;overlay_value<=1;adjust_override<=0;adjust_value<=0;
   select_override<=0;select_value<=0;
  end else begin
@@ -314,6 +328,14 @@ always @(posedge clk or posedge rst) begin
      if(reply_busy_d)busy_reply_pending<=1;
      else if(line_error)reply(5'd5,7'd10);
      else case(operation)
+     30,31,32:begin
+      transition_mode<=(operation==30)?2'd1:(operation==31)?2'd2:2'd0;
+      reply(47,15);
+     end
+     33:begin
+      transition_snapshot<=transition_mode;
+      reply(48,(transition_mode==1)?18:(transition_mode==2)?17:16);
+     end
      0:reply(5'd6,7'd6);
      1:begin
       if(next_block_reason!=0)block_reply(next_block_reason);

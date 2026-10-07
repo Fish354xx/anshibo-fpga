@@ -5,6 +5,8 @@ from PIL import Image, ImageDraw, ImageFont
 root = Path(__file__).resolve().parents[1]
 target = root / 'src/user_source/hdl_source/video_rgb_to_axis_640x480.v'
 marker = '// BEGIN GENERATED CAMPUS OSD'
+if 'parameter integer SLIDE_ENABLE=0' in target.read_text(encoding='utf-8-sig'):
+    raise SystemExit('Current OSD contains maintained transition/event logic; edit the source directly. This legacy generator would overwrite it.')
 normal = '安视播 | 普通模式 | 运行 '
 emergency = '安视播 | 应急模式 | 运行 '
 banner = '校园信息发布  文明校园 安全同行  按KEY3进入或退出应急提示  '

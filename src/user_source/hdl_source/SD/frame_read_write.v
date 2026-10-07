@@ -13,7 +13,8 @@ module frame_read_write
 	parameter BURST_SIZE             = 256,
 	parameter WRITE_V_FLIP           = 1,      // 1: vertical flip when writing TF/BMP frame into SDRAM
 	parameter FRAME_WIDTH            = 640,
-	parameter FRAME_HEIGHT           = 480
+	parameter FRAME_HEIGHT           = 480,
+    parameter SLIDE_ENABLE           = 0
 ) 
 (
 	input                            rst,                  
@@ -44,6 +45,10 @@ module frame_read_write
 	input[ADDR_BITS - 1:0]           read_addr_2,                // data read module read request base address 1, used when read_addr_index = 2
 	input[ADDR_BITS - 1:0]           read_addr_3,                // data read module read request base address 1, used when read_addr_index = 3
 	output [1:0] read_active_index, // 当前读帧缓存编号，由读控制器提供
+    input [9:0] slide_offset,
+    input slide_in,
+    output [9:0] read_slide_offset,
+    output read_slide_in,
 	input[1:0]                       read_addr_index,            // select valid base address from read_addr_0 read_addr_1 read_addr_2 read_addr_3
 	input[ADDR_BITS - 1:0]           read_len,                   // data read module read request data length
 	input                            read_en,                    // data read module read request for one data, read_data valid next clock
@@ -170,7 +175,8 @@ frame_fifo_read
 	.MEM_DATA_BITS              (MEM_DATA_BITS            ),
 	.ADDR_BITS                  (ADDR_BITS                ),
 	.BURST_BITS                 (BURST_BITS               ),
-	.BURST_SIZE                 (BURST_SIZE               )
+	.BURST_SIZE                 (BURST_SIZE               ),
+    .SLIDE_ENABLE               (SLIDE_ENABLE)
 )
 frame_fifo_read_m0
 (
@@ -194,6 +200,8 @@ frame_fifo_read_m0
 	.read_addr_3                (read_addr_3              ),
 	.read_addr_index            (read_addr_index          ),
     .read_active_index          (read_active_index),    
+    .slide_offset(slide_offset),.slide_in(slide_in),
+    .read_slide_offset(read_slide_offset),.read_slide_in(read_slide_in),
 	.read_len                   (read_len                 ),
 	.fifo_aclr                  (read_fifo_aclr           ),
 	.wrusedw                	(wrusedw                  )

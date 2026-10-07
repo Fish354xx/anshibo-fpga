@@ -9,7 +9,8 @@ module sd_card_bmp #(
     parameter integer REMOTE_ENABLE = 0,
     parameter [31:0]  SCAN_START_SECTOR = 32'd0,
     parameter [31:0]  SCAN_MAX_SECTOR   = 32'd131071,
-    parameter [2:0]   SCAN_TARGET_COUNT = 3'd4
+    parameter [2:0]   SCAN_TARGET_COUNT = 3'd4,
+    parameter integer FRAME_READER_FEEDBACK = 0
 )(
     input                       clk,
     input                       rst,
@@ -35,6 +36,7 @@ module sd_card_bmp #(
     output [7:0]                picture_settings,
     output                      transition_pending,
     input                       transition_black_ready,
+    input [1:0]                 read_active_index_async,
 
     input                       write_finish_toggle,
     output reg [1:0]            write_buf_idx,
@@ -98,9 +100,15 @@ reg              source_started_seen;
 reg              memory_done_seen;
 reg [1:0]        transition_ready_sync;
 wire             commit_allowed;
+reg [1:0] reader_index_sync0,reader_index_sync1;
+wire reader_bank_safe=!FRAME_READER_FEEDBACK || !display_valid || reader_index_sync1==disp_buf_idx;
+always @(posedge clk or posedge rst)begin
+ if(rst)begin reader_index_sync0<=0;reader_index_sync1<=0;end
+ else begin reader_index_sync0<=read_active_index_async;reader_index_sync1<=reader_index_sync0;end
+end
 frame_commit_gate u_frame_commit_gate(
     .load_busy(load_busy), .source_done(source_done_seen), .memory_done(memory_done_seen),
-    .display_valid(display_valid), .emergency_mode(o_emergency_mode),
+    .display_valid(display_valid), .emergency_mode(o_emergency_mode || o_emergency_loaded),
     .display_permit(disp_commit_en), .black_ready(transition_ready_sync[1]),
     .transition_pending(transition_pending), .commit_allowed(commit_allowed));
 
@@ -152,7 +160,7 @@ emergency_mode_ctrl #(
     .key_auto_press        (key_auto_press),
     .pause_rotate          (settings_active),
     .scan_done             (scan_done || (scan_paused && !first_image_committed)),
-    .bmp_ready             (bmp_ready),
+    .bmp_ready             (bmp_ready && reader_bank_safe),
     .first_image_committed (first_image_committed),
     .display_valid         (display_valid),
     .load_busy             (load_busy),
@@ -269,7 +277,7 @@ always @(posedge clk or posedge rst) begin
             // have drained. Latch either completion order, then wait for both.
             if (load_busy && write_finish_pulse)
                 memory_done_seen <= 1'b1;
-            // Retain the write-complete event while waiting for the old picture to fade out.
+            // 保留写完成状态，等待日常转场的缓存交换许可。
             if (commit_allowed) begin
                 load_busy        <= 1'b0;
                 source_done_seen <= 1'b0;
@@ -374,7 +382,7 @@ sd_card_top sd_card_top_m0(
 
 endmodule
 
-// Retire rejected transactions immediately; only accepted normal switches fade.
+// 应急、恢复、首图与失效事务绕过动画；日常交换等待转场许可。
 module frame_commit_gate(
     input load_busy,source_done,memory_done,display_valid,emergency_mode,display_permit,black_ready,
     output transition_pending,commit_allowed
