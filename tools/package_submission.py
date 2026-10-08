@@ -15,8 +15,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def check_project(root):
     project = root / 'src/td_project/anshibo.al'
-    tree = ET.parse(project)
-    if tree.getroot().get('Path') != '.':
+    # TD emits an unescaped ampersand in the UsedInP&R attribute.
+    tree = ET.fromstring(project.read_text(encoding='utf-8-sig').replace('UsedInP&R', 'UsedInPandR'))
+    if tree.get('Path') != '.':
         raise RuntimeError('TD project root must be relative')
     references = [n.get('Path') for n in tree.iter('File')]
     missing = [p for p in references if not (project.parent / p).is_file()]
