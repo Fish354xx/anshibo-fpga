@@ -295,7 +295,7 @@ sd_card_bmp #(
     .SCAN_START_SECTOR (32'd0),
     .SCAN_MAX_SECTOR   (32'd131071),
     .SCAN_TARGET_COUNT (3'd4),
-    .FRAME_READER_FEEDBACK(1),.RESOURCE_ENABLE(1)
+    .FRAME_READER_FEEDBACK(1),.RESOURCE_ENABLE(1),.PREFETCH_ENABLE(1)
 ) sd_card_bmp_m0(
     .clk               (sd_card_clk),
     .rst               (rst_sd),

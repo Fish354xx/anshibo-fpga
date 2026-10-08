@@ -1,0 +1,52 @@
+# vsim -do {run -all; quit -f} -l sim/prefetch_pipeline.log -lib C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work -c tb_prefetch_pipeline 
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.tb_prefetch_pipeline
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.sd_card_bmp
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.frame_commit_gate
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.picture_key_control
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.key_press_debounce
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.emergency_mode_ctrl
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.bmp_read
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.bmp_nearest_scaler
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.sd_card_top
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.sd_card_sec_read_write
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.sd_card_cmd
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.spi_master
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.fat32_resources
+# ** Warning: (vsim-3017) tb/tb_prefetch_pipeline.v(22): [TFMPC] - Too few port connections. Expected 47, found 36.
+# 
+#         Region: /tb_prefetch_pipeline/dut
+# ** Warning: (vsim-3722) tb/tb_prefetch_pipeline.v(22): [TFMPC] - Missing connection for port 'auto_play_active'.
+# 
+# ** Warning: (vsim-3722) tb/tb_prefetch_pipeline.v(22): [TFMPC] - Missing connection for port 'resource_catalog_ready'.
+# 
+# ** Warning: (vsim-3722) tb/tb_prefetch_pipeline.v(22): [TFMPC] - Missing connection for port 'resource_emergency_file'.
+# 
+# ** Warning: (vsim-3722) tb/tb_prefetch_pipeline.v(22): [TFMPC] - Missing connection for port 'next_block_reason'.
+# 
+# ** Warning: (vsim-3722) tb/tb_prefetch_pipeline.v(22): [TFMPC] - Missing connection for port 'state_code'.
+# 
+# ** Warning: (vsim-3722) tb/tb_prefetch_pipeline.v(22): [TFMPC] - Missing connection for port 'debug_status'.
+# 
+# ** Warning: (vsim-3722) tb/tb_prefetch_pipeline.v(22): [TFMPC] - Missing connection for port 'picture_settings'.
+# 
+# ** Warning: (vsim-3722) tb/tb_prefetch_pipeline.v(22): [TFMPC] - Missing connection for port 'write_buf_idx'.
+# 
+# ** Warning: (vsim-3722) tb/tb_prefetch_pipeline.v(22): [TFMPC] - Missing connection for port 'SD_nCS'.
+# 
+# ** Warning: (vsim-3722) tb/tb_prefetch_pipeline.v(22): [TFMPC] - Missing connection for port 'SD_DCLK'.
+# 
+# ** Warning: (vsim-3722) tb/tb_prefetch_pipeline.v(22): [TFMPC] - Missing connection for port 'SD_MOSI'.
+# 
+# run -all 
+# PASS background prefetch preserves current image and dwell metadata
+# PASS cache hit causes no TF reload or pixel rewrite
+# PASS cache metadata committed with image
+# PASS ncy takes next transaction, ordinary speculative frame discarded
+# PASS restored current dwell is independent of next preload metadata
+# PASS different SHOW target falls back to file read
+# PASS invalid preload never changes current picture
+# PASS built-in failure background also reusable from cache
+# PASS cached fallback and duration remain aligned
+# PREFETCH PIPELINE: ALL CHECKS PASSED frames=9
+# ** Note: $finish    : tb/tb_prefetch_pipeline.v(90)
+#    Time: 446711195 ns  Iteration: 2  Instance: /tb_prefetch_pipeline

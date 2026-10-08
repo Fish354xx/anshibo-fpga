@@ -4,7 +4,7 @@
 
 ## 上板操作
 
-BitWriter使用PROGRAM_SRAM，只添加firmware/anshibo_resource_manager.bit下载。本阶段默认相接滑动，支持TRANSITION SLIDE / FADE / CUT及查询；进入和解除应急直接切屏，详见TRANSITIONS.md。相接滑动已验收；本资源管理版本待上板确认。请将tf_resources内的NORMAL、ALERT复制到FAT32 TF根目录，PLAYLIST.TXT可选（首次测试先不复制），资源规则和测试见RESOURCE_MANAGEMENT.md。退出旧串口窗口，双击本目录tools/launch_uart.cmd，选择已有COM端口（此前COM3）。
+BitWriter使用PROGRAM_SRAM，只添加firmware/anshibo_prefetch.bit下载。本阶段默认相接滑动，支持TRANSITION SLIDE / FADE / CUT及查询；进入和解除应急直接切屏，详见TRANSITIONS.md。相接滑动已验收；资源管理及新增不同尺寸图片已由用户反馈正常；本预读版本待上板确认。请将tf_resources内的NORMAL、ALERT复制到FAT32 TF根目录，PLAYLIST.TXT可选（首次测试先不复制），资源规则和测试见RESOURCE_MANAGEMENT.md。退出旧串口窗口，双击本目录tools/launch_uart.cmd，选择已有COM端口（此前COM3）。
 
 输入PUBLISH，向导依次录入：
 
@@ -39,4 +39,4 @@ ESTATUS查询该后台事件状态。APPLIED表示FPGA已开始输出该事件�
 
 ## 文件夹与可选播放列表
 
-NORMAL目录最多16张编号BMP；ALERT/EVAC.BMP独立作为应急底图。PLAYLIST.TXT可选，可指定顺序、重复引用和1～60秒停留时间；不提供则按数字编号播放，每张默认5秒。读取沿FAT32簇链进行，支持碎片文件。RESOURCES查看资源状态，SHOW 1～16选择播放条目。保持双缓冲、相接滑动、分级应急、TEXT和PUBLISH。当前资源阶段等待用户上板验收。
+NORMAL目录最多16张编号BMP；ALERT/EVAC.BMP独立作为应急底图。PLAYLIST.TXT可选，可指定顺序、重复引用和1～60秒停留时间；不提供则按数字编号播放，每张默认5秒。读取沿FAT32簇链进行，支持碎片文件。RESOURCES查看资源状态，SHOW 1～16选择播放条目。保持双缓冲、相接滑动、分级应急、TEXT和PUBLISH。资源管理已获用户正常反馈。下一张图片预加载的规则与验证步骤见PREFETCH.md，当前预读阶段待上板验收。

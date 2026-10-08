@@ -1,0 +1,59 @@
+# vsim -do {run -all; quit -f} -l sim/prefetch_scheduler.log -lib C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work -c tb_prefetch_scheduler 
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.tb_prefetch_scheduler
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.sd_card_bmp
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.frame_commit_gate
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.picture_key_control
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.key_press_debounce
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.emergency_mode_ctrl
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.bmp_read
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.bmp_nearest_scaler
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.sd_card_top
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.sd_card_sec_read_write
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.sd_card_cmd
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.spi_master
+# Loading C:/Users/Fish/Desktop/111/anshibo_event_project/sim/work.fat32_resources
+# ** Warning: (vsim-3017) tb/tb_prefetch_scheduler.v(20): [TFMPC] - Too few port connections. Expected 47, found 30.
+# 
+#         Region: /tb_prefetch_scheduler/dut
+# ** Warning: (vsim-3722) tb/tb_prefetch_scheduler.v(20): [TFMPC] - Missing connection for port 'auto_play_active'.
+# 
+# ** Warning: (vsim-3722) tb/tb_prefetch_scheduler.v(20): [TFMPC] - Missing connection for port 'resource_flags'.
+# 
+# ** Warning: (vsim-3722) tb/tb_prefetch_scheduler.v(20): [TFMPC] - Missing connection for port 'resource_emergency_file'.
+# 
+# ** Warning: (vsim-3722) tb/tb_prefetch_scheduler.v(20): [TFMPC] - Missing connection for port 'display_fallback'.
+# 
+# ** Warning: (vsim-3722) tb/tb_prefetch_scheduler.v(20): [TFMPC] - Missing connection for port 'state_code'.
+# 
+# ** Warning: (vsim-3722) tb/tb_prefetch_scheduler.v(20): [TFMPC] - Missing connection for port 'debug_status'.
+# 
+# ** Warning: (vsim-3722) tb/tb_prefetch_scheduler.v(20): [TFMPC] - Missing connection for port 'picture_settings'.
+# 
+# ** Warning: (vsim-3722) tb/tb_prefetch_scheduler.v(20): [TFMPC] - Missing connection for port 'write_buf_idx'.
+# 
+# ** Warning: (vsim-3722) tb/tb_prefetch_scheduler.v(20): [TFMPC] - Missing connection for port 'write_en'.
+# 
+# ** Warning: (vsim-3722) tb/tb_prefetch_scheduler.v(20): [TFMPC] - Missing connection for port 'write_data'.
+# 
+# ** Warning: (vsim-3722) tb/tb_prefetch_scheduler.v(20): [TFMPC] - Missing connection for port 'SD_nCS'.
+# 
+# ** Warning: (vsim-3722) tb/tb_prefetch_scheduler.v(20): [TFMPC] - Missing connection for port 'SD_DCLK'.
+# 
+# ** Warning: (vsim-3722) tb/tb_prefetch_scheduler.v(20): [TFMPC] - Missing connection for port 'SD_MOSI'.
+# 
+# run -all 
+# PASS preload never switches before request and completion
+# PASS deadline remains pending while large preload unfinished
+# PASS source completion alone cannot make cache usable
+# PASS deadline reuses complete cache without another TF read
+# PASS old bank cannot be written while reader remains mixed
+# PASS emergency request accepted during background load
+# PASS completed ordinary preload discarded before emergency
+# PASS next cache rebuilt after emergency restore
+# PASS arbitrary SHOW cache miss reads requested file
+# PASS NEXT accepted while preloading
+# PASS early manual NEXT waits for complete target cache
+# PASS cached picture keeps its metadata
+# PREFETCH SCHEDULER: ALL CHECKS PASSED
+# ** Note: $finish    : tb/tb_prefetch_scheduler.v(75)
+#    Time: 55445 ns  Iteration: 2  Instance: /tb_prefetch_scheduler
