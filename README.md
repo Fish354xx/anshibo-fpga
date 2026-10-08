@@ -4,7 +4,7 @@
 
 ## 上板操作
 
-BitWriter使用PROGRAM_SRAM，只添加firmware/anshibo_prefetch.bit下载。本阶段默认相接滑动，支持TRANSITION SLIDE / FADE / CUT及查询；进入和解除应急直接切屏，详见TRANSITIONS.md。相接滑动已验收；资源管理及新增不同尺寸图片已由用户反馈正常；本预读版本待上板确认。请将tf_resources内的NORMAL、ALERT复制到FAT32 TF根目录，PLAYLIST.TXT可选（首次测试先不复制），资源规则和测试见RESOURCE_MANAGEMENT.md。退出旧串口窗口，双击本目录tools/launch_uart.cmd，选择已有COM端口（此前COM3）。
+BitWriter使用PROGRAM_SRAM，只添加firmware/anshibo_prefetch.bit下载。本阶段默认相接滑动，支持TRANSITION SLIDE / FADE / CUT及查询；进入和解除应急直接切屏，详见TRANSITIONS.md。相接滑动已验收；资源管理及新增不同尺寸图片已由用户反馈正常；预读版本已由用户确认正常。请将tf_resources内的NORMAL、ALERT复制到FAT32 TF根目录，PLAYLIST.TXT可选（首次测试先不复制），资源规则和测试见RESOURCE_MANAGEMENT.md。退出旧串口窗口，双击本目录tools/launch_uart.cmd，选择已有COM端口（此前COM3）。
 
 输入PUBLISH，向导依次录入：
 
@@ -23,7 +23,7 @@ ESTATUS查询该后台事件状态。APPLIED表示FPGA已开始输出该事件�
 
 ## 显示与规则
 
-一级：日常播放继续，提醒条显示正文，另外显示区域，普通通知仍在底部滚动。二级：警戒页显示区域和最多四行正文，间歇提示音。三级：使用TF第四张应急底图、区域及动态应急滚动正文，持续交替报警。声音由等级决定，本版没有独立音量/音色事件字段。
+一级：日常播放继续，提醒条显示正文，另外显示区域，普通通知仍在底部滚动。二级：警戒页显示区域和最多四行正文，间歇提示音。三级：使用TF的ALERT/EVAC.BMP应急底图、区域及动态应急滚动正文，持续交替报警。声音由等级决定，本版没有独立音量/音色事件字段。
 
 后台同时只保留一个最新有效事件，本地另保存一个等级；同级优先本地。完整事件在帧边界安装，错误CRC、缺失或多余字符不修改已有有效事件。当前事件同编号同内容返回DUP，不重新触发；同编号不同内容返回ID错误。历史事件编号没有长期去重记录。
 
@@ -39,4 +39,4 @@ ESTATUS查询该后台事件状态。APPLIED表示FPGA已开始输出该事件�
 
 ## 文件夹与可选播放列表
 
-NORMAL目录最多16张编号BMP；ALERT/EVAC.BMP独立作为应急底图。PLAYLIST.TXT可选，可指定顺序、重复引用和1～60秒停留时间；不提供则按数字编号播放，每张默认5秒。读取沿FAT32簇链进行，支持碎片文件。RESOURCES查看资源状态，SHOW 1～16选择播放条目。保持双缓冲、相接滑动、分级应急、TEXT和PUBLISH。资源管理已获用户正常反馈。下一张图片预加载的规则与验证步骤见PREFETCH.md，当前预读阶段待上板验收。
+NORMAL目录最多16张编号BMP；ALERT/EVAC.BMP独立作为应急底图。PLAYLIST.TXT可选，可指定顺序、重复引用和1～60秒停留时间；不提供则按数字编号播放，每张默认5秒。读取沿FAT32簇链进行，支持碎片文件。RESOURCES查看资源状态，SHOW 1～16选择播放条目。保持双缓冲、相接滑动、分级应急、TEXT和PUBLISH。资源管理已获用户正常反馈。下一张图片预加载的规则与验证步骤见PREFETCH.md，当前预读阶段已由用户确认正常。

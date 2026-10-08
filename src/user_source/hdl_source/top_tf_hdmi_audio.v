@@ -14,7 +14,7 @@ module top(
     input                       adjustment_switch, // SW2：1开启调节，0恢复普通按键操作
     input                       contrast_switch,   // SW3：1选择对比度，0选择亮度
     input                       subtitle_switch, // SW1：1显示文字与波形，0只显示图片
-    input                       key_mode,       // KEY3: emergency mode toggle
+    input                       key_mode,       // KEY3：预警等级选择/确认，长按进入三级应急
 
     output [5:0]                seg_sel,
     output [7:0]                seg_data,
