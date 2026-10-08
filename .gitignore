@@ -28,3 +28,7 @@ sim/fat_fixture_*.hex
 !measurements/graded_alert/*.log
 
 !measurements/event_publish/*.log
+
+# Generated quantitative simulation intermediates
+/sim/latency_frame_gate.v
+/sim/latency_frame.vcd
