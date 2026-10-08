@@ -1,0 +1,21 @@
+# vsim -do {run -all; quit -f} -l measurements/quantitative/frame_gate.log -lib sim/work -c tb_latency_frame_measure 
+# Loading sim/work.tb_latency_frame_measure
+# Loading sim/work.video_timing_data
+# Loading sim/work.color_bar
+# Loading sim/work.emergency_audio_frame_gate
+# ** Warning: (vsim-3017) tb/tb_latency_frame_measure.v(15): [TFMPC] - Too few port connections. Expected 11, found 9.
+# 
+#         Region: /tb_latency_frame_measure/gate
+# ** Warning: (vsim-3722) tb/tb_latency_frame_measure.v(15): [TFMPC] - Missing connection for port 'picture_ready'.
+# 
+# ** Warning: (vsim-3722) tb/tb_latency_frame_measure.v(15): [TFMPC] - Missing connection for port 'restore_ready'.
+# 
+# run -all 
+# MEASURE gate 0: commit_to_qualified=1414500 ns qualified_to_enable=0 ns
+# MEASURE gate 1: commit_to_qualified=1413540 ns qualified_to_enable=0 ns
+# MEASURE gate 2: commit_to_qualified=14214540 ns qualified_to_enable=0 ns
+# MEASURE gate 3: commit_to_qualified=10214540 ns qualified_to_enable=0 ns
+# MEASURE gate 4: commit_to_qualified=2214540 ns qualified_to_enable=0 ns
+# LATENCY: ALL CHECKS PASSED
+# ** Note: $finish    : tb/tb_latency_frame_measure.v(41)
+#    Time: 57475200 ns  Iteration: 1  Instance: /tb_latency_frame_measure

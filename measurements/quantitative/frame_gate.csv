@@ -1,0 +1,6 @@
+test,id,phase_or_offset_ns,injected_busy_ns,mode_or_frame_wait_ns,req_assert_or_gate_delay_ns,req_accept_or_total_ns
+gate,0,0,0,1414500,0,1414500
+gate,1,1000,0,1413540,0,1413540
+gate,2,4000000,0,14214540,0,14214540
+gate,3,8000000,0,10214540,0,10214540
+gate,4,16000000,0,2214540,0,2214540

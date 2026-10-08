@@ -1,0 +1,51 @@
+# vsim -do {run -all; quit -f} -l measurements/quantitative/prefetch.log -lib sim/work -c tb_latency_prefetch 
+# Loading sim/work.tb_latency_prefetch
+# Loading sim/work.sd_card_bmp
+# Loading sim/work.frame_commit_gate
+# Loading sim/work.picture_key_control
+# Loading sim/work.key_press_debounce
+# Loading sim/work.emergency_mode_ctrl
+# Loading sim/work.bmp_read
+# Loading sim/work.bmp_nearest_scaler
+# Loading sim/work.sd_card_top
+# Loading sim/work.sd_card_sec_read_write
+# Loading sim/work.sd_card_cmd
+# Loading sim/work.spi_master
+# Loading sim/work.fat32_resources
+# ** Warning: (vsim-3017) tb/tb_latency_prefetch.v(20): [TFMPC] - Too few port connections. Expected 47, found 30.
+# 
+#         Region: /tb_latency_prefetch/dut
+# ** Warning: (vsim-3722) tb/tb_latency_prefetch.v(20): [TFMPC] - Missing connection for port 'auto_play_active'.
+# 
+# ** Warning: (vsim-3722) tb/tb_latency_prefetch.v(20): [TFMPC] - Missing connection for port 'resource_flags'.
+# 
+# ** Warning: (vsim-3722) tb/tb_latency_prefetch.v(20): [TFMPC] - Missing connection for port 'resource_emergency_file'.
+# 
+# ** Warning: (vsim-3722) tb/tb_latency_prefetch.v(20): [TFMPC] - Missing connection for port 'display_fallback'.
+# 
+# ** Warning: (vsim-3722) tb/tb_latency_prefetch.v(20): [TFMPC] - Missing connection for port 'state_code'.
+# 
+# ** Warning: (vsim-3722) tb/tb_latency_prefetch.v(20): [TFMPC] - Missing connection for port 'debug_status'.
+# 
+# ** Warning: (vsim-3722) tb/tb_latency_prefetch.v(20): [TFMPC] - Missing connection for port 'picture_settings'.
+# 
+# ** Warning: (vsim-3722) tb/tb_latency_prefetch.v(20): [TFMPC] - Missing connection for port 'write_buf_idx'.
+# 
+# ** Warning: (vsim-3722) tb/tb_latency_prefetch.v(20): [TFMPC] - Missing connection for port 'write_en'.
+# 
+# ** Warning: (vsim-3722) tb/tb_latency_prefetch.v(20): [TFMPC] - Missing connection for port 'write_data'.
+# 
+# ** Warning: (vsim-3722) tb/tb_latency_prefetch.v(20): [TFMPC] - Missing connection for port 'SD_nCS'.
+# 
+# ** Warning: (vsim-3722) tb/tb_latency_prefetch.v(20): [TFMPC] - Missing connection for port 'SD_DCLK'.
+# 
+# ** Warning: (vsim-3722) tb/tb_latency_prefetch.v(20): [TFMPC] - Missing connection for port 'SD_MOSI'.
+# 
+# run -all 
+# MEASURE emergency case=0 accepted_ns=10 commit_ns=555
+# PASS emergency bypasses transition
+# MEASURE emergency case=1 accepted_ns=10 commit_ns=11795
+# PASS emergency bypasses transition
+# LATENCY PREFETCH: ALL CHECKS PASSED
+# ** Note: $finish    : tb/tb_latency_prefetch.v(71)
+#    Time: 26855 ns  Iteration: 2  Instance: /tb_latency_prefetch

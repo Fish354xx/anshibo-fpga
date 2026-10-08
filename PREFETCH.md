@@ -30,3 +30,5 @@ TF目录、文件名和PLAYLIST.TXT沿用当前规则，不需要重做。BitWri
 4. 连续按下一张、停止轮播、调节亮度/对比度，检查无花屏和错误跳转。所有本阶段效果等待用户确认。
 
 本阶段不增加串口功能，不修改运行时间为实际日期。编译和仿真记录见measurements/prefetch/RESULTS.md。
+
+2026-10-08：用户反馈本阶段上板正常。延迟测量平台及适用边界见measurements/quantitative/README.md；该反馈不替代实物时间测量。

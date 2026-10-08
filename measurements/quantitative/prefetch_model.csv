@@ -1,0 +1,4 @@
+test,case,accept_ns,commit_ns,accept_to_commit_ns
+startup_model,0,0,565,565
+emergency,0,10,555,545
+emergency,1,10,11795,11785
